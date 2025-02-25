@@ -1,43 +1,85 @@
-#include <iostream>
-#include <raylib.h>
+#include "mainmenu.h"
+#include "linkedlistvisual.h"
+#include "hashvisual.h"
+#include "treevisual.h"
+#include "graphvisual.h"
 
 using namespace std;
 
+bool MouseButtonPressed(float x, float y, float u, float v) {
+    Vector2 p = GetMousePosition();
+    if(p.x >= x && p.x < u && p.y >= y && p.y < v)
+        return true;
+    return false;
+}
+
 int main () {
-
-    const int SCREEN_WIDTH = 800;
-    const int SCREEN_HEIGHT = 600;
-    int ball_x = 100;
-    int ball_y = 100;
-    int ball_speed_x = 5;
-    int ball_speed_y = 5;
-    int ball_radius = 15;
-
-    cout << "Hello World" << endl;
-
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "My first RAYLIB program!");
+    InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
+    GameScreen currentScreen = MAINMENU;
     SetTargetFPS(60);
-
-    while (WindowShouldClose() == false){
-   
-        ball_x += ball_speed_x;
-        ball_y += ball_speed_y;
-
-        if(ball_x + ball_radius >= SCREEN_WIDTH || ball_x - ball_radius <= 0)
-        {
-            ball_speed_x *= -1;
+    while(!WindowShouldClose()) {
+        switch(currentScreen) {
+            case MAINMENU:
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    if(MouseButtonPressed(0, 0, 400, 400))
+                        currentScreen = LINKEDLIST;
+                    else if(MouseButtonPressed(0, 400, 400, 800))
+                        currentScreen = HASH;
+                    else if(MouseButtonPressed(400, 0, 800, 400))
+                        currentScreen = TREE;
+                    else if(MouseButtonPressed(400, 400, 800, 800))
+                        currentScreen = GRAPH;
+                }
+                break;
+            case LINKEDLIST:
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    if(MouseButtonPressed(0, 0, 400, 100))
+                        currentScreen = MAINMENU;
+                }
+                break;
+            case HASH:
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    if(MouseButtonPressed(0, 0, 400, 100))
+                        currentScreen = MAINMENU;
+                }
+                break;
+            case TREE:
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    if(MouseButtonPressed(0, 0, 400, 100))
+                        currentScreen = MAINMENU;
+                }
+                break;
+            case GRAPH:
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    if(MouseButtonPressed(0, 0, 400, 100))
+                        currentScreen = MAINMENU;
+                }
+                break;
+            default:
+                break;
         }
 
-        if(ball_y + ball_radius >= SCREEN_HEIGHT || ball_y - ball_radius <= 0)
-        {
-            ball_speed_y *= -1;
-        }
-        
         BeginDrawing();
-            ClearBackground(BLACK);
-            DrawCircle(ball_x,ball_y,ball_radius, WHITE);
+        ClearBackground(RAYWHITE);
+        switch(currentScreen) {
+            case MAINMENU:
+                DisplayMainMenu();
+                break;
+            case LINKEDLIST:
+                DisplayLinkedList();
+                break;
+            case HASH:
+                DisplayHash();
+                break;
+            case TREE:
+                DisplayTree();
+                break;
+            case GRAPH:
+                DisplayGraph();
+                break;
+            default:
+                break;
+        }
         EndDrawing();
     }
-
-    CloseWindow();
 }
