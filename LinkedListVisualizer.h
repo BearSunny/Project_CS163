@@ -53,7 +53,6 @@ private:
     void drawConnection(float startX, float startY, float offsetX);
     void drawInputBox();
     void drawHelpText();
-    void drawBackButton();
 
     void updateAnimation();
     void stepForward();
