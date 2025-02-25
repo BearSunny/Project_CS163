@@ -1,10 +1,11 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "DummyLinkedList.h"
+#include "LinkedList.h"
 #include <string>
 #include <sstream>
 #include <deque>
+#include "declare.h"
 using namespace std;
 
 enum VisualizerMode {
@@ -26,13 +27,13 @@ struct Operation {
 
 class LinkedListVisualizer {
 public:
-    LinkedListVisualizer(DummyLinkedList* list);
+    LinkedListVisualizer(LinkedList* list);
     void init();
     void draw();
     void handleEvent();
 
 private:
-    DummyLinkedList* list;
+    LinkedList* list;
     VisualizerMode mode;
     string inputString;
     int nodeIndex;
@@ -52,6 +53,7 @@ private:
     void drawConnection(float startX, float startY, float offsetX);
     void drawInputBox();
     void drawHelpText();
+    void drawBackButton();
 
     void updateAnimation();
     void stepForward();

@@ -3,7 +3,7 @@
 #include <raylib.h>
 #include <cmath>
 
-LinkedListVisualizer::LinkedListVisualizer(DummyLinkedList* list)
+LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
     : list(list), mode(MODE_NONE), inputString(""), nodeIndex(-1),
     isPaused(false), animationSpeed(1.0f), animationProgress(0.0f),
     currentStep(0), lastOperation("") {}

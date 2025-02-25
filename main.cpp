@@ -1,10 +1,14 @@
 #include "mainmenu.h"
-#include "linkedlistvisual.h"
+#include "LinkedList.h"
+#include "LinkedListVisualizer.h"
 #include "hashvisual.h"
 #include "treevisual.h"
 #include "graphvisual.h"
 
 using namespace std;
+
+LinkedList linkedList; 
+LinkedListVisualizer visualizer(&linkedList);
 
 bool MouseButtonPressed(float x, float y, float u, float v) {
     Vector2 p = GetMousePosition();
@@ -66,7 +70,7 @@ int main () {
                 DisplayMainMenu();
                 break;
             case LINKEDLIST:
-                DisplayLinkedList();
+                // DisplayLinkedList();
                 break;
             case HASH:
                 DisplayHash();
