@@ -5,7 +5,7 @@
 
 void DisplayMainMenu() {
     DrawRectangle(0, 0, 500, 400, LIGHTGRAY);
-    DrawText("LINKED LIST", 250 - MeasureText("LINKED LIST", 40) / 2, 240, 40, DARKBROWN);
+    DrawText("LINKED LIST", 250 - MeasureText("LINKED LIST", 40) / 2, 180, 40, DARKBROWN);
 
     DrawRectangle(500, 0, 500, 400, GRAY);
     DrawText("HASH", 750 - MeasureText("HASH", 40) / 2, 180, 40, BROWN);
