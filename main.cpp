@@ -1,8 +1,11 @@
 #include "mainmenu.h"
-#include "linkedlistvisual.h"
+#include "LinkedListVisualizer.h"
 #include "hashvisual.h"
 #include "treevisual.h"
 #include "graphvisual.h"
+
+LinkedList* linkedList = nullptr;
+LinkedListVisualizer* listVisualizer = nullptr;
 
 bool MouseButtonPressed(float x, float y, float u, float v) {
     Vector2 p = GetMousePosition();
@@ -36,6 +39,47 @@ void Updatenumber() {
         Deletenumber();
 }
 
+void InitLinkedList() {
+    if (linkedList == nullptr) {
+        linkedList = new LinkedList();
+        // Add some initial nodes for demonstration
+        // FOR DEMONSTRATION ONLY
+        // Feature to add manually and upload files is not done
+        linkedList->add(10);
+        linkedList->add(20);
+        linkedList->add(30);
+        linkedList->add(40);
+        linkedList->add(50);
+    }
+    
+    if (listVisualizer == nullptr) {
+        listVisualizer = new LinkedListVisualizer(linkedList);
+        listVisualizer->init();
+    }
+}
+
+void CleanupLinkedList() {
+    if (listVisualizer != nullptr) {
+        delete listVisualizer;
+        listVisualizer = nullptr;
+    }
+    
+    if (linkedList != nullptr) {
+        delete linkedList;
+        linkedList = nullptr;
+    }
+}
+
+void DisplayLinkedList() {
+    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
+    DrawText("Back to Main Menu", 20, 40, 20, BLACK);
+    
+    if (listVisualizer != nullptr) {
+        listVisualizer->draw();
+        listVisualizer->handleEvent();
+    }
+}
+
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
     GameScreen currentScreen = MAINMENU;
@@ -44,8 +88,10 @@ int main () {
         switch(currentScreen) {
             case MAINMENU:
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    if(MouseButtonPressed(0, 0, 500, 400))
+                    if(MouseButtonPressed(0, 0, 500, 400)) {
                         currentScreen = LINKEDLIST;
+                        InitLinkedList();
+                    }
                     else if(MouseButtonPressed(500, 0, 1000, 400))
                         currentScreen = HASH;
                     else if(MouseButtonPressed(0, 400, 500, 800))
@@ -56,8 +102,10 @@ int main () {
                 break;
             case LINKEDLIST:
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    if(MouseButtonPressed(0, 0, 400, 100))
+                    if(MouseButtonPressed(0, 0, 400, 100)) {
                         currentScreen = MAINMENU;
+                        CleanupLinkedList();
+                    }
                 }
                 break;
             case HASH:
@@ -137,4 +185,6 @@ int main () {
         }
         EndDrawing();
     }
+    CleanupLinkedList();
+    CloseWindow();
 }
