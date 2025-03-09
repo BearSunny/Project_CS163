@@ -1,20 +1,39 @@
 #include "mainmenu.h"
-#include "LinkedList.h"
-#include "LinkedListVisualizer.h"
+#include "linkedlistvisual.h"
 #include "hashvisual.h"
 #include "treevisual.h"
 #include "graphvisual.h"
-
-using namespace std;
-
-LinkedList linkedList; 
-LinkedListVisualizer visualizer(&linkedList);
 
 bool MouseButtonPressed(float x, float y, float u, float v) {
     Vector2 p = GetMousePosition();
     if(p.x >= x && p.x < u && p.y >= y && p.y < v)
         return true;
     return false;
+}
+
+void Updatenumber() {
+    if(IsKeyPressed(KEY_ZERO))
+        Insertnumber(0);
+    else if(IsKeyPressed(KEY_ONE))
+        Insertnumber(1);
+    else if(IsKeyPressed(KEY_TWO))
+        Insertnumber(2);
+    else if(IsKeyPressed(KEY_THREE))
+        Insertnumber(3);
+    else if(IsKeyPressed(KEY_FOUR))
+        Insertnumber(4);
+    else if(IsKeyPressed(KEY_FIVE))
+        Insertnumber(5);
+    else if(IsKeyPressed(KEY_SIX))
+        Insertnumber(6);
+    else if(IsKeyPressed(KEY_SEVEN))
+        Insertnumber(7);
+    else if(IsKeyPressed(KEY_EIGHT))
+        Insertnumber(8);
+    else if(IsKeyPressed(KEY_NINE))
+        Insertnumber(9);
+    else if(IsKeyPressed(KEY_BACKSPACE))
+        Deletenumber();
 }
 
 int main () {
@@ -25,13 +44,13 @@ int main () {
         switch(currentScreen) {
             case MAINMENU:
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    if(MouseButtonPressed(0, 0, 400, 400))
+                    if(MouseButtonPressed(0, 0, 500, 400))
                         currentScreen = LINKEDLIST;
-                    else if(MouseButtonPressed(0, 400, 400, 800))
+                    else if(MouseButtonPressed(500, 0, 1000, 400))
                         currentScreen = HASH;
-                    else if(MouseButtonPressed(400, 0, 800, 400))
+                    else if(MouseButtonPressed(0, 400, 500, 800))
                         currentScreen = TREE;
-                    else if(MouseButtonPressed(400, 400, 800, 800))
+                    else if(MouseButtonPressed(500, 400, 1000, 800))
                         currentScreen = GRAPH;
                 }
                 break;
@@ -49,9 +68,41 @@ int main () {
                 break;
             case TREE:
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    if(MouseButtonPressed(0, 0, 400, 100))
-                        currentScreen = MAINMENU;
+                    if(MouseButtonPressed(200, 10, 300, 40)) {
+                        if(!InsertButton) {
+                            InsertButton = true;
+                            length = 0;
+                            number[0] = 0;
+                            framecount = 0;
+                        }
+                    }
+                    else
+                        InsertButton = false;
+                    if(MouseButtonPressed(305, 10, 405, 40))
+                        InsertAVL();
+                    if(MouseButtonPressed(410, 10, 510, 40)) {
+                        if(!DeleteButton) {
+                            DeleteButton = true;
+                            length = 0;
+                            number[0] = 0;
+                            framecount = 0;
+                        }
+                    }
+                    else
+                        DeleteButton = false;
+                    if(MouseButtonPressed(620, 10, 720, 40)) {
+                        if(!FindButton) {
+                            FindButton = true;
+                            length = 0;
+                            number[0] = 0;
+                            framecount = 0;
+                        }
+                    }
+                    else
+                        FindButton = false;
                 }
+                else if(InsertButton || DeleteButton || FindButton)
+                    Updatenumber();
                 break;
             case GRAPH:
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -70,7 +121,7 @@ int main () {
                 DisplayMainMenu();
                 break;
             case LINKEDLIST:
-                // DisplayLinkedList();
+                DisplayLinkedList();
                 break;
             case HASH:
                 DisplayHash();
