@@ -1,8 +1,29 @@
 #include <iostream>
+#include <vector>
 #include "LinkedList.h"
 using namespace std;
 
+// Default constructor - empty linked list
 LinkedList::LinkedList() {
+    head = nullptr;
+}
+
+// Constructor with empty flag - creates an empty list if true
+LinkedList::LinkedList(bool empty) {
+    head = nullptr;
+    if (!empty) {
+        createDefaultList();
+    }
+}
+
+LinkedList::~LinkedList() {
+    clear();
+}
+
+// Helper method to create the default list
+void LinkedList::createDefaultList() {
+    clear(); // Clear any existing nodes
+    
     head = new Node(10);
     Node* node1 = new Node(20);
     Node* node2 = new Node(30);
@@ -15,8 +36,45 @@ LinkedList::LinkedList() {
     node3->next = node4;
 }
 
-LinkedList::~LinkedList() {
-    clear();
+// Create a list from a vector of values
+void LinkedList::createFromValues(const std::vector<int>& values) {
+    clear(); // Clear any existing nodes
+    
+    if (values.empty()) {
+        return; // Nothing to add
+    }
+    
+    head = new Node(values[0]);
+    Node* current = head;
+    
+    for (size_t i = 1; i < values.size(); i++) {
+        current->next = new Node(values[i]);
+        current = current->next;
+    }
+}
+
+// Create a list from a file
+bool LinkedList::createFromFile(const std::string& filePath) {
+    ifstream file(filePath);
+    if (!file.is_open()) {
+        return false;
+    }
+    
+    std::vector<int> values;
+    int value;
+    
+    while (file >> value) {
+        values.push_back(value);
+    }
+    
+    file.close();
+    
+    if (values.empty()) {
+        return false; // No valid integers found
+    }
+    
+    createFromValues(values);
+    return true;
 }
 
 void LinkedList::clear() {
@@ -29,7 +87,7 @@ void LinkedList::clear() {
     head = nullptr;
 }
 
-Node* LinkedList::getHead() {
+Node* LinkedList::getHead() const {
     return head;
 }
 
@@ -55,6 +113,13 @@ void LinkedList::add(int x) {
         cur = cur->next;
     }
     cur->next = new Node(x);
+}
+
+// Add multiple values at once
+void LinkedList::addMultiple(const std::vector<int>& values) {
+    for (int value : values) {
+        add(value);
+    }
 }
 
 // Add at specific index
@@ -143,6 +208,21 @@ int LinkedList::getAt(int idx) {
     return cur ? cur->val : -1;
 }
 
+// Get node at index
+Node* LinkedList::getNodeAt(int idx) {
+    if (idx < 0) return nullptr;
+    
+    Node* cur = head;
+    int curIdx = 0;
+
+    while (cur && curIdx < idx) {
+        cur = cur->next;
+        curIdx++;
+    }
+
+    return cur;
+}
+
 // Search for a value and return its index
 int LinkedList::search(int x) {
     Node* cur = head;
@@ -162,15 +242,5 @@ int LinkedList::search(int x) {
 // Reset list to initial state
 void LinkedList::reset() {
     clear();
-    
-    head = new Node(10);
-    Node* node1 = new Node(20);
-    Node* node2 = new Node(30);
-    Node* node3 = new Node(40);
-    Node* node4 = new Node(50);
-
-    head->next = node1;
-    node1->next = node2;
-    node2->next = node3;
-    node3->next = node4;
+    createDefaultList();
 }

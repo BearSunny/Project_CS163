@@ -42,14 +42,6 @@ void Updatenumber() {
 void InitLinkedList() {
     if (linkedList == nullptr) {
         linkedList = new LinkedList();
-        // Add some initial nodes for demonstration
-        // FOR DEMONSTRATION ONLY
-        // Feature to add manually and upload files is not done
-        linkedList->add(10);
-        linkedList->add(20);
-        linkedList->add(30);
-        linkedList->add(40);
-        linkedList->add(50);
     }
     
     if (listVisualizer == nullptr) {
@@ -78,6 +70,9 @@ void DisplayLinkedList() {
         listVisualizer->draw();
         listVisualizer->handleEvent();
     }
+
+    DrawText("Press M to create list manually | Press F to load list from file", 
+        GetScreenWidth() - 600, GetScreenHeight() - 60, 16, DARKGRAY);
 }
 
 int main () {

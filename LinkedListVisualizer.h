@@ -3,8 +3,11 @@
 
 #include "LinkedList.h"
 #include <string>
+#include <vector>
+#include <cstring>
 #include <sstream>
 #include <deque>
+#include <fstream>
 #include "declare.h"
 using namespace std;
 
@@ -14,7 +17,9 @@ enum VisualizerMode {
     MODE_ADD,
     MODE_DELETE,
     MODE_UPDATE,
-    MODE_SEARCH
+    MODE_SEARCH,
+    MODE_CREATE_MANUAL,
+    MODE_CREATE_FILE
 };
 
 struct Operation {
@@ -31,12 +36,24 @@ public:
     void init();
     void draw();
     void handleEvent();
+    void createManualList();
+    void createFromValues(const std::vector<int>& values);
+    bool createFromFile(const std::string& filePath);
+    void drawManualCreationInterface();
+    void drawFileUploadInterface();
+    void createListFromFile(const string& filePath);
 
 private:
     LinkedList* list;
     VisualizerMode mode;
     string inputString;
     int nodeIndex;
+    int selectedNodeIndex;
+    vector<int> manualInputValues;
+    bool showFileDialog;
+    char filePath[256];
+    bool fileError;
+    string fileErrorMessage;
 
     bool isPaused;
     float animationSpeed;

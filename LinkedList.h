@@ -1,31 +1,55 @@
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
+#include <vector>
+#include <string>
+#include <fstream>
+using std::vector;
+using std::string;
+using std::ifstream;
+
 struct Node {
     int val;
     Node* next;
+    
     Node(int x) : val(x), next(nullptr) {}
 };
 
 class LinkedList {
-public:
-    LinkedList();
-    ~LinkedList();
-    
-    Node* getHead();
-    int getSize();
-    
-    void add(int x);           // Add at end
-    void insertAt(int idx, int x); // Add at index
-    void update(int idx, int x);   // Update value at index
-    bool deleteAt(int idx);        // Delete at index
-    int getAt(int idx);           // Get value at index
-    int search(int x);            // Search for value
-    void reset();                 // Reset to initial state
-    void clear();                 // Clear entire list
-
 private:
     Node* head;
+    
+    // Helper method to create the default list
+    void createDefaultList();
+
+public:
+    LinkedList();
+    LinkedList(bool empty);
+    ~LinkedList();
+    
+    void clear();
+    Node* getHead() const;
+    int getSize();
+    // Create list methods
+    void createFromValues(const std::vector<int>& values);
+    bool createFromFile(const std::string& filePath);
+    
+    // Add methods
+    void add(int x);
+    void addMultiple(const std::vector<int>& values);
+    void insertAt(int idx, int x);
+    
+    // Update and delete methods
+    void update(int idx, int x);
+    bool deleteAt(int idx);
+    
+    // Get and search methods
+    int getAt(int idx);
+    Node* getNodeAt(int idx);
+    int search(int x);
+    
+    // Reset method
+    void reset();
 };
 
-#endif 
+#endif // LINKEDLIST_H
