@@ -228,7 +228,7 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     if (!file.is_open()) {
         fileError = true;
         fileErrorMessage = "Error: Could not open file " + filePath;
-        return;
+        return false;
     }
     
     // Clear the existing list
@@ -245,7 +245,7 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     if (values.empty()) {
         fileError = true;
         fileErrorMessage = "Error: No valid integers found in file";
-        return;
+        return false;
     }
     
     // Add all the values to the list
@@ -262,6 +262,7 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     currentStep = 0;
     animationProgress = 0.0f;
     lastOperation = "Created list from file: " + filePath;
+    return true;
 }
 
 void LinkedListVisualizer::createLLFromValues(const std::vector<int>& values) {
