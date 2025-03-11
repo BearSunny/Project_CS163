@@ -740,7 +740,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 int displayValue = round(currentOp.oldValue + 
                                     (currentOp.newValue - currentOp.oldValue) * animationProgress);
                 
-                const char* valueText = TextFormat("%.1f", displayValue);
+                const char* valueText = TextFormat("%d", displayValue);
                 float textWidth = MeasureText(valueText, 20);
                 DrawText(valueText, posX - textWidth/2, posY - 10, 20, BLACK);
             }
