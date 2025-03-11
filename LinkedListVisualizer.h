@@ -37,11 +37,10 @@ public:
     void draw();
     void handleEvent();
     void createManualList();
-    void createFromValues(const std::vector<int>& values);
-    bool createFromFile(const std::string& filePath);
+    void createLLFromValues(const std::vector<int>& values);
+    bool createLLFromFile(const std::string& filePath);
     void drawManualCreationInterface();
     void drawFileUploadInterface();
-    void createListFromFile(const string& filePath);
 
 private:
     LinkedList* list;

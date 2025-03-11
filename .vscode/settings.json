@@ -103,5 +103,6 @@
 		"typeinfo": "cpp",
 		"valarray": "cpp",
 		"variant": "cpp"
-	}
+	},
+	"C_Cpp.default.compilerPath": "C:/raylib/w64devkit/bin/gcc.exe"
 }

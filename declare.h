@@ -1,6 +1,9 @@
 #ifndef DECLARE_H
 #define DECLARE_H
 
+// CANNOT RUN CODE
+// RECHECK THIS FILE
+
 #include <raylib.h>
 #include <bits/stdc++.h>
 

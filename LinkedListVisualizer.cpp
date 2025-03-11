@@ -183,7 +183,7 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     // Load button
     bool loadClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Load File");
     if (loadClicked && strlen(filePath) > 0) {
-        createListFromFile(filePath);
+        createLLFromFile(filePath);
     }
     
     // Browse button (in a real implementation, this would open a file dialog)
@@ -223,7 +223,7 @@ void LinkedListVisualizer::createManualList() {
     lastOperation = "Created list manually";
 }
 
-void LinkedListVisualizer::createListFromFile(const std::string& filePath) {
+bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
         fileError = true;
@@ -262,6 +262,36 @@ void LinkedListVisualizer::createListFromFile(const std::string& filePath) {
     currentStep = 0;
     animationProgress = 0.0f;
     lastOperation = "Created list from file: " + filePath;
+}
+
+void LinkedListVisualizer::createLLFromValues(const std::vector<int>& values) {
+    // Clear the existing list
+    list->clear();
+    
+    // Add each value one by one, recording each addition as a separate operation
+    for (int i = 0; i < values.size(); i++) {
+        int value = values[i];
+        
+        // Create operation and add to history
+        Operation op(Operation::ADD, i, 0, value);
+        operationHistory.push_back(op);
+        
+        // Add the value to the list
+        list->add(value);
+    }
+    
+    // Reset the visualizer state but keep the operation history
+    mode = MODE_NONE;
+    inputString = "";
+    selectedNodeIndex = -1;
+    currentStep = operationHistory.size() - 1;
+    animationProgress = 0.0f;
+    
+    if (!values.empty()) {
+        lastOperation = "Created list with " + std::to_string(values.size()) + " values";
+    } else {
+        lastOperation = "Created empty list";
+    }
 }
 
 void LinkedListVisualizer::drawAnimationControls() {
@@ -469,12 +499,21 @@ void LinkedListVisualizer::handleEvent() {
         
         // Process Enter key to add the current input as a value
         if (IsKeyPressed(KEY_ENTER) && !inputString.empty()) {
-            std::istringstream iss(inputString);
-            int value;
-            while (iss >> value) {
-                manualInputValues.push_back(value);
+            try {
+                std::istringstream iss(inputString);
+                int value;
+                std::vector<int> newValues;
+                while (iss >> value) {
+                    newValues.push_back(value);
+                }
+                if (!newValues.empty()) {
+                    manualInputValues.insert(manualInputValues.end(), newValues.begin(), newValues.end());
+                    inputString.clear();
+                }
+                inputString = "";
+            } catch(std::exception& e) {
+                inputString.clear();
             }
-            inputString = "";
         }
     } else if (mode == MODE_CREATE_FILE) {
         int key = GetCharPressed();
@@ -644,13 +683,15 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
             list->deleteAt(op.nodeIndex);
             break;
         case Operation::DELETE:
-            list->insertAt(op.nodeIndex, op.oldValue);
+            if (op.nodeIndex <= list->getSize()) {
+                list->insertAt(op.nodeIndex, op.oldValue);
+            }
             break;
         case Operation::UPDATE:
             list->update(op.nodeIndex, op.oldValue);
             break;
         case Operation::SEARCH:
-            // Handle search undo
+            // No need to undo search operation
             break;
     }
 }
@@ -706,8 +747,8 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 DrawCircleLines(posX, posY, 30.f, BLACK);
                 
                 // Interpolate between old and new value visually
-                float displayValue = currentOp.oldValue + 
-                                    (currentOp.newValue - currentOp.oldValue) * animationProgress;
+                int displayValue = round(currentOp.oldValue + 
+                                    (currentOp.newValue - currentOp.oldValue) * animationProgress);
                 
                 const char* valueText = TextFormat("%.1f", displayValue);
                 float textWidth = MeasureText(valueText, 20);
