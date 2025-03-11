@@ -268,30 +268,19 @@ void LinkedListVisualizer::createLLFromValues(const std::vector<int>& values) {
     // Clear the existing list
     list->clear();
     
-    // Add each value one by one, recording each addition as a separate operation
-    for (int i = 0; i < values.size(); i++) {
-        int value = values[i];
-        
-        // Create operation and add to history
-        Operation op(Operation::ADD, i, 0, value);
-        operationHistory.push_back(op);
-        
-        // Add the value to the list
+    // Add all the values from the vector
+    for (int value : values) {
         list->add(value);
     }
     
-    // Reset the visualizer state but keep the operation history
+    // Reset the visualizer state
     mode = MODE_NONE;
     inputString = "";
-    selectedNodeIndex = -1;
-    currentStep = operationHistory.size() - 1;
+    operationHistory.clear();
+    undoHistory.clear();
+    currentStep = 0;
     animationProgress = 0.0f;
-    
-    if (!values.empty()) {
-        lastOperation = "Created list with " + std::to_string(values.size()) + " values";
-    } else {
-        lastOperation = "Created empty list";
-    }
+    lastOperation = "Created list from values";
 }
 
 void LinkedListVisualizer::drawAnimationControls() {
