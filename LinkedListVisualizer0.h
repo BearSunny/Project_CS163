@@ -41,6 +41,9 @@ void DisplayLinkedList() {
         listVisualizer->draw();
         listVisualizer->handleEvent();
     }
+
+    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
+    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, DARKBROWN);
 }
 
 LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
@@ -99,8 +102,9 @@ void LinkedListVisualizer::draw() {
 }
 
 void LinkedListVisualizer::drawHelpText() {
-    DrawText("Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | Click node to select", 
-             50, GetScreenHeight() - 30, 16, DARKGRAY);
+    const char* helpText = "Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | Click node to select";
+    int textWidth = MeasureText(helpText, 16);
+    DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, DARKGRAY);
 }
 
 void LinkedListVisualizer::drawFileUploadInterface() {
@@ -210,36 +214,45 @@ void LinkedListVisualizer::drawAnimationControls() {
     float controlsY = GetScreenHeight() - 80;
     float buttonWidth = 30;
     float buttonSpacing = 10;
-    float startX = GetScreenWidth() / 2 - (buttonWidth * 3 + buttonSpacing * 2) / 2;
+    float startX = GetScreenWidth() * 0.25 - (buttonWidth * 4 + buttonSpacing * 3) / 2;
 
     // Backward button
     if (DrawButton(startX, controlsY, buttonWidth, buttonWidth, "<")) {
         stepBackward();
     }
 
-    // Play/Pause button
-    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, 
-                  isPaused ? "▶" : "⏸")) {
-        isPaused = !isPaused;
+    // Play button
+    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "||")) {
+        isPaused = false;
     }
 
+    // Pause button
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 2, controlsY, buttonWidth, buttonWidth, "|>")) {
+        isPaused = true;
+    }
+    
     // Forward button
-    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 2, controlsY, buttonWidth, buttonWidth, ">")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 3, controlsY, buttonWidth, buttonWidth, ">")) {
         stepForward();
     }
 
     // Speed control slider
-    float sliderWidth = 100;
-    float sliderX = startX + (buttonWidth + buttonSpacing) * 3 + 20;
+    float sliderWidth = 200;
+    float sliderX = GetScreenWidth() * 0.6;
     DrawText("Speed:", sliderX, controlsY, 20, DARKGRAY);
-    Rectangle sliderRect = { sliderX + 70, controlsY + 5, sliderWidth, 20 };
+    Rectangle sliderRect = { sliderX + 110, controlsY, sliderWidth, 20 };
     animationSpeed = GuiSlider(sliderRect, "0.5x", "2.0x", animationSpeed, 0.5f, 2.0f);
 }
 
 void LinkedListVisualizer::drawOperationInfo() {
-    DrawRectangle(50, 10, 300, 30, DARKGRAY);
+    int screenWidth = GetScreenWidth();   
+    int rightMargin = 10;
+    int topMargin = 10;
+    int rectHeight = 30;
+    int rectWidth = 200;
+    DrawRectangle(screenWidth - rectWidth - rightMargin, topMargin, rectWidth, rectHeight, DARKGRAY);
     string stepInfo = "Step " + to_string(currentStep) + " of " + to_string(operationHistory.size());
-    DrawText(stepInfo.c_str(), 60, 15, 18, WHITE);
+    DrawText(stepInfo.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + 5, 20, WHITE);
 
     string modeText = "Mode: ";
     switch(mode) {
@@ -249,11 +262,11 @@ void LinkedListVisualizer::drawOperationInfo() {
         case MODE_SEARCH: modeText += "Search"; break;
         default: modeText += "None"; break;
     }
-    DrawText(modeText.c_str(), GetScreenWidth() - 200, 15, 18, WHITE);
+    DrawText(modeText.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 5, 18, DARKGRAY);
     
     // Display last operation
     if (!lastOperation.empty()) {
-        DrawText(lastOperation.c_str(), 60, 40, 16, WHITE);
+        DrawText(lastOperation.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 30, 16, DARKGRAY);
     }
 }
 
@@ -333,8 +346,17 @@ void LinkedListVisualizer::drawConnection(float startX, float startY, float offs
 }
 
 void LinkedListVisualizer::drawInputBox() {
-    DrawRectangle(50, 50, 300, 50, LIGHTGRAY);
-    DrawRectangleLines(50, 50, 300, 50, DARKGRAY);
+    int screenWidth = GetScreenWidth();
+    int rightMargin = 10;
+    int topMargin = 50;
+    int rectWidth = 300;
+    int rectHeight = 35;
+
+    int rectX = screenWidth - rectWidth - rightMargin;
+    int rectY = topMargin + 40;
+
+    DrawRectangle(rectX, rectY, rectWidth, rectHeight, LIGHTGRAY);
+    DrawRectangleLines(rectX, rectY, rectWidth, rectHeight, DARKGRAY);
     
     // Show appropriate prompt based on mode
     string prompt = "";
@@ -347,15 +369,17 @@ void LinkedListVisualizer::drawInputBox() {
         default: break;
     }
     
-    DrawText(prompt.c_str(), 60, 60, 18, DARKGRAY);
-    DrawText(inputString.c_str(), 60 + MeasureText(prompt.c_str(), 18), 60, 18, BLACK);
+    int textX = rectX + 10;  // Padding from the left
+    int textY = rectY + 15; 
+    DrawText(prompt.c_str(), textX, textY, 18, DARKGRAY);
+    DrawText(inputString.c_str(), textX + MeasureText(prompt.c_str(), 18), textY, 18, BLACK);
     
     // Draw cursor blink
     static float cursorTimer = 0;
     cursorTimer += GetFrameTime();
     if (fmod(cursorTimer, 1.0f) < 0.5f && (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH)) {
-        float cursorX = 60 + MeasureText((prompt + inputString).c_str(), 18);
-        DrawRectangle(cursorX, 60, 2, 18, BLACK);
+        float cursorX = textX + MeasureText((prompt + inputString).c_str(), 18);
+        DrawRectangle(cursorX, textY, 2, 18, BLACK);
     }
 }
 
