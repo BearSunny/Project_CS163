@@ -1,3 +1,6 @@
+#ifndef LINKEDLIST0_H
+#define LINKEDLIST0_H
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -245,3 +248,5 @@ void LinkedList::reset() {
     clear();
     createDefaultList();
 }
+
+#endif // LINKEDLIST0_H

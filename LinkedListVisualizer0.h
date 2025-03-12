@@ -1,3 +1,6 @@
+#ifndef LINKEDLISTVISUALIZER0_H
+#define LINKEDLISTVISUALIZER0_H
+
 #include "LinkedListVisualizer.h"
 #include <sstream>
 #include <raylib.h>
@@ -821,3 +824,5 @@ float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, co
 
     return value;
 }
+
+#endif // LINKEDLISTVISUALIZER0_H

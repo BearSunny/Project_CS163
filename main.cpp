@@ -1,5 +1,6 @@
 #include "mainmenu.h"
-#include "LinkedListVisualizer.h"
+#include "LinkedListVisualizer0.h"
+#include "LinkedList0.h"
 #include "hashvisual.h"
 #include "treevisual.h"
 #include "graphvisual.h"
