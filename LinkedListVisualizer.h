@@ -18,7 +18,6 @@ enum VisualizerMode {
     MODE_DELETE,
     MODE_UPDATE,
     MODE_SEARCH,
-    MODE_CREATE_MANUAL,
     MODE_CREATE_FILE
 };
 
@@ -30,16 +29,17 @@ struct Operation {
     Operation(Type t, int idx, int oldVal = 0, int newVal = 0);
 };
 
+void InitLinkedList();
+void CleanupLinkedList();
+void DisplayLinkedList();
+
 class LinkedListVisualizer {
 public:
     LinkedListVisualizer(LinkedList* list);
     void init();
     void draw();
     void handleEvent();
-    void createManualList();
-    void createLLFromValues(const std::vector<int>& values);
     bool createLLFromFile(const std::string& filePath);
-    void drawManualCreationInterface();
     void drawFileUploadInterface();
 
 private:

@@ -5,9 +5,6 @@
 #include "treevisual.h"
 #include "graphvisual.h"
 
-LinkedList* linkedList = nullptr;
-LinkedListVisualizer* listVisualizer = nullptr;
-
 bool MouseButtonPressed(float x, float y, float u, float v) {
     Vector2 p = GetMousePosition();
     if(p.x >= x && p.x < u && p.y >= y && p.y < v)
@@ -38,42 +35,6 @@ void Updatenumber() {
         Insertnumber(9);
     else if(IsKeyPressed(KEY_BACKSPACE))
         Deletenumber();
-}
-
-void InitLinkedList() {
-    if (linkedList == nullptr) {
-        linkedList = new LinkedList();
-    }
-    
-    if (listVisualizer == nullptr) {
-        listVisualizer = new LinkedListVisualizer(linkedList);
-        listVisualizer->init();
-    }
-}
-
-void CleanupLinkedList() {
-    if (listVisualizer != nullptr) {
-        delete listVisualizer;
-        listVisualizer = nullptr;
-    }
-    
-    if (linkedList != nullptr) {
-        delete linkedList;
-        linkedList = nullptr;
-    }
-}
-
-void DisplayLinkedList() {
-    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
-    DrawText("Back to Main Menu", 20, 40, 20, BLACK);
-    
-    if (listVisualizer != nullptr) {
-        listVisualizer->draw();
-        listVisualizer->handleEvent();
-    }
-
-    DrawText("Press M to create list manually | Press F to load list from file", 
-        GetScreenWidth() - 600, GetScreenHeight() - 60, 16, DARKGRAY);
 }
 
 int main () {

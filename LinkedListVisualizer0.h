@@ -8,6 +8,41 @@
 #include <fstream>
 #include <deque>
 
+LinkedList* linkedList = nullptr;
+LinkedListVisualizer* listVisualizer = nullptr;
+
+void InitLinkedList() {
+    if (linkedList == nullptr) {
+        linkedList = new LinkedList();
+    }
+    
+    if (listVisualizer == nullptr) {
+        listVisualizer = new LinkedListVisualizer(linkedList);
+        listVisualizer->init();
+    }
+}
+
+void CleanupLinkedList() {
+    if (listVisualizer != nullptr) {
+        delete listVisualizer;
+        listVisualizer = nullptr;
+    }
+    
+    if (linkedList != nullptr) {
+        delete linkedList;
+        linkedList = nullptr;
+    }
+}
+
+void DisplayLinkedList() {
+    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
+    
+    if (listVisualizer != nullptr) {
+        listVisualizer->draw();
+        listVisualizer->handleEvent();
+    }
+}
+
 LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
     : list(list), mode(MODE_NONE), inputString(""), selectedNodeIndex(-1),
     isPaused(false), animationSpeed(1.0f), animationProgress(0.0f),
@@ -31,20 +66,18 @@ void LinkedListVisualizer::init() {
     fileErrorMessage = "";
 
     // User's instruction
-    lastOperation = "Press M to create a list manually or F to load from a file";
+    // lastOperation = "Press M to create a list manually or F to load from a file";
 }
 
 void LinkedListVisualizer::draw() {
     float startX = 50.f;
-    float startY = GetScreenHeight() / 2.f;
+    float startY = 800 / 2.f;
     float offsetX = 100.f;  // Horizontal spacing between nodes
 
     drawAnimationControls();
     drawOperationInfo();
     
-    if (mode == MODE_CREATE_MANUAL) {
-        drawManualCreationInterface();
-    } else if (mode == MODE_CREATE_FILE) {
+    if (mode == MODE_CREATE_FILE) {
         drawFileUploadInterface();
     } else {
         if (list->getHead() == nullptr) {
@@ -66,83 +99,8 @@ void LinkedListVisualizer::draw() {
 }
 
 void LinkedListVisualizer::drawHelpText() {
-    DrawText("Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | M-Manual Create | F-File Upload | Click node to select", 
+    DrawText("Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | Click node to select", 
              50, GetScreenHeight() - 30, 16, DARKGRAY);
-    if (list->getHead() == nullptr) {
-        DrawText("Start by creating a list: Press M for manual input or F to load from file", 
-                    50, GetScreenHeight() - 60, 18, DARKGRAY);
-    }
-}
-
-void LinkedListVisualizer::drawManualCreationInterface() {
-    // Draw a panel for manual list creation
-    int panelWidth = 600;
-    int panelHeight = 300;
-    int panelX = (GetScreenWidth() - panelWidth) / 2;
-    int panelY = (GetScreenHeight() - panelHeight) / 2;
-    
-    DrawRectangle(panelX, panelY, panelWidth, panelHeight, LIGHTGRAY);
-    DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, DARKGRAY);
-    
-    DrawText("Create Linked List Manually", panelX + 20, panelY + 20, 20, BLACK);
-    DrawText("Enter values separated by spaces:", panelX + 20, panelY + 60, 18, DARKGRAY);
-    
-    // Draw input box
-    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, WHITE);
-    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, DARKGRAY);
-    DrawText(inputString.c_str(), panelX + 30, panelY + 100, 18, BLACK);
-    
-    // Draw cursor blink
-    static float cursorTimer = 0;
-    cursorTimer += GetFrameTime();
-    if (fmod(cursorTimer, 1.0f) < 0.5f) {
-        float cursorX = panelX + 30 + MeasureText(inputString.c_str(), 18);
-        DrawRectangle(cursorX, panelY + 100, 2, 18, BLACK);
-    }
-    
-    // Draw current values
-    DrawText("Current values:", panelX + 20, panelY + 150, 18, DARKGRAY);
-    std::string valuesStr = "";
-    for (size_t i = 0; i < manualInputValues.size(); i++) {
-        valuesStr += std::to_string(manualInputValues[i]);
-        if (i < manualInputValues.size() - 1) {
-            valuesStr += ", ";
-        }
-    }
-    DrawText(valuesStr.c_str(), panelX + 30, panelY + 180, 18, BLACK);
-    
-    // Draw buttons
-    int buttonWidth = 120;
-    int buttonHeight = 40;
-    int buttonSpacing = 20;
-    int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
-    int buttonsY = panelY + panelHeight - 60;
-    
-    // Add button
-    bool addClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Add Value");
-    if (addClicked && !inputString.empty()) {
-        try {
-            int value = std::stoi(inputString);
-            manualInputValues.push_back(value);
-            inputString = "";
-        } catch (std::exception& e) {
-            // Invalid input
-        }
-    }
-    
-    // Create List button
-    bool createClicked = DrawButton(buttonsStartX + buttonWidth + buttonSpacing, buttonsY, buttonWidth, buttonHeight, "Create List");
-    if (createClicked && !manualInputValues.empty()) {
-        createManualList();
-    }
-    
-    // Cancel button
-    bool cancelClicked = DrawButton(panelX + panelWidth - 100, panelY + 20, 80, 30, "Cancel");
-    if (cancelClicked) {
-        mode = MODE_NONE;
-        inputString = "";
-        manualInputValues.clear();
-    }
 }
 
 void LinkedListVisualizer::drawFileUploadInterface() {
@@ -206,26 +164,6 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     }
 }
 
-void LinkedListVisualizer::createManualList() {
-    // Clear the existing list
-    list->clear();
-    
-    // Add all the values from manualInputValues
-    for (int value : manualInputValues) {
-        list->add(value);
-    }
-    
-    // Reset the visualizer state
-    mode = MODE_NONE;
-    inputString = "";
-    manualInputValues.clear();
-    operationHistory.clear();
-    undoHistory.clear();
-    currentStep = 0;
-    animationProgress = 0.0f;
-    lastOperation = "Created list manually";
-}
-
 bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
@@ -266,25 +204,6 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     animationProgress = 0.0f;
     lastOperation = "Created list from file: " + filePath;
     return true;
-}
-
-void LinkedListVisualizer::createLLFromValues(const std::vector<int>& values) {
-    // Clear the existing list
-    list->clear();
-    
-    // Add all the values from the vector
-    for (int value : values) {
-        list->add(value);
-    }
-    
-    // Reset the visualizer state
-    mode = MODE_NONE;
-    inputString = "";
-    operationHistory.clear();
-    undoHistory.clear();
-    currentStep = 0;
-    animationProgress = 0.0f;
-    lastOperation = "Created list from values";
 }
 
 void LinkedListVisualizer::drawAnimationControls() {
@@ -459,10 +378,6 @@ void LinkedListVisualizer::handleEvent() {
     } else if (IsKeyPressed(KEY_S)) {
         mode = MODE_SEARCH;
         inputString = "";
-    } else if (IsKeyPressed(KEY_M)) {
-        mode = MODE_CREATE_MANUAL;
-        inputString = "";
-        manualInputValues.clear();
     } else if (IsKeyPressed(KEY_F)) {
         mode = MODE_CREATE_FILE;
         memset(filePath, 0, sizeof(filePath));
@@ -478,35 +393,6 @@ void LinkedListVisualizer::handleEvent() {
         
         if (IsKeyPressed(KEY_BACKSPACE) && !inputString.empty()) {
             inputString.pop_back();
-        }
-    } else if (mode == MODE_CREATE_MANUAL) {
-        int key = GetCharPressed();
-        // Allow numbers, spaces, and commas for manual input
-        if ((key >= '0' && key <= '9') || key == ' ' || key == ',') {
-            inputString += (char)key;
-        }
-        
-        if (IsKeyPressed(KEY_BACKSPACE) && !inputString.empty()) {
-            inputString.pop_back();
-        }
-        
-        // Process Enter key to add the current input as a value
-        if (IsKeyPressed(KEY_ENTER) && !inputString.empty()) {
-            try {
-                std::istringstream iss(inputString);
-                int value;
-                std::vector<int> newValues;
-                while (iss >> value) {
-                    newValues.push_back(value);
-                }
-                if (!newValues.empty()) {
-                    manualInputValues.insert(manualInputValues.end(), newValues.begin(), newValues.end());
-                    inputString.clear();
-                }
-                inputString = "";
-            } catch(std::exception& e) {
-                inputString.clear();
-            }
         }
     } else if (mode == MODE_CREATE_FILE) {
         int key = GetCharPressed();
