@@ -82,7 +82,7 @@ void LinkedListVisualizer::draw() {
     } else {
         if (list->getHead() == nullptr) {
             // Draw a message prompting the user to create a list
-            const char* message = "List is empty. Press M to create manually or F to load from file.";
+            const char* message = "List is empty. Press A to add nodes or F to load from file.";
             int textWidth = MeasureText(message, 20);
             DrawText(message, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() / 2, 20, DARKGRAY);
         } else {
