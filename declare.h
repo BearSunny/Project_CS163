@@ -6,6 +6,8 @@
 
 using namespace std;
 
+inline Font FONT = LoadFontEx("./Font/SF-Pro-Display-Regular.otf", 40, 0, 255);
+
 typedef enum GameScreen {MAINMENU, LINKEDLIST, HASH, TREE, GRAPH} GameScreen;
 
 const int screenWidth = 1000;
