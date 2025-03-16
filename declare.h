@@ -1,9 +1,6 @@
 #ifndef DECLARE_H
 #define DECLARE_H
 
-// CANNOT RUN CODE
-// RECHECK THIS FILE
-
 #include <raylib.h>
 #include <bits/stdc++.h>
 
@@ -34,6 +31,28 @@ void Deletenumber() {
         return;
     --length;
     number[length] = 0;
+}
+
+void DrawNumber(int data, int x, int y, int fs) {
+    int len = 0;
+    int tmp = data;
+    while(data) {
+        ++len;
+        data /= 10;
+    }
+    if(len == 0) {
+        DrawText("0", x - MeasureText("0", fs) / 2, y - fs / 2, fs, BLACK);
+        return;
+    }
+    char *c = new char[len + 1];
+    c[len] = 0;
+    while(tmp) {
+        --len;
+        c[len] = tmp % 10 + '0';
+        tmp /= 10;
+    }
+    DrawText(c, x - MeasureText(c, fs) / 2, y - fs / 2, fs, BLACK);
+    delete[] c;
 }
 
 #endif
