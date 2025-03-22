@@ -8,6 +8,7 @@
 #include <fstream>
 #include <deque>
 
+
 LinkedList* linkedList = nullptr;
 LinkedListVisualizer* listVisualizer = nullptr;
 
@@ -47,9 +48,11 @@ void DisplayLinkedList() {
 }
 
 LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
-    : list(list), mode(MODE_NONE), inputString(""), selectedNodeIndex(-1),
-    isPaused(false), animationSpeed(1.0f), animationProgress(0.0f),
-    currentStep(0), lastOperation("") {}
+    : list(list), mode(MODE_NONE), inputString(""), nodeIndex(-1), selectedNodeIndex(-1),
+    manualInputValues(), showFileDialog(false), filePath{0}, fileError(false),
+    fileErrorMessage(""), arrowProgress(0.0f), isPaused(false), animationSpeed(1.0f),
+    animationProgress(0.0f), operationHistory(), undoHistory(), currentStep(0),
+    lastOperation(""), connectionAnimations() {}
 
 Operation::Operation(Type t, int idx, int oldVal, int newVal)
     : type(t), nodeIndex(idx), oldValue(oldVal), newValue(newVal) {}
@@ -70,6 +73,7 @@ void LinkedListVisualizer::init() {
 
     // User's instruction
     // lastOperation = "Press M to create a list manually or F to load from a file";
+    connectionAnimations.clear();
 }
 
 void LinkedListVisualizer::draw() {
@@ -207,6 +211,12 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     currentStep = 0;
     animationProgress = 0.0f;
     lastOperation = "Created list from file: " + filePath;
+
+    connectionAnimations.clear();
+    for (size_t i = 0; i < values.size() - 1; ++i) {
+        connectionAnimations.push_back({0.0f, animationSpeed});
+    }
+
     return true;
 }
 
@@ -241,6 +251,7 @@ void LinkedListVisualizer::drawAnimationControls() {
     float sliderX = GetScreenWidth() * 0.6;
     DrawText("Speed:", sliderX, controlsY, 20, DARKGRAY);
     Rectangle sliderRect = { sliderX + 110, controlsY, sliderWidth, 20 };
+    // Update animation speed dynamically
     animationSpeed = GuiSlider(sliderRect, "0.5x", "2.0x", animationSpeed, 0.5f, 2.0f);
 }
 
@@ -278,7 +289,9 @@ void LinkedListVisualizer::drawLinkedList(float startX, float startY, float offs
     while (current != nullptr && current->next != nullptr) {
         float posX = startX + index * offsetX;
         float posY = startY;
-        drawConnection(posX, posY, offsetX);
+        if (index < static_cast<int>(connectionAnimations.size())) {
+            drawConnection(posX, posY, offsetX, index);
+        }
         current = current->next;
         index++;
     }
@@ -334,15 +347,40 @@ void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int inde
     DrawText(indexText, posX - indexWidth/2, posY - 50, 16, GRAY);
 }
 
-void LinkedListVisualizer::drawConnection(float startX, float startY, float offsetX) {
+void LinkedListVisualizer::drawConnection(float startX, float startY, float offsetX, int connectionIndex) {
     float arrowEndX = startX + offsetX - 30;
     float arrowStartX = startX + 30;
-    
-    DrawLine(arrowStartX, startY, arrowEndX, startY, BLACK);
-    Vector2 arrowTip = {arrowEndX, startY};
-    Vector2 arrowLeft = {arrowEndX - 10, startY - 5};
-    Vector2 arrowRight = {arrowEndX - 10, startY + 5};
-    DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
+     // Get the progress and speed for this connection
+    auto& [arrowProgress, speed] = connectionAnimations[connectionIndex];
+
+    // Increment progress only if it hasn't reached the end
+    if (arrowProgress < 1.0f) {
+        arrowProgress += GetFrameTime() * animationSpeed;
+        if (arrowProgress > 1.0f) {
+            arrowProgress = 1.0f; // Clamp to 1.0 to stop the animation
+        }
+    }
+
+    // Interpolate the arrow's position based on progress
+    float currentArrowX = arrowStartX + (arrowEndX - arrowStartX) * arrowProgress;
+
+    // Draw the line up to the current arrow position
+    DrawLine(startX + 30, startY, currentArrowX, startY, BLACK);
+
+    // Draw the arrow tip at the current position
+    if (arrowProgress >= 1.0f) {
+        // Draw the full arrow tip when the animation is complete
+        Vector2 arrowTip = {arrowEndX, startY};
+        Vector2 arrowLeft = {arrowEndX - 10, startY - 5};
+        Vector2 arrowRight = {arrowEndX - 10, startY + 5};
+        DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
+    } else {
+        // Draw the arrow tip at the current position during animation
+        Vector2 arrowTip = {currentArrowX, startY};
+        Vector2 arrowLeft = {currentArrowX - 10, startY - 5};
+        Vector2 arrowRight = {currentArrowX - 10, startY + 5};
+        DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
+    }
 }
 
 void LinkedListVisualizer::drawInputBox() {
@@ -459,6 +497,9 @@ void LinkedListVisualizer::handleEvent() {
                     // Perform delete
                     if (list->deleteAt(index)) {
                         lastOperation = "Deleted node at index " + to_string(index);
+                        if (index < static_cast<int>(connectionAnimations.size())) {
+                            connectionAnimations.erase(connectionAnimations.begin() + index);
+                        }
                     } else {
                         lastOperation = "Failed to delete node at index " + to_string(index);
                     }
@@ -492,6 +533,9 @@ void LinkedListVisualizer::handleEvent() {
                 list->add(value);
                 lastOperation = "Added node with value: " + inputString;
                 
+                // Add a new connection animation with the current speed
+                connectionAnimations.push_back({0.0f, animationSpeed});
+
                 // Reset and update animation
                 inputString = "";
                 mode = MODE_NONE;
