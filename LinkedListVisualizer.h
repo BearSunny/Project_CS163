@@ -53,7 +53,7 @@ private:
     char filePath[256];
     bool fileError;
     string fileErrorMessage;
-
+    float arrowProgress;
     bool isPaused;
     float animationSpeed;
     float animationProgress;
@@ -61,12 +61,13 @@ private:
     deque<Operation> undoHistory;
     int currentStep;
     string lastOperation;
+    std::vector<std::pair<float, float>> connectionAnimations; // Pair of (arrowProgress, animationSpeed)
 
     void drawAnimationControls();
     void drawOperationInfo();
     void drawLinkedList(float startX, float startY, float offsetX);
     void drawNode(float posX, float posY, Node* node, int index);
-    void drawConnection(float startX, float startY, float offsetX);
+    void drawConnection(float startX, float startY, float offsetX, int connectionIndex);
     void drawInputBox();
     void drawHelpText();
 
