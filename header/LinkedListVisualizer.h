@@ -1,14 +1,14 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "LinkedList.h"
+#include "../header/LinkedList.h"
 #include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>
 #include <deque>
 #include <fstream>
-#include "declare.h"
+#include "../header/declare.h"
 using namespace std;
 
 enum VisualizerMode {
@@ -18,7 +18,6 @@ enum VisualizerMode {
     MODE_DELETE,
     MODE_UPDATE,
     MODE_SEARCH,
-    MODE_CREATE_MANUAL,
     MODE_CREATE_FILE
 };
 
@@ -30,16 +29,17 @@ struct Operation {
     Operation(Type t, int idx, int oldVal = 0, int newVal = 0);
 };
 
+void InitLinkedList();
+void CleanupLinkedList();
+void DisplayLinkedList();
+
 class LinkedListVisualizer {
 public:
     LinkedListVisualizer(LinkedList* list);
     void init();
     void draw();
     void handleEvent();
-    void createManualList();
-    void createLLFromValues(const std::vector<int>& values);
     bool createLLFromFile(const std::string& filePath);
-    void drawManualCreationInterface();
     void drawFileUploadInterface();
 
 private:
@@ -53,7 +53,7 @@ private:
     char filePath[256];
     bool fileError;
     string fileErrorMessage;
-
+    float arrowProgress;
     bool isPaused;
     float animationSpeed;
     float animationProgress;
@@ -61,12 +61,13 @@ private:
     deque<Operation> undoHistory;
     int currentStep;
     string lastOperation;
+    std::vector<std::pair<float, float>> connectionAnimations; // Pair of (arrowProgress, animationSpeed)
 
     void drawAnimationControls();
     void drawOperationInfo();
     void drawLinkedList(float startX, float startY, float offsetX);
     void drawNode(float posX, float posY, Node* node, int index);
-    void drawConnection(float startX, float startY, float offsetX);
+    void drawConnection(float startX, float startY, float offsetX, int connectionIndex);
     void drawInputBox();
     void drawHelpText();
 

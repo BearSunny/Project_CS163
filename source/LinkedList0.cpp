@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include "LinkedList.h"
+#include "header/LinkedList.h"
 using namespace std;
 
 // Default constructor - empty linked list
