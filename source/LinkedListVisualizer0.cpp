@@ -1,7 +1,7 @@
 #ifndef LINKEDLISTVISUALIZER0_H
 #define LINKEDLISTVISUALIZER0_H
 
-#include "../header/LinkedListVisualizer.h"
+#include "header/LinkedListVisualizer.h"
 #include <sstream>
 #include <raylib.h>
 #include <cmath>
