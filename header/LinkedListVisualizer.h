@@ -1,14 +1,14 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "../header/LinkedList.h"
+#include "header/LinkedList.h"
 #include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>
 #include <deque>
 #include <fstream>
-#include "../header/declare.h"
+#include "header/declare.h"
 using namespace std;
 
 enum VisualizerMode {
