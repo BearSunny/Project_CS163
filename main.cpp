@@ -1,8 +1,8 @@
 #include "source/mainmenu.cpp"
-#include "header/LinkedListVisualizer0.h"
-#include "header/LinkedList0.h"
-#include "header/hashvisual.h"
+#include "source/LinkedListVisualizer0.cpp"
+#include "source/LinkedList0.cpp"
 #include "source/treevisual.cpp"
+#include "header/hashvisual.h"
 #include "header/graphvisual.h"
 
 int main () {
