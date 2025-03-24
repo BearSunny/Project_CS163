@@ -8,8 +8,4 @@
 		"**/*.o": true,
 		"**/*.exe": true,
 	}
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 24f3404 (update json files)
