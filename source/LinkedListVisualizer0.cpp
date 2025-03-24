@@ -1,7 +1,7 @@
 #ifndef LINKEDLISTVISUALIZER0_H
 #define LINKEDLISTVISUALIZER0_H
 
-#include "header/LinkedListVisualizer.h"
+#include "LinkedListVisualizer.h"
 #include <sstream>
 #include <raylib.h>
 #include <cmath>
@@ -36,15 +36,15 @@ void CleanupLinkedList() {
 }
 
 void DisplayLinkedList() {
-    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
+    DrawRectangle(0, 0, 400, 100, (Color){163, 190, 140, 255});
     
     if (listVisualizer != nullptr) {
         listVisualizer->draw();
         listVisualizer->handleEvent();
     }
 
-    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
-    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, DARKBROWN);
+    DrawRectangle(0, 0, 400, 100, (Color){163, 190, 140, 255});
+    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, BLACK);
 }
 
 LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
@@ -77,6 +77,8 @@ void LinkedListVisualizer::init() {
 }
 
 void LinkedListVisualizer::draw() {
+    ClearBackground({30, 30, 46, 255});
+
     float startX = 50.f;
     float startY = 800 / 2.f;
     float offsetX = 100.f;  // Horizontal spacing between nodes
@@ -91,7 +93,7 @@ void LinkedListVisualizer::draw() {
             // Draw a message prompting the user to create a list
             const char* message = "List is empty. Press A to add nodes or F to load from file.";
             int textWidth = MeasureText(message, 20);
-            DrawText(message, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() / 2, 20, DARKGRAY);
+            DrawText(message, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() / 2, 20, (Color){163, 190, 140, 255});
         } else {
             drawLinkedList(startX, startY, offsetX);
         }
@@ -108,7 +110,7 @@ void LinkedListVisualizer::draw() {
 void LinkedListVisualizer::drawHelpText() {
     const char* helpText = "Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | Click node to select";
     int textWidth = MeasureText(helpText, 16);
-    DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, DARKGRAY);
+    DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, (Color){163, 190, 140, 255});
 }
 
 void LinkedListVisualizer::drawFileUploadInterface() {
@@ -249,7 +251,7 @@ void LinkedListVisualizer::drawAnimationControls() {
     // Speed control slider
     float sliderWidth = 200;
     float sliderX = GetScreenWidth() * 0.6;
-    DrawText("Speed:", sliderX, controlsY, 20, DARKGRAY);
+    DrawText("Speed:", sliderX, controlsY, 20, (Color){163, 190, 140, 255});
     Rectangle sliderRect = { sliderX + 110, controlsY, sliderWidth, 20 };
     // Update animation speed dynamically
     animationSpeed = GuiSlider(sliderRect, "0.5x", "2.0x", animationSpeed, 0.5f, 2.0f);
@@ -261,9 +263,9 @@ void LinkedListVisualizer::drawOperationInfo() {
     int topMargin = 10;
     int rectHeight = 30;
     int rectWidth = 200;
-    DrawRectangle(screenWidth - rectWidth - rightMargin, topMargin, rectWidth, rectHeight, DARKGRAY);
+    DrawRectangle(screenWidth - rectWidth - rightMargin, topMargin, rectWidth, rectHeight, (Color){30, 30, 46, 255});
     string stepInfo = "Step " + to_string(currentStep) + " of " + to_string(operationHistory.size());
-    DrawText(stepInfo.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + 5, 20, WHITE);
+    DrawText(stepInfo.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + 5, 20, (Color){124, 156, 191, 255});
 
     string modeText = "Mode: ";
     switch(mode) {
@@ -273,11 +275,11 @@ void LinkedListVisualizer::drawOperationInfo() {
         case MODE_SEARCH: modeText += "Search"; break;
         default: modeText += "None"; break;
     }
-    DrawText(modeText.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 5, 18, DARKGRAY);
+    DrawText(modeText.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 5, 18, (Color){163, 190, 140, 255});
     
     // Display last operation
     if (!lastOperation.empty()) {
-        DrawText(lastOperation.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 30, 16, DARKGRAY);
+        DrawText(lastOperation.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 30, 16, (Color){208, 135, 112, 255});
     }
 }
 
@@ -321,20 +323,20 @@ void LinkedListVisualizer::drawLinkedList(float startX, float startY, float offs
 }
 
 void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int index) {
-    Color nodeColor = WHITE;
+    Color nodeColor = {180, 142, 173, 255};
     
     // Selected node
     if (index == selectedNodeIndex) {
-        nodeColor = BLUE;
+        nodeColor = {208, 135, 112, 255};
     } 
     // Search highlighted node
     else if (mode == MODE_SEARCH && !inputString.empty() && 
              to_string(node->val) == inputString) {
-        nodeColor = GREEN;
+        nodeColor = {163, 190, 140, 255};
     }
     
     DrawCircle(posX, posY, 30.f, nodeColor);
-    DrawCircleLines(posX, posY, 30.f, BLACK);
+    DrawCircleLines(posX, posY, 30.f, WHITE);
     
     // Draw node value
     const char* valueText = TextFormat("%d", node->val);
@@ -344,7 +346,7 @@ void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int inde
     // Draw index
     const char* indexText = TextFormat("%d", index);
     float indexWidth = MeasureText(indexText, 16);
-    DrawText(indexText, posX - indexWidth/2, posY - 50, 16, GRAY);
+    DrawText(indexText, posX - indexWidth/2, posY - 50, 16, WHITE);
 }
 
 void LinkedListVisualizer::drawConnection(float startX, float startY, float offsetX, int connectionIndex) {
@@ -365,7 +367,7 @@ void LinkedListVisualizer::drawConnection(float startX, float startY, float offs
     float currentArrowX = arrowStartX + (arrowEndX - arrowStartX) * arrowProgress;
 
     // Draw the line up to the current arrow position
-    DrawLine(startX + 30, startY, currentArrowX, startY, BLACK);
+    DrawLine(startX + 30, startY, currentArrowX, startY, WHITE);
 
     // Draw the arrow tip at the current position
     if (arrowProgress >= 1.0f) {
@@ -373,13 +375,13 @@ void LinkedListVisualizer::drawConnection(float startX, float startY, float offs
         Vector2 arrowTip = {arrowEndX, startY};
         Vector2 arrowLeft = {arrowEndX - 10, startY - 5};
         Vector2 arrowRight = {arrowEndX - 10, startY + 5};
-        DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
+        DrawTriangle(arrowTip, arrowLeft, arrowRight, WHITE);
     } else {
         // Draw the arrow tip at the current position during animation
         Vector2 arrowTip = {currentArrowX, startY};
         Vector2 arrowLeft = {currentArrowX - 10, startY - 5};
         Vector2 arrowRight = {currentArrowX - 10, startY + 5};
-        DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
+        DrawTriangle(arrowTip, arrowLeft, arrowRight, WHITE);
     }
 }
 
@@ -393,8 +395,8 @@ void LinkedListVisualizer::drawInputBox() {
     int rectX = screenWidth - rectWidth - rightMargin;
     int rectY = topMargin + 40;
 
-    DrawRectangle(rectX, rectY, rectWidth, rectHeight, LIGHTGRAY);
-    DrawRectangleLines(rectX, rectY, rectWidth, rectHeight, DARKGRAY);
+    DrawRectangle(rectX, rectY, rectWidth, rectHeight, (Color){163, 190, 140, 255});
+    DrawRectangleLines(rectX, rectY, rectWidth, rectHeight, (Color){163, 190, 140, 255});
     
     // Show appropriate prompt based on mode
     string prompt = "";
@@ -409,7 +411,7 @@ void LinkedListVisualizer::drawInputBox() {
     
     int textX = rectX + 10;  // Padding from the left
     int textY = rectY + 15; 
-    DrawText(prompt.c_str(), textX, textY, 18, DARKGRAY);
+    DrawText(prompt.c_str(), textX, textY, 18, BLACK);
     DrawText(inputString.c_str(), textX + MeasureText(prompt.c_str(), 18), textY, 18, BLACK);
     
     // Draw cursor blink
@@ -664,9 +666,10 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::ADD:
             if (index == currentOp.nodeIndex) {
                 // Fade in effect for new node
+                Color nodeColor = {180, 142, 173, 255};
                 float alpha = animationProgress;
-                DrawCircle(posX, posY, 30.f, ColorAlpha(GREEN, alpha));
-                DrawCircleLines(posX, posY, 30.f, BLACK);
+                DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
+                DrawCircleLines(posX, posY, 30.f, WHITE);
                 
                 const char* valueText = TextFormat("%d", node->val);
                 float textWidth = MeasureText(valueText, 20);
@@ -677,8 +680,9 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::DELETE:
             if (index == currentOp.nodeIndex) {
                 // Fade out effect for deleted node
+                Color nodeColor = {208, 135, 112, 255};
                 float alpha = 1.0f - animationProgress;
-                DrawCircle(posX, posY, 30.f, ColorAlpha(RED, alpha));
+                DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
                 DrawCircleLines(posX, posY, 30.f, ColorAlpha(BLACK, alpha));
                 
                 const char* valueText = TextFormat("%d", node->val);
@@ -690,14 +694,10 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::UPDATE:
             if (index == currentOp.nodeIndex) {
                 // Transition effect for updated value
-                DrawCircle(posX, posY, 30.f, YELLOW);
-                DrawCircleLines(posX, posY, 30.f, BLACK);
+                DrawCircle(posX, posY, 30.f, (Color){ 124, 156, 191, 255 });
+                DrawCircleLines(posX, posY, 30.f, WHITE);
                 
-                // Interpolate between old and new value visually
-                int displayValue = round(currentOp.oldValue + 
-                                    (currentOp.newValue - currentOp.oldValue) * animationProgress);
-                
-                const char* valueText = TextFormat("%d", displayValue);
+                const char* valueText = TextFormat("%d", currentOp.newValue);
                 float textWidth = MeasureText(valueText, 20);
                 DrawText(valueText, posX - textWidth/2, posY - 10, 20, BLACK);
             }
@@ -706,9 +706,10 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::SEARCH:
             if (node->val == currentOp.newValue) {
                 // Pulse effect for found node
+                Color nodeColor = {163, 190, 140, 255};
                 float pulse = 0.5f + 0.5f * sin(animationProgress * PI * 4);
-                DrawCircle(posX, posY, 30.f + pulse * 5.f, GREEN);
-                DrawCircleLines(posX, posY, 30.f + pulse * 5.f, BLACK);
+                DrawCircle(posX, posY, 30.f + pulse * 5.f, nodeColor);
+                DrawCircleLines(posX, posY, 30.f + pulse * 5.f, WHITE);
                 
                 const char* valueText = TextFormat("%d", node->val);
                 float textWidth = MeasureText(valueText, 20);
@@ -726,20 +727,20 @@ bool LinkedListVisualizer::DrawButton(float x, float y, float width, float heigh
     bool clicked = false;
     
     if (CheckCollisionPointRec(GetMousePosition(), btnRect)) {
-        DrawRectangleRec(btnRect, LIGHTGRAY);
+        DrawRectangleRec(btnRect, {200, 200, 200, 255});
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             clicked = true;
         }
     } else {
-        DrawRectangleRec(btnRect, GRAY);
+        DrawRectangleRec(btnRect, WHITE);
     }
     
-    DrawRectangleLinesEx(btnRect, 1, BLACK);
+    DrawRectangleLinesEx(btnRect, 1, WHITE);
     
     float textWidth = MeasureText(text, 20);
     float textX = x + (width - textWidth) / 2;
     float textY = y + (height - 20) / 2;
-    DrawText(text, textX, textY, 20, BLACK);
+    DrawText(text, textX, textY, 20, (Color){208, 135, 112, 255});
     
     return clicked;
 }
@@ -747,22 +748,22 @@ bool LinkedListVisualizer::DrawButton(float x, float y, float width, float heigh
 float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, const char* textRight, 
     float value, float minValue, float maxValue) {
     // Draw slider background
-    DrawRectangleRec(bounds, LIGHTGRAY);
-    DrawRectangleLinesEx(bounds, 1, DARKGRAY);
+    DrawRectangleRec(bounds, WHITE);
+    DrawRectangleLinesEx(bounds, 1, WHITE);
 
     // Calculate slider position based on current value
     float range = maxValue - minValue;
     float sliderPos = bounds.x + (bounds.width * ((value - minValue) / range));
 
     // Draw slider knob
-    DrawCircle(sliderPos, bounds.y + bounds.height/2, 10, DARKGRAY);
-    DrawCircleLines(sliderPos, bounds.y + bounds.height/2, 10, BLACK);
+    DrawCircle(sliderPos, bounds.y + bounds.height/2, 10, (Color){208, 135, 112, 255});
+    DrawCircleLines(sliderPos, bounds.y + bounds.height/2, 10, (Color){208, 135, 112, 255});
 
     // Draw min/max labels
     DrawText(textLeft, bounds.x - MeasureText(textLeft, 16) - 5, 
-    bounds.y + bounds.height/2 - 8, 16, DARKGRAY);
+    bounds.y + bounds.height/2 - 8, 16, (Color){163, 190, 140, 255});
     DrawText(textRight, bounds.x + bounds.width + 5, 
-    bounds.y + bounds.height/2 - 8, 16, DARKGRAY);
+    bounds.y + bounds.height/2 - 8, 16, (Color){163, 190, 140, 255});
 
     // Handle mouse input
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
@@ -779,12 +780,4 @@ float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, co
     return value;
 }
 
-void LINKEDLIST_INTERACT() {
-    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if(MouseButtonPressed(0, 0, 400, 100)) {
-            currentScreen = MAINMENU;
-            CleanupLinkedList();
-        }
-    }
-}
 #endif // LINKEDLISTVISUALIZER0_H
