@@ -14,12 +14,7 @@ int main () {
                 MAINMENU_INTERACT();
                 break;
             case LINKEDLIST:
-                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    if(MouseButtonPressed(0, 0, 400, 100)) {
-                        currentScreen = MAINMENU;
-                        CleanupLinkedList();
-                    }
-                }
+                LINKEDLIST_INTERACT();
                 break;
             case HASH:
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
