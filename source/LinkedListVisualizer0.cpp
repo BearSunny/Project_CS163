@@ -780,4 +780,12 @@ float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, co
     return value;
 }
 
+void LINKEDLIST_INTERACT() {
+    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if(MouseButtonPressed(0, 0, 400, 100)) {
+            currentScreen = MAINMENU;
+            CleanupLinkedList();
+        }
+    }
+}
 #endif // LINKEDLISTVISUALIZER0_H
