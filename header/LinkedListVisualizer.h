@@ -1,14 +1,14 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "header/LinkedList.h"
+#include "LinkedList.h"
 #include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>
 #include <deque>
 #include <fstream>
-#include "header/declare.h"
+#include "declare.h"
 using namespace std;
 
 enum VisualizerMode {
@@ -82,7 +82,8 @@ private:
     bool DrawButton(float x, float y, float width, float height, const char* text);
     float GuiSlider(Rectangle bounds, const char* textLeft, const char* textRight, 
                    float value, float minValue, float maxValue);
-    void LINKEDLIST_INTERACT();
 };
+
+void LINKEDLIST_INTERACT();
 
 #endif // LINKEDLISTVISUALIZER_H

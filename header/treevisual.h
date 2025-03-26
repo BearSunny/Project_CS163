@@ -31,7 +31,7 @@ struct AVLTree {
     void remove(int x);
     bool find(int x);
     void Draw(Node *p);
-} S;
+};
 
 void InsertAVL();
 void RemoveAVL();
