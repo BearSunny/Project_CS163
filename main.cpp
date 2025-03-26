@@ -8,6 +8,10 @@
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
     SetTargetFPS(60);
+
+    GraphVisualize graph = GraphVisualize(FONT);
+    TittleButton title = TittleButton({465, 34, 350, 40}, "Graph", -1, BLACK, 20);
+
     while(!WindowShouldClose()) {
         switch(currentScreen) {
             case MAINMENU:
@@ -26,10 +30,11 @@ int main () {
                 TREE_INTERACT();
                 break;
             case GRAPH:
-                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                graph.handle();
+                /* if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     if(MouseButtonPressed(0, 0, 400, 100))
                         currentScreen = MAINMENU;
-                }
+                } */
                 break;
             default:
                 break;
@@ -51,7 +56,9 @@ int main () {
                 DisplayTree();
                 break;
             case GRAPH:
-                DisplayGraph();
+                ClearBackground(THEME.BACKGROUND);
+                graph.draw();
+                title.draw();
                 break;
             default:
                 break;
