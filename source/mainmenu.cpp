@@ -1,4 +1,4 @@
-#include "header/mainmenu.h"
+#include "../header/mainmenu.h"
 
 void DisplayMainMenu() {
     DrawRectangle(0, 0, 500, 400, LIGHTGRAY);

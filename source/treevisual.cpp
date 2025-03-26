@@ -1,4 +1,6 @@
-#include "header/treevisual.h"
+#include "../header/treevisual.h"
+
+AVLTree S;
 
 int AVLTree::height(Node *p) {
     if(p == nullptr)
