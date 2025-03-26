@@ -94,12 +94,30 @@ AVLTree::Node *AVLTree::remove(Node *p, int x) {
     return p;
 }
 
+void AVLTree::UpdatePosition(Node *p, int u, int v) {
+    p->newx = u;
+    p->newy = v;
+    if(p->x == -1) {
+        p->x = p->newx;
+        p->y = p->newy;
+    }
+    if(p->depth > 1) {
+        int d = 35 * (1 << (p->depth - 2));
+        if(p->left)
+            UpdatePosition(p->left, u - d, v + 100);
+        if(p->right)
+            UpdatePosition(p->right, u + d, v + 100);
+    }
+}
+
 void AVLTree::insert(int x) {
     root = insert(root, x);
+    UpdatePosition(root, 500, 100);
 }
 
 void AVLTree::remove(int x) {
     root = remove(root, x);
+    UpdatePosition(root, 500, 100);
 }
 
 bool AVLTree::find(int x) {
@@ -115,18 +133,26 @@ bool AVLTree::find(int x) {
     return false;
 }
 
-void AVLTree::Draw(Node *p, int d, int x, int y) {
+void AVLTree::Draw(Node *p) {
+    if(p->x < p->newx)
+        ++p->x;
+    else if(p->x > p->newx)
+        --p->x;
+    if(p->y < p->newy)
+        ++p->y;
+    else if(p->y > p->newy)
+        --p->y;
     if(p->left) {
-        DrawLine(x, y, x - d, y + 100, BLACK);
-        Draw(p->left, d / 2, x - d, y + 100);        
+        DrawLine(p->x, p->y, p->left->x, p->left->y, BLACK);
+        Draw(p->left);        
     }
     if(p->right) {
-        DrawLine(x, y, x + d, y + 100, BLACK);
-        Draw(p->right, d / 2, x + d, y + 100);
+        DrawLine(p->x, p->y, p->right->x, p->right->y, BLACK);
+        Draw(p->right);
     }
-    DrawCircle(x, y, 32, DARKGREEN);
-    DrawCircle(x, y, 30, GREEN);
-    DrawNumber(p->data, x, y, 20);
+    DrawCircle(p->x, p->y, 32, DARKGREEN);
+    DrawCircle(p->x, p->y, 30, GREEN);
+    DrawNumber(p->data, p->x, p->y, 20);
 }
 
 void InsertAVL() {
@@ -136,6 +162,7 @@ void InsertAVL() {
     for(int i = 0; i < length; ++i)
         x = 10 * x + number[i] - '0';
     S.insert(x);
+    FindQuerry = -1;
 }
 
 void RemoveAVL() {
@@ -145,6 +172,7 @@ void RemoveAVL() {
     for(int i = 0; i < length; ++i)
         x = 10 * x + number[i] - '0';
     S.remove(x);
+    FindQuerry = -1;
 }
 
 void FindAVL() {
@@ -158,14 +186,13 @@ void FindAVL() {
 }
 
 void DrawTree() {
-    int dist = 35;
-    for(int i = 0; i < S.height(S.root) - 2; ++i)
-        dist *= 2;
     if(S.root)
-        S.Draw(S.root, dist, 500, 100);
+        S.Draw(S.root);
 }
 
 void DisplayTree() {
+    ClearBackground((Color){30, 30, 46, 255});
+
     DrawRectangle(0, 0, 1000, 50, GREEN);
     DrawText("AVL TREE", 10, 10, 30, YELLOW);
 
