@@ -1,14 +1,14 @@
-#include "source/mainmenu.cpp"
-#include "source/LinkedListVisualizer0.cpp"
-#include "source/LinkedList0.cpp"
-#include "source/treevisual.cpp"
+#include "header/mainmenu.h"
+#include "header/LinkedListVisualizer.h"
+#include "header/LinkedList.h"
+#include "header/treevisual.h"
 #include "header/hashvisual.h"
 #include "header/graphvisual.h"
 
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
+    initResource();
     SetTargetFPS(60);
-
     GraphVisualize graph = GraphVisualize(FONT);
     TittleButton title = TittleButton({465, 34, 350, 40}, "Graph", -1, BLACK, 20);
 
