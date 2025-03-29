@@ -49,6 +49,7 @@ void Deletenumber();
 void DrawNumber(int data, int x, int y, int fs);
 bool MouseButtonPressed(float x, float y, float u, float v);
 void Updatenumber();
+void Updatenumbercopy();
 void drawPicture(const char* path, Rectangle desRec, float rotation, Vector2 origin, Color color);
 void drawPicture(Texture2D texture, Rectangle desRec, float rotation, Vector2 origin, Color color);
 
