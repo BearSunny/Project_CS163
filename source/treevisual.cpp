@@ -119,7 +119,8 @@ void AVLTree::insert(int x) {
 
 void AVLTree::remove(int x) {
     root = remove(root, x);
-    UpdatePosition(root, 500, 100);
+    if(root)
+        UpdatePosition(root, 500, 100);
 }
 
 bool AVLTree::find(int x) {
@@ -136,14 +137,29 @@ bool AVLTree::find(int x) {
 }
 
 void AVLTree::Draw(Node *p) {
-    if(p->x < p->newx)
-        ++p->x;
-    else if(p->x > p->newx)
-        --p->x;
-    if(p->y < p->newy)
-        ++p->y;
-    else if(p->y > p->newy)
-        --p->y;
+    double dx = abs(p->x - p->newx);
+    double dy = abs(p->y - p->newy);
+    double d = sqrt(dx * dx + dy * dy);
+    if(p->x < p->newx) {
+        p->x += dx / d;
+        if(p->x > p->newx)
+            p->x = p->newx;       
+    }
+    else if(p->x > p->newx) {
+        p->x -= dx / d;
+        if(p->x < p->newx)
+            p->x = p->newx;
+    }
+    if(p->y < p->newy) {
+        p->y += dy / d;
+        if(p->y > p->newy)
+            p->y = p->newy;       
+    }
+    else if(p->y > p->newy) {
+        p->y -= dy / d;
+        if(p->y < p->newy)
+            p->y = p->newy;
+    }
     if(p->left) {
         DrawLine(p->x, p->y, p->left->x, p->left->y, BLACK);
         Draw(p->left);        
@@ -152,9 +168,9 @@ void AVLTree::Draw(Node *p) {
         DrawLine(p->x, p->y, p->right->x, p->right->y, BLACK);
         Draw(p->right);
     }
-    DrawCircle(p->x, p->y, 32, DARKGREEN);
-    DrawCircle(p->x, p->y, 30, GREEN);
-    DrawNumber(p->data, p->x, p->y, 20);
+    DrawCircle(p->x, p->y, 22, DARKGREEN);
+    DrawCircle(p->x, p->y, 20, GREEN);
+    DrawNumber(p->data, p->x, p->y, 15);
 }
 
 void InsertAVL() {
@@ -193,7 +209,8 @@ void DrawTree() {
 }
 
 void DisplayTree() {
-    ClearBackground((Color){30, 30, 46, 255});
+    // ClearBackground((Color){30, 30, 46, 255});
+    ClearBackground(RAYWHITE);
 
     DrawRectangle(0, 0, 1000, 50, GREEN);
     DrawText("AVL TREE", 10, 10, 30, YELLOW);
@@ -208,7 +225,10 @@ void DisplayTree() {
     }
 
     DrawRectangle(304, 9, 102, 32, BLACK);
-    DrawRectangle(305, 10, 100, 30, LIGHTGRAY);
+    if(MouseButtonPressed(305, 10, 405, 40))
+        DrawRectangle(305, 10, 100, 30, GRAY);
+    else
+        DrawRectangle(305, 10, 100, 30, LIGHTGRAY);
     DrawText("Insert", 355 - MeasureText("Insert", 20) / 2, 15, 20, BLACK);
 
     DrawRectangle(409, 9, 102, 32, BLACK);
@@ -221,7 +241,10 @@ void DisplayTree() {
     }
 
     DrawRectangle(514, 9, 102, 32, BLACK);
-    DrawRectangle(515, 10, 100, 30, LIGHTGRAY);
+    if(MouseButtonPressed(515, 10, 615, 40))
+        DrawRectangle(515, 10, 100, 30, GRAY);
+    else
+        DrawRectangle(515, 10, 100, 30, LIGHTGRAY);
     DrawText("Delete", 565 - MeasureText("Delete", 20) / 2, 15, 20, BLACK);
 
     DrawRectangle(619, 9, 102, 32, BLACK);
@@ -234,7 +257,10 @@ void DisplayTree() {
     }
 
     DrawRectangle(724, 9, 102, 32, BLACK);
-    DrawRectangle(725, 10, 100, 30, LIGHTGRAY);
+    if(MouseButtonPressed(725, 10, 825, 40))
+        DrawRectangle(725, 10, 100, 30, GRAY);
+    else
+        DrawRectangle(725, 10, 100, 30, LIGHTGRAY);
     DrawText("Find", 775 - MeasureText("Find", 20) / 2, 15, 20, BLACK);
 
     DrawTree();
@@ -282,6 +308,34 @@ void TREE_INTERACT() {
         if(MouseButtonPressed(725, 10, 825, 40))
             FindAVL();
     }
-    else if(InsertButton || DeleteButton || FindButton)
-        Updatenumber();
+    else if(InsertButton) {
+        if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_V))
+            Updatenumbercopy();
+        if(IsKeyPressed(KEY_ENTER)) {
+            InsertAVL();
+            InsertButton = false;
+        }
+        else
+            Updatenumber();
+    }
+    else if(DeleteButton) {
+        if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_V))
+            Updatenumbercopy();
+        if(IsKeyPressed(KEY_ENTER)) {
+            RemoveAVL();
+            DeleteButton = false;
+        }
+        else
+            Updatenumber();
+    }
+    else if(FindButton) {
+        if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_V))
+            Updatenumbercopy();
+        if(IsKeyPressed(KEY_ENTER)) {
+            FindAVL();
+            FindButton = false;
+        }
+        else
+            Updatenumber();
+    }
 }
