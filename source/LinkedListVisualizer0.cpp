@@ -1,7 +1,7 @@
 #ifndef LINKEDLISTVISUALIZER0_H
 #define LINKEDLISTVISUALIZER0_H
 
-#include "../header/LinkedListVisualizer.h"
+#include "LinkedListVisualizer.h"
 #include <sstream>
 #include <raylib.h>
 #include <cmath>
@@ -79,9 +79,9 @@ void LinkedListVisualizer::init() {
 void LinkedListVisualizer::draw() {
     ClearBackground({30, 30, 46, 255});
 
-    float startX = 50.f;
-    float startY = 800 / 2.f;
-    float offsetX = 100.f;  // Horizontal spacing between nodes
+    float startX = GetScreenWidth() * 0.05f;
+    float startY = GetScreenHeight() / 2.f;
+    float offsetX = GetScreenWidth() / (list->getSize() + 1);  // Horizontal spacing between nodes
 
     drawAnimationControls();
     drawOperationInfo();
@@ -115,8 +115,8 @@ void LinkedListVisualizer::drawHelpText() {
 
 void LinkedListVisualizer::drawFileUploadInterface() {
     // Draw a panel for file upload
-    int panelWidth = 600;
-    int panelHeight = 300;
+    int panelWidth = GetScreenWidth() * 0.4f;
+    int panelHeight = GetScreenWidth() * 0.4f;
     int panelX = (GetScreenWidth() - panelWidth) / 2;
     int panelY = (GetScreenHeight() - panelHeight) / 2;
     
@@ -135,8 +135,8 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     static float cursorTimer = 0;
     cursorTimer += GetFrameTime();
     if (fmod(cursorTimer, 1.0f) < 0.5f) {
-        float cursorX = panelX + 30 + MeasureText(filePath, 18);
-        DrawRectangle(cursorX, panelY + 100, 2, 18, BLACK);
+        float cursorX = panelX + GetScreenWidth() * 0.02f + MeasureText(filePath, 18);
+        DrawRectangle(cursorX, panelY + GetScreenHeight() * 0.1f, 2, GetScreenHeight() * 0.02f, BLACK);
     }
     
     // Show error message if any
@@ -145,8 +145,8 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     }
     
     // Draw buttons
-    int buttonWidth = 120;
-    int buttonHeight = 40;
+    int buttonWidth = GetScreenWidth() * 0.1f;
+    int buttonHeight = GetScreenHeight() * 0.05f;
     int buttonSpacing = 20;
     int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
     int buttonsY = panelY + panelHeight - 60;
@@ -164,7 +164,7 @@ void LinkedListVisualizer::drawFileUploadInterface() {
         // For now, we'll just simulate it with a message
         strcpy(filePath, "example.txt");
     }
-    
+
     // Cancel button
     bool cancelClicked = DrawButton(panelX + panelWidth - 100, panelY + 20, 80, 30, "Cancel");
     if (cancelClicked) {
@@ -350,8 +350,8 @@ void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int inde
 }
 
 void LinkedListVisualizer::drawConnection(float startX, float startY, float offsetX, int connectionIndex) {
-    float arrowEndX = startX + offsetX - 30;
-    float arrowStartX = startX + 30;
+    float arrowEndX = startX + offsetX - GetScreenWidth() * 0.02f;
+    float arrowStartX = startX + GetScreenWidth() * 0.02f;
      // Get the progress and speed for this connection
     auto& [arrowProgress, speed] = connectionAnimations[connectionIndex];
 
@@ -479,7 +479,7 @@ void LinkedListVisualizer::handleEvent() {
         Vector2 mousePos = GetMousePosition();
         float startX = 50.f;
         float startY = GetScreenHeight() / 2.f;
-        float offsetX = 100.f;
+        float offsetX = GetScreenWidth() / (list->getSize() + 1);;
         int index = 0;
         Node* current = list->getHead();
         
@@ -487,7 +487,8 @@ void LinkedListVisualizer::handleEvent() {
             float posX = startX + index * offsetX;
             float posY = startY;
             
-            if (CheckCollisionPointCircle(mousePos, (Vector2){posX, posY}, 30.f)) {
+            float nodeRadius = GetScreenHeight() * 0.04f;
+            if (CheckCollisionPointCircle(mousePos, (Vector2){posX, posY}, nodeRadius)) {
                 selectedNodeIndex = index;
                 
                 // If in delete mode, handle delete operation immediately
@@ -780,12 +781,4 @@ float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, co
     return value;
 }
 
-void LINKEDLIST_INTERACT() {
-    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if(MouseButtonPressed(0, 0, 400, 100)) {
-            currentScreen = MAINMENU;
-            CleanupLinkedList();
-        }
-    }
-}
 #endif // LINKEDLISTVISUALIZER0_H
