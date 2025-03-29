@@ -124,6 +124,15 @@ void Updatenumber() {
         Deletenumber();
 }
 
+void Updatenumbercopy() {
+    const char* n = GetClipboardText();
+    for(int i = 0; n[i] != '\0'; ++i)
+        if(n[i] < '0' || n[i] > '9')
+            return;
+    for(int i = 0; n[i] != '\0'; ++i)
+        Insertnumber(n[i] - '0');
+}
+
 void drawPicture(const char* path, Rectangle desRec, float rotation, Vector2 origin, Color color) {
     Texture2D texture = LoadTexture(path);
     if (texture.id == 0) return;
