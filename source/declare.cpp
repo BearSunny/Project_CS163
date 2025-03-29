@@ -19,20 +19,15 @@ const int screenHeight = 800;
 const Vector2 ORIGIN = {0.0f, 0.0f};
 const float CODE_SIZE = 15;
 
-GameScreen currentScreen;
-bool InsertButton, DeleteButton, FindButton;
-int FindQuerry, FindNumber, framecount, length;
-char number[10];
+GameScreen currentScreen = MAINMENU;
+bool InsertButton = false, DeleteButton = false, FindButton = false;
+int FindQuerry = -1, FindNumber = 0, framecount = 0, length = 0;
+char number[10] = {};
 
 // Function implementations
 
 void initResource() 
 {
-    GameScreen currentScreen = MAINMENU;
-    bool InsertButton = false, DeleteButton = false, FindButton = false;
-    int FindQuerry = -1, FindNumber = 0, framecount = 0, length = 0;
-    char number[10] = {};
-
     PLAY = LoadTexture("./asset/Play.png");
     PAUSE = LoadTexture("./asset/Pause.png");
     REPLAY = LoadTexture("./asset/Replay.png");
