@@ -1,9 +1,11 @@
-#include "header/mainmenu.h"
-#include "header/LinkedListVisualizer.h"
-#include "header/LinkedList.h"
-#include "header/treevisual.h"
+#include "source/declare.cpp"
+#include "source/mainmenu.cpp"
+#include "source/LinkedListVisualizer0.cpp"
+#include "source/LinkedList0.cpp"
+#include "source/treevisual.cpp"
+#include "source/Graph.cpp"
+#include "source/GraphButton.cpp"
 #include "header/hashvisual.h"
-#include "header/graphvisual.h"
 
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
