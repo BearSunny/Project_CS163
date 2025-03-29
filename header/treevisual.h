@@ -5,7 +5,7 @@
 
 struct AVLTree {
     struct Node {
-        int x, y, newx, newy;
+        double x, y, newx, newy;
         int data, depth;
         Node *left, *right;
 
