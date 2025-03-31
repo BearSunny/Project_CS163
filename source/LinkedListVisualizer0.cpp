@@ -291,9 +291,15 @@ void LinkedListVisualizer::drawAnimationControls() {
     float buttonSpacing = 10;
     float startX = GetScreenWidth() * 0.25 - (buttonWidth * 4 + buttonSpacing * 3) / 2;
 
-    // Backward button
+    // Undo button
     if (DrawButton(startX, controlsY, buttonWidth, buttonWidth, "<")) {
-        stepBackward();
+        if (!operationHistory.empty()) {
+            Operation lastOp = operationHistory.back();
+            operationHistory.pop_back();
+            undoHistory.push_back(lastOp);
+            undoOperation(lastOp);
+            lastOperation = "Undid operation: " + lastOp.toString();
+        }
     }
 
     // Play button
@@ -306,9 +312,16 @@ void LinkedListVisualizer::drawAnimationControls() {
         isPaused = true;
     }
     
-    // Forward button
+    // Redo button
     if (DrawButton(startX + (buttonWidth + buttonSpacing) * 3, controlsY, buttonWidth, buttonWidth, ">")) {
-        stepForward();
+        if (!undoHistory.empty()) {
+            // Redo the last undone operation
+            Operation lastUndo = undoHistory.back();
+            undoHistory.pop_back();
+            operationHistory.push_back(lastUndo);
+            applyOperation(lastUndo);
+            lastOperation = "Redid operation: " + lastUndo.toString();
+        }
     }
 
     // Speed control slider
@@ -318,6 +331,17 @@ void LinkedListVisualizer::drawAnimationControls() {
     Rectangle sliderRect = { sliderX + 110, controlsY, sliderWidth, 20 };
     // Update animation speed dynamically
     animationSpeed = GuiSlider(sliderRect, "0.5x", "2.0x", animationSpeed, 0.5f, 2.0f);
+}
+
+std::string Operation::toString() {
+    switch (type) {
+        case ADD: return "Add node with value " + std::to_string(newValue);
+        case DELETE: return "Delete node at index " + std::to_string(nodeIndex);
+        case UPDATE: return "Update node at index " + std::to_string(nodeIndex) +
+                             " from " + std::to_string(oldValue) + " to " + std::to_string(newValue);
+        case SEARCH: return "Search for value " + std::to_string(newValue);
+        default: return "Unknown operation";
+    }
 }
 
 void LinkedListVisualizer::drawOperationInfo() {
