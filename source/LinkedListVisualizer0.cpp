@@ -113,7 +113,7 @@ void LinkedListVisualizer::draw() {
 }
 
 void LinkedListVisualizer::drawHelpText() {
-    const char* helpText = "Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | R-Random | C-Clear | Click node to select";
+    const char* helpText = "Controls: I-Init | T-Toggle Step By Step | A-Add | D-Delete | U-Update | S-Search | F-File Upload | R-Random | C-Clear | Click node to select";
     int textWidth = MeasureText(helpText, 16);
     DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, (Color){163, 190, 140, 255});
 }
@@ -291,8 +291,13 @@ void LinkedListVisualizer::drawAnimationControls() {
     float buttonSpacing = 10;
     float startX = GetScreenWidth() * 0.25 - (buttonWidth * 4 + buttonSpacing * 3) / 2;
 
+    // Step backward button ("<<")
+    if (DrawButton(startX, controlsY, buttonWidth, buttonWidth, "<<")) {
+        stepBackward(); // Step backward through operations
+    }
+    
     // Undo button
-    if (DrawButton(startX, controlsY, buttonWidth, buttonWidth, "<")) {
+    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "<")) {
         if (!operationHistory.empty()) {
             Operation lastOp = operationHistory.back();
             operationHistory.pop_back();
@@ -303,17 +308,17 @@ void LinkedListVisualizer::drawAnimationControls() {
     }
 
     // Play button
-    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "||")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 2, controlsY, buttonWidth, buttonWidth, "||")) {
         isPaused = false;
     }
 
     // Pause button
-    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 2, controlsY, buttonWidth, buttonWidth, "|>")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 3, controlsY, buttonWidth, buttonWidth, "|>")) {
         isPaused = true;
     }
     
     // Redo button
-    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 3, controlsY, buttonWidth, buttonWidth, ">")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, ">")) {
         if (!undoHistory.empty()) {
             // Redo the last undone operation
             Operation lastUndo = undoHistory.back();
@@ -322,6 +327,11 @@ void LinkedListVisualizer::drawAnimationControls() {
             applyOperation(lastUndo);
             lastOperation = "Redid operation: " + lastUndo.toString();
         }
+    }
+
+    // Step forward button (">>")
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 5, controlsY, buttonWidth, buttonWidth, ">>")) {
+        stepForward(); // Step forward through operations
     }
 
     // Speed control slider
@@ -559,7 +569,7 @@ void LinkedListVisualizer::handleEvent() {
         animationProgress = 0.0f;
 
         connectionAnimations.clear();
-    }
+    } 
 
     // Handle text input
     if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH || mode == MODE_INITIALIZE) {
@@ -712,7 +722,7 @@ void LinkedListVisualizer::handleEvent() {
     }
 }
 
-void LinkedListVisualizer::updateAnimation() {
+void LinkedListVisualizer::updateAnimation() {    
     if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size())) {
         animationProgress += GetFrameTime() * animationSpeed;
         if (animationProgress >= 1.0f) {
@@ -760,16 +770,16 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
 }
 
 void LinkedListVisualizer::stepForward() {
-    if (currentStep < static_cast<int>(operationHistory.size()) - 1) {
+    if (currentStep < static_cast<int>(operationHistory.size())) {
         currentStep++;
-        animationProgress = 0.0f;
+        animationProgress = 0.0f; // Reset animation progress
     }
 }
 
 void LinkedListVisualizer::stepBackward() {
     if (currentStep > 0) {
         currentStep--;
-        animationProgress = 0.0f;
+        animationProgress = 0.0f; // Reset animation progress
     }
 }
 
