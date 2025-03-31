@@ -27,6 +27,7 @@ struct Operation {
     int oldValue;
     int newValue;
     Operation(Type t, int idx, int oldVal = 0, int newVal = 0);
+    std::string toString();
 };
 
 void InitLinkedList();
@@ -63,7 +64,7 @@ private:
     int currentStep;
     string lastOperation;
     std::vector<std::pair<float, float>> connectionAnimations; // Pair of (arrowProgress, animationSpeed)
-
+    
     void drawAnimationControls();
     void drawOperationInfo();
     void drawLinkedList(float startX, float startY, float offsetX);
