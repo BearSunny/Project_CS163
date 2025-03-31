@@ -71,6 +71,9 @@ void LinkedListVisualizer::init() {
     fileError = false;
     fileErrorMessage = "";
 
+    // Seed the random number generator
+    srand(static_cast<unsigned>(time(0)));
+
     // User's instruction
     // lastOperation = "Press M to create a list manually or F to load from a file";
     connectionAnimations.clear();
@@ -88,6 +91,8 @@ void LinkedListVisualizer::draw() {
     
     if (mode == MODE_CREATE_FILE) {
         drawFileUploadInterface();
+    } else if (mode == MODE_INITIALIZE) {
+        drawInitInterface();
     } else {
         if (list->getHead() == nullptr) {
             // Draw a message prompting the user to create a list
@@ -108,7 +113,7 @@ void LinkedListVisualizer::draw() {
 }
 
 void LinkedListVisualizer::drawHelpText() {
-    const char* helpText = "Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | Click node to select";
+    const char* helpText = "Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | R-Random | C-Clear | Click node to select";
     int textWidth = MeasureText(helpText, 16);
     DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, (Color){163, 190, 140, 255});
 }
@@ -171,6 +176,64 @@ void LinkedListVisualizer::drawFileUploadInterface() {
         mode = MODE_NONE;
         memset(filePath, 0, sizeof(filePath));
         fileError = false;
+    }
+}
+
+void LinkedListVisualizer::drawInitInterface() {
+    // Draw a panel for file upload
+    int panelWidth = GetScreenWidth() * 0.4f;
+    int panelHeight = GetScreenWidth() * 0.4f;
+    int panelX = (GetScreenWidth() - panelWidth) / 2;
+    int panelY = (GetScreenHeight() - panelHeight) / 2;
+    
+    DrawRectangle(panelX, panelY, panelWidth, panelHeight, LIGHTGRAY);
+    DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, DARKGRAY);
+    
+    DrawText("Initialize Linked List", panelX + 20, panelY + 20, 20, BLACK);
+    DrawText("Enter numbers separated by space:", panelX + 20, panelY + 60, 18, DARKGRAY);
+    
+    // Draw input box
+    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, WHITE);
+    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, DARKGRAY);
+    DrawText(inputString.c_str(), panelX + 30, panelY + 100, 18, BLACK);
+
+    static float cursorTimer = 0;
+    cursorTimer += GetFrameTime();
+    if (fmod(cursorTimer, 1.0f) < 0.5f) {
+        float cursorX = panelX + 30 + MeasureText(inputString.c_str(), 18);
+        DrawRectangle(cursorX, panelY + 100, 2, 20, BLACK);
+    }
+
+    int buttonWidth = GetScreenWidth() * 0.1f;
+    int buttonHeight = GetScreenHeight() * 0.05f;
+    int buttonSpacing = 20;
+    int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
+    int buttonsY = panelY + panelHeight - 60;
+
+    // Add button
+    bool addClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Add");
+    if (addClicked && !inputString.empty()) {
+        std::istringstream iss(inputString);
+        int value;
+        list->clear();
+        while (iss >> value) {
+            list->add(value);
+        }
+
+        connectionAnimations.clear();
+        for (int i = 0; i < list->getSize(); i++) {
+            connectionAnimations.push_back({0.0f, animationSpeed});
+        }
+        
+        mode = MODE_NONE;
+        inputString.clear();
+        lastOperation = "Initialize linked list";
+    }
+
+    bool cancelClicked = DrawButton(panelX + panelWidth - 100, panelY + 20, 80, 30, "Cancel");
+    if (cancelClicked) {
+        mode = MODE_NONE;
+        inputString.clear();
     }
 }
 
@@ -426,9 +489,8 @@ void LinkedListVisualizer::drawInputBox() {
 void LinkedListVisualizer::handleEvent() {
     // Handle mode selection
     if (IsKeyPressed(KEY_I)) {
-        list->reset();
-        init();
-        lastOperation = "Initialized list";
+        mode = MODE_INITIALIZE;
+        inputString.clear();
     } else if (IsKeyPressed(KEY_A)) {
         mode = MODE_ADD;
         inputString = "";
@@ -446,12 +508,39 @@ void LinkedListVisualizer::handleEvent() {
         mode = MODE_CREATE_FILE;
         memset(filePath, 0, sizeof(filePath));
         fileError = false;
+    } else if (IsKeyPressed(KEY_R)) {
+        list->clear();
+
+        for (int i = 0; i < 10; i++) {
+            int randomValue = rand() % 100;
+            list->add(randomValue);
+        }
+
+        lastOperation = "Generate random linked list with 10 nodes";
+        operationHistory.clear();
+        undoHistory.clear();
+        currentStep = 0;
+        animationProgress = 0.0f;
+
+        connectionAnimations.clear();
+        for (int i = 0; i < 9; i++) {
+            connectionAnimations.push_back({0.0f, animationSpeed});
+        }
+    } else if (IsKeyPressed(KEY_C)) {
+        list->clear();
+        lastOperation = "Clear the existing linked list";
+        operationHistory.clear();
+        undoHistory.clear();
+        currentStep = 0;
+        animationProgress = 0.0f;
+
+        connectionAnimations.clear();
     }
 
     // Handle text input
-    if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH) {
+    if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH || mode == MODE_INITIALIZE) {
         int key = GetCharPressed();
-        if (key >= '0' && key <= '9') {
+        if (key >= '0' && key <= '9' || key == ' ') {
             inputString += (char)key;
         }
         
