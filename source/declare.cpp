@@ -14,8 +14,8 @@ Texture2D BACK_PAGE;
 theme THEME;
 Font FONT;
 
-const int screenWidth = 1000;
-const int screenHeight = 800;
+const int screenWidth = 1600;
+const int screenHeight = 900;
 const Vector2 ORIGIN = {0.0f, 0.0f};
 const float CODE_SIZE = 15;
 
