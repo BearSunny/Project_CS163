@@ -1,14 +1,14 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "LinkedList.h"
+#include "header/LinkedList.h"
 #include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>
 #include <deque>
 #include <fstream>
-#include "declare.h"
+#include "header/declare.h"
 using namespace std;
 
 enum VisualizerMode {
@@ -41,6 +41,7 @@ public:
     void handleEvent();
     bool createLLFromFile(const std::string& filePath);
     void drawFileUploadInterface();
+    void drawInitInterface();
 
 private:
     LinkedList* list;
@@ -82,8 +83,7 @@ private:
     bool DrawButton(float x, float y, float width, float height, const char* text);
     float GuiSlider(Rectangle bounds, const char* textLeft, const char* textRight, 
                    float value, float minValue, float maxValue);
+    void LINKEDLIST_INTERACT();
 };
-
-void LINKEDLIST_INTERACT();
 
 #endif // LINKEDLISTVISUALIZER_H
