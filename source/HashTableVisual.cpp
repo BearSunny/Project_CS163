@@ -1,12 +1,12 @@
 #include "../header/HashTableVisual.h"
 
-HashTablePage::HashTablePage(Program* prog) : 
-    program(prog),
-    inputField((Global::WINDOW_WIDTH - 400)/2, 100, 400, 50),
+HashTablePage::HashTablePage() : 
+    // program(prog),
+    inputField((screenWidth - 400)/2, 100, 400, 50),
     table(nullptr),
     startX(10 + 150), startY(170), offsetX((800 - startX - 6*50)/7),
     highlightedIdx(-1),
-    backButton(0, 0, 100, 40, "Back", 25),
+    // backButton(0, 0, 100, 40, "Back", 25),
     createButton(10, 200, 180, 40, "Create Table", 30), // Modidy the coordinate after
     insertButton(10, 250, 180, 40, "Insert", 30),
     deleteButton(10, 300, 180, 40, "Delete", 30),
@@ -15,7 +15,7 @@ HashTablePage::HashTablePage(Program* prog) :
     newButton(10, 450, 180, 40, "New", 30),
     tableCreated(false)
 { 
-    backButton.setIdleColor(LIGHTGRAY);
+    // backButton.setIdleColor(LIGHTGRAY);
     createButton.setIdleColor(LIGHTGRAY);
     insertButton.setIdleColor(LIGHTGRAY);
     deleteButton.setIdleColor(LIGHTGRAY);
@@ -28,14 +28,14 @@ void HashTablePage::handleInput()
 {
     // Xử lý nhập
     inputField.handleInput();
-    backButton.handleInput();
+    // backButton.handleInput();
 
     // Nếu nhấn Back -> quay về MainPage
-    if (backButton.isClicked())
-    {
-        program->popPage();
-        return;
-    }
+    // if (backButton.isClicked())
+    // {
+    //     program->popPage();
+    //     return;
+    // }
 
     if (!tableCreated) {
         // Chưa tạo bảng, chỉ xử lý nút Create Table
@@ -177,7 +177,10 @@ void HashTablePage::draw()
 {
     BeginDrawing();
     ClearBackground(Color {135, 206, 250});
-    backButton.draw();
+    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
+    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, DARKBROWN);
+
+    // backButton.draw();
     inputField.draw();
     createButton.draw();
     insertButton.draw();
@@ -191,14 +194,14 @@ void HashTablePage::draw()
     {
         // Khi chưa tạo bảng, yêu cầu người dùng nhập kích thước của bảng
         const char *text = "Enter table size:";
-        Vector2 textSize = MeasureTextEx(Global::mainFont, text, 35, 1);
-        DrawTextEx(Global::mainFont, text, Vector2{(Global::WINDOW_WIDTH - textSize.x)/2, 50}, 35, 1, WHITE);
+        Vector2 textSize = MeasureTextEx(FONT, text, 35, 1);
+        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, WHITE);
     }
     else
     {
         const char *text = "Insert values into the below box!";
-        Vector2 textSize = MeasureTextEx(Global::mainFont, text, 35, 1);
-        DrawTextEx(Global::mainFont, text, Vector2{(Global::WINDOW_WIDTH - textSize.x)/2, 50}, 35, 1, WHITE);
+        Vector2 textSize = MeasureTextEx(FONT, text, 35, 1);
+        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, WHITE);
     }
 
     // Nếu bảng đã được tạo, biểu diễn HashTable dưới dạng các ô vuông
@@ -219,16 +222,16 @@ void HashTablePage::draw()
             {
                 std::string keyStr = std::to_string(table->getKeyAt(i));
                 int fontSize = 25;
-                Vector2 textSizeKey = MeasureTextEx(Global::mainFont, keyStr.c_str(), fontSize, 1);
-                DrawTextEx(Global::mainFont, keyStr.c_str(), 
+                Vector2 textSizeKey = MeasureTextEx(FONT, keyStr.c_str(), fontSize, 1);
+                DrawTextEx(FONT, keyStr.c_str(), 
                            Vector2{ cellX + (cellSize - textSizeKey.x) / 2, cellY + (cellSize - textSizeKey.y) / 2 },
                            fontSize, 1, BLACK);
             }
 
             std::string idxStr = std::to_string(i);
             int idxFontSize = 20;
-            Vector2 idxTextSize = MeasureTextEx(Global::mainFont, idxStr.c_str(), idxFontSize, 1);
-            DrawTextEx(Global::mainFont, idxStr.c_str(), 
+            Vector2 idxTextSize = MeasureTextEx(FONT, idxStr.c_str(), idxFontSize, 1);
+            DrawTextEx(FONT, idxStr.c_str(), 
                        Vector2{ cellX + (cellSize - idxTextSize.x) / 2, cellY + cellSize + 5 },
                        idxFontSize, 1, BLACK);
         }
@@ -236,3 +239,11 @@ void HashTablePage::draw()
 
     EndDrawing();
 }
+
+// void HASH_INTERACT() {
+    
+// }
+
+// void DisplayHash() {
+//     
+// }

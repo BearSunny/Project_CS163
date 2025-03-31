@@ -6,6 +6,7 @@
 #include "source/Graph.cpp"
 #include "source/GraphButton.cpp"
 #include "header/hashvisual.h"
+#include "source/HashTableVisual.cpp"
 
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
@@ -13,6 +14,7 @@ int main () {
     SetTargetFPS(60);
     GraphVisualize graph = GraphVisualize(FONT);
     TittleButton title = TittleButton({465, 34, 350, 40}, "Graph", -1, BLACK, 20);
+    HashTablePage hashPage;
 
     while(!WindowShouldClose()) {
         switch(currentScreen) {
@@ -27,6 +29,7 @@ int main () {
                     if(MouseButtonPressed(0, 0, 400, 100))
                         currentScreen = MAINMENU;
                 }
+                hashPage.handleInput();
                 break;
             case TREE:
                 TREE_INTERACT();
@@ -53,6 +56,7 @@ int main () {
                 break;
             case HASH:
                 DisplayHash();
+                hashPage.draw();
                 break;
             case TREE:
                 DisplayTree();
