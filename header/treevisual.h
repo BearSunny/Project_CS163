@@ -3,7 +3,7 @@
 
 #include "declare.h"
 
-typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON} ButtonState;
+typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON} ButtonState;
 ButtonState CurrentButton = NULLBUTTON;
 
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -18,6 +18,7 @@ struct AVLTree {
         int data, depth;
         Node *left, *right;
         bool selected;
+        bool findselected;
 
         Node(int d) {
             x = -1;
@@ -27,6 +28,7 @@ struct AVLTree {
             left = nullptr;
             right = nullptr;
             selected = false;
+            findselected = false;
         }
     };
 
@@ -44,7 +46,7 @@ struct AVLTree {
     void UpdatePosition(Node *p, int u, int v);
     void insert(int x);
     void remove(int x);
-    bool find(int x);
+    void find(int x);
     void Draw(Node *p);
     bool UpdateSelectedNode(Node *p);
     string FindSelectedNode(Node *p);
