@@ -6,6 +6,7 @@
 #include "source/Graph.cpp"
 #include "source/GraphButton.cpp"
 #include "header/hashvisual.h"
+#include "header/HashTableVisual.h"
 #include "source/HashTableVisual.cpp"
 
 int main () {

@@ -3,12 +3,12 @@
 HashButton::HashButton(float x, float y, float width, float height, const std::string& str, int sizeFont) {
     shape = { x, y, width, height };
     text = str;
-    idleColor = BLUE;
-    hoverColor = SKYBLUE;
+    idleColor = Color {248, 186, 200, 255};
+    hoverColor = Color {245, 162, 178, 255};
     hovered = false;
-    borderColor = BLACK;
+    borderColor = Color {194, 24, 91, 255};
     fontSize = sizeFont;
-    textColor = BLACK;
+    textColor = Color {255, 254, 206, 255};
 }
 
 void HashButton::handleInput() {

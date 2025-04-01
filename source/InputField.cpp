@@ -20,19 +20,6 @@ void InputField::handleInput() {
         {
             inputText.push_back((char)key);
         }
-        // else if (key == 8) // Backspace
-        // {
-        //     if (!inputText.empty())
-        //     {
-        //         inputText.pop_back();
-        //     }
-        // }
-        // else if (key == 13)
-        // {
-        //     // Enter -> Ta sẽ xử lý bên ngoài, ở đây không xóa text
-        //     // (Hoặc có thể tùy ý clear hay không)
-        // }
-        // // Lấy ký tự tiếp
         key = GetCharPressed();
     }
 
@@ -43,9 +30,6 @@ void InputField::handleInput() {
             inputText.pop_back();
         }
     }
-
-    // Ngoài ra, ta có thể kiểm tra phím backspace bằng IsKeyPressed(KEY_BACKSPACE)...
-    // nhưng vòng while trên đã xử lý.
 }
 
 void InputField::draw() {
@@ -57,4 +41,12 @@ void InputField::draw() {
     int fontSize = 20;
     Vector2 pos = { box.x + 5, box.y + (box.height - fontSize) / 2.0f };
     DrawTextEx(GetFontDefault(), inputText.c_str(), pos, fontSize, 1, BLACK);
+}
+
+void InputField::setActive(bool state) {
+    isActive = state;
+}
+
+bool InputField::IsActive() {
+    return isActive;
 }

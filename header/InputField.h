@@ -24,4 +24,7 @@ public:
     void clearText() { 
         inputText.clear(); 
     }
+
+    bool IsActive();
+    void setActive(bool state);
 };

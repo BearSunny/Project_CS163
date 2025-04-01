@@ -50,3 +50,31 @@ bool HashTable::remove(int key, int &idx) {
     
     return false;
 }
+
+bool HashTable::loadHashTableFromFile(const std::string& filePath) {
+    std::ifstream input(filePath);
+    if (!input.is_open()) {
+        return false; // Không mở được file
+    }
+
+    int newSize;
+    input >> newSize;
+    if (input.fail() || newSize <= 0 || newSize > 60) {
+        input.close();
+        return false; // Không đọc được kích thước hợp lệ
+    }
+
+    // Cập nhật kích thước bảng và làm mới các vector lưu trữ
+    TABLE_SIZE = newSize;
+    table.assign(newSize, 0);
+    occ.assign(newSize, false);
+
+    int key;
+    // Đọc các key từ file và chèn vào bảng
+    while (input >> key) {
+        insert(key);
+    }
+
+    input.close();
+    return true;
+}

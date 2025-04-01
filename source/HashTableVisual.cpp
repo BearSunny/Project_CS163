@@ -1,45 +1,112 @@
 #include "../header/HashTableVisual.h"
 
 HashTablePage::HashTablePage() : 
-    // program(prog),
     inputField((screenWidth - 400)/2, 100, 400, 50),
+    filePathInput((screenWidth - 400)/2, (screenHeight - 50)/2, 400, 50),
     table(nullptr),
-    startX(10 + 150), startY(170), offsetX((800 - startX - 6*50)/7),
+    startX(150 + 150), startY(170), offsetX((800 - startX - 6*50)/7),
     highlightedIdx(-1),
-    // backButton(0, 0, 100, 40, "Back", 25),
+
     createButton(10, 200, 180, 40, "Create Table", 30), // Modidy the coordinate after
-    insertButton(10, 250, 180, 40, "Insert", 30),
-    deleteButton(10, 300, 180, 40, "Delete", 30),
-    searchButton(10, 350, 180, 40, "Search", 30),
-    clearButton(10, 400, 180, 40, "Clear", 30),
-    newButton(10, 450, 180, 40, "New", 30),
+    insertButton(10, 270, 180, 40, "Insert", 30),
+    deleteButton(10, 340, 180, 40, "Delete", 30),
+    searchButton(10, 410, 180, 40, "Search", 30),
+    clearButton(10, 480, 180, 40, "Clear", 30),
+    newButton(10, 550, 180, 40, "New", 30),
+    loadFileButton(10, 620, 180, 40, "Load File", 30),
+    randomButton(10, 690, 180, 40, "Random", 30),
     tableCreated(false)
 { 
-    // backButton.setIdleColor(LIGHTGRAY);
-    createButton.setIdleColor(LIGHTGRAY);
-    insertButton.setIdleColor(LIGHTGRAY);
-    deleteButton.setIdleColor(LIGHTGRAY);
-    searchButton.setIdleColor(LIGHTGRAY);
-    clearButton.setIdleColor(LIGHTGRAY);
-    newButton.setIdleColor(LIGHTGRAY);
+    filePathInput.setActive(false);
+}
+
+HashTablePage::~HashTablePage() {
+    delete table;
+    table = nullptr;
 }
 
 void HashTablePage::handleInput() 
 {
-    // Xử lý nhập
-    inputField.handleInput();
-    // backButton.handleInput();
+    randomButton.handleInput();
+    if (randomButton.isClicked())
+    {
+        std::srand((unsigned)std::time(nullptr));
+        int randomSize = std::rand() % 61;
+        if (table != nullptr) {
+            delete table;
+            table = new HashTable(randomSize);
+        } else {
+            table = new HashTable(randomSize);
+        }
+        // Use the current time as the seed for the random number generator
+        int randomNum = std::rand() % (randomSize + 1);
+        for (int i = 0; i < randomNum; i++) {
+            int key = std::rand() % 100000 ;
+            table->insert(key);
+        }
+        highlightedIdx = -1;
+        tableCreated = true;
+        filePathInput.setActive(false);
+        inputField.setActive(true);
+    } 
 
-    // Nếu nhấn Back -> quay về MainPage
-    // if (backButton.isClicked())
-    // {
-    //     program->popPage();
-    //     return;
-    // }
+    // Chỉ xử lý 1 trong 2 trước
+    if (filePathInput.IsActive()) { 
+        filePathInput.handleInput();
+
+        FilePathList droppedFiles = LoadDroppedFiles(); // Lấy danh sách file được kéo thả
+        if (droppedFiles.count > 0) {
+            std::string path = std::string(droppedFiles.paths[0]);
+            UnloadDroppedFiles(droppedFiles); // Giải phóng bộ nhớ danh sách file
+            if (table == nullptr) { // Tránh gây crash khi gọi loadHashTableFromFile()
+                table = new HashTable(1); // Size tạm, sẽ được cập nhật khi load file
+            }
+            if (table->loadHashTableFromFile(path)) {
+                tableCreated = true;
+                highlightedIdx = -1;
+                filePathInput.clearText();
+                // filePathInput.setActive(false);
+                // inputField.setActive(true);
+            }
+            else {
+                TraceLog(LOG_WARNING, "Load file failed: %s", path.c_str());
+            }
+            filePathInput.setActive(false);
+            inputField.setActive(true);
+        }
+
+        if (IsKeyPressed(KEY_ENTER)) {
+            std::string path = filePathInput.getText();
+            if (!path.empty())
+            {
+                if (table == nullptr) { // Tránh gây crash khi gọi loadHashTableFromFile()
+                    table = new HashTable(1); // Size tạm, sẽ được cập nhật khi load file
+                }
+                if (table->loadHashTableFromFile(path)) {
+                    tableCreated = true;
+                    highlightedIdx = -1;
+                    filePathInput.clearText();
+                    // filePathInput.setActive(false);
+                    // inputField.setActive(true);
+                }
+                else {
+                    TraceLog(LOG_WARNING, "Load file failed: %s", path.c_str());
+                }
+                filePathInput.setActive(false);
+                inputField.setActive(true);
+            }
+            // filePathInput.clearText();
+        }
+    }
+    else {
+        inputField.handleInput();
+    }
 
     if (!tableCreated) {
-        // Chưa tạo bảng, chỉ xử lý nút Create Table
+        // Chưa tạo bảng, chỉ xử lý nút Create Table và Load File
         createButton.handleInput();
+        loadFileButton.handleInput();
+
         if (createButton.isClicked())
         {
             std::string str = inputField.getText();
@@ -62,10 +129,17 @@ void HashTablePage::handleInput()
             inputField.clearText();
         }
 
+        if (loadFileButton.isClicked())
+        {
+            filePathInput.setActive(true);
+            inputField.setActive(false);
+        }
+
         return;
     }
 
-    insertButton.handleInput(); // Should be handled after creation
+    // Should be handled after creation
+    insertButton.handleInput(); 
     deleteButton.handleInput();
     searchButton.handleInput();
     clearButton.handleInput();
@@ -175,44 +249,48 @@ void HashTablePage::update(float deltaTime)
 
 void HashTablePage::draw() 
 {
-    BeginDrawing();
-    ClearBackground(Color {135, 206, 250});
-    DrawRectangle(0, 0, 400, 100, LIGHTGRAY);
-    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, DARKBROWN);
-
-    // backButton.draw();
-    inputField.draw();
+    // BeginDrawing();
+    ClearBackground((Color){241, 231, 231, 255});
     createButton.draw();
     insertButton.draw();
     deleteButton.draw();
     searchButton.draw();
     clearButton.draw();
     newButton.draw();
+    loadFileButton.draw();
+    randomButton.draw();
+    inputField.draw();
+    if (filePathInput.IsActive()) {
+        const char *text = "Drag and drop input file or type the file path into the below box";
+        Vector2 textSize = MeasureTextEx(FONT, text, 35, 1);
+        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 375}, 35, 1, Color{87, 143, 202, 255});
+        filePathInput.draw();
+    }
 
     // Vẽ tiêu đề và hướng dẫn
     if (!tableCreated)
     {
         // Khi chưa tạo bảng, yêu cầu người dùng nhập kích thước của bảng
-        const char *text = "Enter table size:";
+        const char *text = "Please enter table size first";
         Vector2 textSize = MeasureTextEx(FONT, text, 35, 1);
-        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, WHITE);
+        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, Color{87, 143, 202, 255});
     }
     else
     {
-        const char *text = "Insert values into the below box!";
+        const char *text = "Insert values into the below box";
         Vector2 textSize = MeasureTextEx(FONT, text, 35, 1);
-        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, WHITE);
+        DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, Color{87, 143, 202, 255});
     }
 
     // Nếu bảng đã được tạo, biểu diễn HashTable dưới dạng các ô vuông
     if (tableCreated && table != nullptr)
     {
         int tableSize = table->getTableSize();
-        const int cellSize = 50;  
+        const int cellSize = 80;  
         for (int i = 0; i < tableSize; i++) // Traverse the whole table
         {
-            float cellX = startX + (i % 6 + 0.5)*(cellSize + offsetX);
-            float cellY = startY + (i / 6)*(cellSize + 30);
+            float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
+            float cellY = startY + (i / 10)*(cellSize + 40);
 
             Color cellColor = (i == highlightedIdx) ? YELLOW : RAYWHITE;
             DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
@@ -237,13 +315,5 @@ void HashTablePage::draw()
         }
     }
 
-    EndDrawing();
+    // EndDrawing();
 }
-
-// void HASH_INTERACT() {
-    
-// }
-
-// void DisplayHash() {
-//     
-// }

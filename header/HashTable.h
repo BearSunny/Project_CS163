@@ -36,4 +36,6 @@ public:
     bool remove(int key, int &idx);
 
     // void rehashing();
+
+    bool loadHashTableFromFile(const std::string& filePath);
 };
