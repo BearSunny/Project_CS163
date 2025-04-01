@@ -184,13 +184,13 @@ void AVLTree::Draw(Node *p) {
         Draw(p->right);
     }
     if(p->findselected)
-        DrawCircle(p->x, p->y, 30, RED);
+        DrawCircle(p->x, p->y, 30, BUTTON);
     else
-        DrawCircle(p->x, p->y, 26, BLACK);
+        DrawCircle(p->x, p->y, 26, BORDER);
     if(p->selected)
-        DrawCircle(p->x, p->y, 25, DARKGREEN);
+        DrawCircle(p->x, p->y, 25, BUTTON);
     else
-        DrawCircle(p->x, p->y, 25, GREEN);
+        DrawCircle(p->x, p->y, 25, HOVERED);
     DrawNumber(p->data, p->x, p->y, 20);
 }
 
@@ -205,7 +205,7 @@ bool AVLTree::UpdateSelectedNode(Node *p) {
     else
         p->selected = false;
     bool res = UpdateSelectedNode(p->left) | UpdateSelectedNode(p->right);    
-    return res;
+    return p->selected | res;
 }
 
 string AVLTree::FindSelectedNode(Node *p) {
@@ -427,61 +427,62 @@ void DrawFind() {
 }
 
 void DisplayTree() {
-    ClearBackground(RAYWHITE);
+    ClearBackground(BACKGROUND);
 
-    DrawRectangle(0, 0, 400, 900, GREEN);
-    DrawText("AVL TREE", 10, 10, 30, YELLOW);
+    DrawRectangle(9, 9, 212, 42, BORDER);
+    DrawRectangle(10, 10, 210, 40, HOVERED);
+    DrawText("AVL Tree", 115 - MeasureText("AVL Tree", 30) / 2, 15, 30, TEXT);
 
-    DrawRectangle(9, 59, 102, 32, BLACK);
+    DrawRectangle(9, 59, 102, 32, BORDER);
     if(MouseButtonPressed(10, 60, 110, 90))
-        DrawRectangle(10, 60, 100, 30, GRAY);
+        DrawRectangle(10, 60, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 60, 100, 30, LIGHTGRAY);
-    DrawText("Initialize", 60 - MeasureText("Initialize", 20) / 2, 65, 20, BLACK);
+        DrawRectangle(10, 60, 100, 30, HOVERED);
+    DrawText("Initialize", 60 - MeasureText("Initialize", 20) / 2, 65, 20, TEXT);
 
-    DrawRectangle(9, 109, 102, 32, BLACK);
+    DrawRectangle(9, 109, 102, 32, BORDER);
     if(MouseButtonPressed(10, 110, 110, 140))
-        DrawRectangle(10, 110, 100, 30, GRAY);
+        DrawRectangle(10, 110, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 110, 100, 30, LIGHTGRAY);
-    DrawText("Add", 60 - MeasureText("Add", 20) / 2, 115, 20, BLACK);
+        DrawRectangle(10, 110, 100, 30, HOVERED);
+    DrawText("Add", 60 - MeasureText("Add", 20) / 2, 115, 20, TEXT);
 
-    DrawRectangle(119, 109, 102, 32, BLACK);
+    DrawRectangle(119, 109, 102, 32, BORDER);
     DrawRectangle(120, 110, 100, 30, WHITE);
 
-    DrawRectangle(9, 159, 102, 32, BLACK);
+    DrawRectangle(9, 159, 102, 32, BORDER);
     if(MouseButtonPressed(10, 160, 110, 190))
-        DrawRectangle(10, 160, 100, 30, GRAY);
+        DrawRectangle(10, 160, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 160, 100, 30, LIGHTGRAY);
-    DrawText("Delete", 60 - MeasureText("Delete", 20) / 2, 165, 20, BLACK);
+        DrawRectangle(10, 160, 100, 30, HOVERED);
+    DrawText("Delete", 60 - MeasureText("Delete", 20) / 2, 165, 20, TEXT);
 
-    DrawRectangle(119, 159, 102, 32, BLACK);
+    DrawRectangle(119, 159, 102, 32, BORDER);
     DrawRectangle(120, 160, 100, 30, WHITE);
 
-    DrawRectangle(9, 209, 102, 32, BLACK);
+    DrawRectangle(9, 209, 102, 32, BORDER);
     if(MouseButtonPressed(10, 210, 110, 240))
-        DrawRectangle(10, 210, 100, 30, GRAY);
+        DrawRectangle(10, 210, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 210, 100, 30, LIGHTGRAY);
-    DrawText("Find", 60 - MeasureText("Find", 20) / 2, 215, 20, BLACK);
+        DrawRectangle(10, 210, 100, 30, HOVERED);
+    DrawText("Find", 60 - MeasureText("Find", 20) / 2, 215, 20, TEXT);
 
-    DrawRectangle(119, 209, 102, 32, BLACK);
+    DrawRectangle(119, 209, 102, 32, BORDER);
     DrawRectangle(120, 210, 100, 30, WHITE);
 
-    DrawRectangle(9, 259, 102, 32, BLACK);
+    DrawRectangle(9, 259, 102, 32, BORDER);
     if(MouseButtonPressed(10, 260, 110, 290))
-        DrawRectangle(10, 260, 100, 30, GRAY);
+        DrawRectangle(10, 260, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 260, 100, 30, LIGHTGRAY);
-    DrawText("Undo", 60 - MeasureText("Undo", 20) / 2, 265, 20, BLACK);
+        DrawRectangle(10, 260, 100, 30, HOVERED);
+    DrawText("Undo", 60 - MeasureText("Undo", 20) / 2, 265, 20, TEXT);
 
-    DrawRectangle(119, 259, 102, 32, BLACK);
+    DrawRectangle(119, 259, 102, 32, BORDER);
     if(MouseButtonPressed(120, 260, 220, 290))
-        DrawRectangle(120, 260, 100, 30, GRAY);
+        DrawRectangle(120, 260, 100, 30, BUTTON);
     else
-        DrawRectangle(120, 260, 100, 30, LIGHTGRAY);
-    DrawText("Redo", 170 - MeasureText("Redo", 20) / 2, 265, 20, BLACK);
+        DrawRectangle(120, 260, 100, 30, HOVERED);
+    DrawText("Redo", 170 - MeasureText("Redo", 20) / 2, 265, 20, TEXT);
 
     DrawTree();
 
@@ -671,6 +672,11 @@ void TREE_INTERACT() {
                 Number.clear();
                 CurrentCursor = 0;
             }
+            else if(MouseButtonPressed(120, 210, 220, 240)) {
+                CurrentButton = FINDBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
             else if(MouseButtonPressed(10, 260, 110, 290)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
@@ -698,6 +704,11 @@ void TREE_INTERACT() {
             }
             else if(MouseButtonPressed(120, 160, 220, 190)) {
                 CurrentButton = DELETEBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
+            else if(MouseButtonPressed(120, 210, 220, 240)) {
+                CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
@@ -733,6 +744,11 @@ void TREE_INTERACT() {
                 Number.clear();
                 CurrentCursor = 0;
             }
+            else if(MouseButtonPressed(120, 210, 220, 240)) {
+                CurrentButton = FINDBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
             else if(MouseButtonPressed(10, 260, 110, 290)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
@@ -760,6 +776,11 @@ void TREE_INTERACT() {
             }
             else if(S.UpdateSelectedNode(S.root))
                 CurrentButton = NULLBUTTON;
+            else if(MouseButtonPressed(120, 210, 220, 240)) {
+                CurrentButton = FINDBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
             else if(MouseButtonPressed(10, 260, 110, 290)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
@@ -787,6 +808,11 @@ void TREE_INTERACT() {
             }
             else if(S.UpdateSelectedNode(S.root))
                 CurrentButton = NULLBUTTON;
+            else if(MouseButtonPressed(120, 210, 220, 240)) {
+                CurrentButton = FINDBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
             else if(MouseButtonPressed(10, 260, 110, 290)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
@@ -803,6 +829,28 @@ void TREE_INTERACT() {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if(MouseButtonPressed(10, 210, 110, 240)) {
                 FindAVL();
+                CurrentButton = NULLBUTTON;
+            }
+            else if(MouseButtonPressed(10, 60, 110, 90))
+                CurrentButton = INITIALIZEBUTTON;
+            else if(MouseButtonPressed(120, 110, 220, 140)) {
+                CurrentButton = ADDBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
+            else if(MouseButtonPressed(120, 160, 220, 190)) {
+                CurrentButton = DELETEBUTTON;
+                Number.clear();
+                CurrentCursor = 0;
+            }
+            else if(S.UpdateSelectedNode(S.root))
+                CurrentButton = NULLBUTTON;
+            else if(MouseButtonPressed(10, 260, 110, 290)) {
+                S.PopHistory();
+                CurrentButton = NULLBUTTON;
+            }
+            else if(MouseButtonPressed(120, 260, 220, 290)) {
+                S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
         }
