@@ -3,6 +3,12 @@
 
 #include "declare.h"
 
+const Color BACKGROUND = {241, 231, 231, 255};
+const Color BUTTON = {77, 85, 204, 255};
+const Color HOVERED = {245, 162, 178, 255};
+const Color BORDER = {194, 24, 91, 255};
+const Color TEXT = {255, 254, 206, 255};
+
 typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON} ButtonState;
 ButtonState CurrentButton = NULLBUTTON;
 
