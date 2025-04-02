@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include "../header/LinkedList.h"
+#include "header/LinkedList.h"
 using namespace std;
 
 // Default constructor - empty linked list
@@ -117,6 +117,12 @@ void LinkedList::add(int x) {
         cur = cur->next;
     }
     cur->next = new Node(x);
+}
+
+void LinkedList::addAtHead(int x) {
+    Node* newNode = new Node(x);
+    newNode->next = head;
+    head = newNode;
 }
 
 // Add multiple values at once
