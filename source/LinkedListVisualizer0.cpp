@@ -315,6 +315,13 @@ void LinkedListVisualizer::drawPseudocodeBox() {
                 pseudocodeLines[7] = "   b. Link the last node to the new node.";
                 lineCount = 8;
                 break;
+            case Operation::ADD_HEAD:
+                pseudocodeLines[0] = "ADD AT HEAD Operation:\n";
+                pseudocodeLines[1] = "1. Create a new node.\n";
+                pseudocodeLines[2] = "2. Set the value of the new node.\n";
+                pseudocodeLines[3] = "3. Link the new node to the head.";
+                lineCount = 4;
+                break;
             case Operation::DELETE:
                 pseudocodeLines[0] = "DELETE Operation:\n";
                 pseudocodeLines[1] = "1. If the list is empty:\n";
@@ -335,6 +342,7 @@ void LinkedListVisualizer::drawPseudocodeBox() {
                 pseudocodeLines[4] = "2. Find the node at the given index:\n";
                 pseudocodeLines[5] = "   a. Traverse the list to the index.\n";
                 pseudocodeLines[6] = "3. Update the value of the node.";
+                lineCount = 7;
                 break;
             case Operation::SEARCH:
                 pseudocodeLines[0] = "SEARCH Operation:\n";
@@ -720,12 +728,18 @@ void LinkedListVisualizer::handleEvent() {
         if (IsKeyPressed(KEY_ENTER) && !inputString.empty()) {
             try {
                 int value = std::stoi(inputString);
+
+                // Create operation and add to history
+                Operation op(Operation::ADD_HEAD, 0, 0, value);
+                operationHistory.push_back(op);
+
                 list->addAtHead(value); // Add node at head
                 lastOperation = "Added node with value " + inputString + " at head";
 
                 // Update connection animations
                 connectionAnimations.insert(connectionAnimations.begin(), {0.0f, animationSpeed});
 
+                currentStep = static_cast<int>(operationHistory.size() - 1);
                 inputString.clear();
                 mode = MODE_NONE; // Reset mode
             } catch (std::exception& e) {
@@ -875,6 +889,9 @@ void LinkedListVisualizer::applyOperation(const Operation& op) {
         case Operation::ADD:
             list->add(op.newValue);
             break;
+        case Operation::ADD_HEAD:
+            list->addAtHead(op.newValue);
+            break;
         case Operation::DELETE:
             list->deleteAt(op.nodeIndex);
             break;
@@ -927,9 +944,9 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::ADD:
             if (index == currentOp.nodeIndex) {
                 // Highlight pseudocode lines based on animation progress
-                if (animationProgress < 0.2f) {
+                if (animationProgress < 0.3f) {
                     currentPseudocodeLine = 0; // "1. Create a new node."
-                } else if (animationProgress < 0.4f) {
+                } else if (animationProgress < 0.6f) {
                     currentPseudocodeLine = 1; // "2. Set the value of the new node."
                 } else if (animationProgress < 0.6f) {
                     currentPseudocodeLine = 2; // "3. If the list is empty:"
@@ -950,11 +967,34 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
             }
             break;
-            
+        case Operation::ADD_HEAD:
+            if (index == currentOp.nodeIndex) {
+                if (animationProgress < 0.25f) {
+                    currentPseudocodeLine = 0; 
+                } else if (animationProgress < 0.5f) {
+                    currentPseudocodeLine = 1; // "2. Set the value of the new node."
+                } else if (animationProgress < 0.65f) {
+                    currentPseudocodeLine = 2; // "3. Link the new node to the head."
+                } else if (animationProgress < 0.75f) {
+                    currentPseudocodeLine = 3;
+                }
+
+                // Fade in effect for new node
+                Color nodeColor = {245, 162, 178, 255};
+                float alpha = animationProgress;
+                DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
+                DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255} );
+                
+                const char* valueText = TextFormat("%d", node->val);
+                float textWidth = MeasureText(valueText, 20);
+                DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+            }
+            break;
+
         case Operation::DELETE:
             if (index == currentOp.nodeIndex) {
                 // Highlight pseudocode lines based on animation progress
-                if (animationProgress < 0.3f) {
+                if (animationProgress < 0.5f) {
                     currentPseudocodeLine = 3; // "2. Find the node at the given index:"
                 } else {
                     currentPseudocodeLine = 6; // "3. Remove the node:"
