@@ -23,7 +23,7 @@ enum VisualizerMode {
 };
 
 struct Operation {
-    enum Type { ADD, DELETE, UPDATE, SEARCH } type;
+    enum Type { ADD, ADD_HEAD, DELETE, UPDATE, SEARCH } type;
     int nodeIndex;
     int oldValue;
     int newValue;
