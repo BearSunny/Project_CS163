@@ -18,7 +18,8 @@ enum VisualizerMode {
     MODE_DELETE,
     MODE_UPDATE,
     MODE_SEARCH,
-    MODE_CREATE_FILE
+    MODE_CREATE_FILE,
+    MODE_ADD_HEAD
 };
 
 struct Operation {
@@ -63,8 +64,10 @@ private:
     deque<Operation> undoHistory;
     int currentStep;
     string lastOperation;
-    std::vector<std::pair<float, float>> connectionAnimations; // Pair of (arrowProgress, animationSpeed)
-    
+    std::vector<std::pair<float, float>> connectionAnimations;
+    bool showPseudocode;
+    int currentPseudocodeLine;
+
     void drawAnimationControls();
     void drawOperationInfo();
     void drawLinkedList(float startX, float startY, float offsetX);
@@ -72,6 +75,7 @@ private:
     void drawConnection(float startX, float startY, float offsetX, int connectionIndex);
     void drawInputBox();
     void drawHelpText();
+    void drawPseudocodeBox();
 
     void updateAnimation();
     void stepForward();
