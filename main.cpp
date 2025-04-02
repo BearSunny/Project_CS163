@@ -18,6 +18,7 @@ int main () {
     HashTablePage hashPage;
 
     while(!WindowShouldClose()) {
+        float deltaTime = GetFrameTime();
         switch(currentScreen) {
             case MAINMENU:
                 MAINMENU_INTERACT();
@@ -31,6 +32,7 @@ int main () {
                         currentScreen = MAINMENU;
                 }
                 hashPage.handleInput();
+                hashPage.update(deltaTime);
                 break;
             case TREE:
                 TREE_INTERACT();

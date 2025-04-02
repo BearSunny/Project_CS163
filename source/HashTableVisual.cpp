@@ -15,6 +15,7 @@ HashTablePage::HashTablePage() :
     newButton(10, 550, 180, 40, "New", 30),
     loadFileButton(10, 620, 180, 40, "Load File", 30),
     randomButton(10, 690, 180, 40, "Random", 30),
+    closeLoadFileButton((screenWidth - 400)/2.0 + 400, (screenHeight - 50)/2.0, 100, 50, "Close", 30),
     tableCreated(false)
 { 
     filePathInput.setActive(false);
@@ -135,6 +136,12 @@ void HashTablePage::handleInput()
             inputField.setActive(false);
         }
 
+        closeLoadFileButton.handleInput();
+        if (closeLoadFileButton.isClicked()) {
+            filePathInput.setActive(false);
+            inputField.setActive(true);
+        }
+
         return;
     }
 
@@ -243,8 +250,8 @@ void HashTablePage::handleInput()
 
 void HashTablePage::update(float deltaTime) 
 {
-    // Không cần update gì nhiều, 
-    // có thể thêm animation cho square nếu muốn
+    inputField.update(deltaTime);
+    filePathInput.update(deltaTime);
 }
 
 void HashTablePage::draw() 
@@ -265,6 +272,7 @@ void HashTablePage::draw()
         Vector2 textSize = MeasureTextEx(FONT, text, 35, 1);
         DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 375}, 35, 1, Color{87, 143, 202, 255});
         filePathInput.draw();
+        closeLoadFileButton.draw();
     }
 
     // Vẽ tiêu đề và hướng dẫn
@@ -292,7 +300,7 @@ void HashTablePage::draw()
             float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
             float cellY = startY + (i / 10)*(cellSize + 40);
 
-            Color cellColor = (i == highlightedIdx) ? YELLOW : RAYWHITE;
+            Color cellColor = (i == highlightedIdx) ? Color {255, 254, 206, 255} : RAYWHITE;
             DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
             DrawRectangleLines(cellX, cellY, cellSize, cellSize, BLACK);
 

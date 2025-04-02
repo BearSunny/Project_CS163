@@ -29,6 +29,7 @@ private:
     HashButton newButton;
     HashButton loadFileButton;
     HashButton randomButton;
+    BackHashButton closeLoadFileButton;
 
     bool tableCreated;  // Trạng thái đã tạo bảng hay chưa
 

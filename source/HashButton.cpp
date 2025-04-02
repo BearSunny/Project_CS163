@@ -40,16 +40,16 @@ void HashButton::draw() {
     DrawTextEx(FONT, text.c_str(), {textX, textY}, fontSize, 1, textColor);
 }
 
-// void BackHashButton::draw() {
-//     // Đổi màu nếu hovered
-//     Color currentColor = hovered ? hoverColor : idleColor;
-//     DrawRectangle(shape.x, shape.y, shape.width, shape.height, currentColor);
-//     DrawRectangleLines(shape.x, shape.y, shape.width, shape.height, BLACK);
+void BackHashButton::draw() {
+    // Đổi màu nếu hovered
+    Color currentColor = hovered ? hoverColor : idleColor;
+    DrawRectangle(shape.x, shape.y, shape.width, shape.height, currentColor);
+    DrawRectangleLinesEx(shape, 2, BLACK);
 
-//     // Tính toán để vẽ text chính giữa HashButton
-//     Vector2 textSize = MeasureTextEx(Global::mainFont, text.c_str(), fontSize, 1);
-//     float textX = shape.x + (shape.width - textSize.x) / 2.0f;
-//     float textY = shape.y + (shape.height - textSize.y) / 2.0f;
+    // Tính toán để vẽ text chính giữa HashButton
+    Vector2 textSize = MeasureTextEx(FONT, text.c_str(), fontSize, 1);
+    float textX = shape.x + (shape.width - textSize.x) / 2.0f;
+    float textY = shape.y + (shape.height - textSize.y) / 2.0f;
 
-//     DrawTextEx(Global::mainFont, text.c_str(), {textX, textY}, fontSize, 1, BLACK);
-// }
+    DrawTextEx(FONT, text.c_str(), {textX, textY}, fontSize, 1, BLACK);
+}

@@ -35,10 +35,10 @@ public:
     float getHeight() const { return shape.height; }
 };
 
-// class BackButton : public Button {
-// public: 
-//     BackButton(float x, float y, float width, float height, const std::string& str, int sizeFont): 
-//         Button(x, y, width, height, str, sizeFont){}
+class BackHashButton : public HashButton {
+public: 
+    BackHashButton(float x, float y, float width, float height, const std::string& str, int sizeFont): 
+        HashButton(x, y, width, height, str, sizeFont){}
 
-//     void draw() override;
-// };
+    void draw() override;
+};
