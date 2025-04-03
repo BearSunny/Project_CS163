@@ -27,6 +27,7 @@ public:
     void setHoverColor(Color color) { hoverColor = color; }
     void setBorderColor(Color color) { borderColor = color; }
     void setTextColor(Color color) { textColor = color; }
+    void setText(std::string textSet) { text = textSet; }
 
     // Thêm các phương thức getter
     float getX() const { return shape.x; }

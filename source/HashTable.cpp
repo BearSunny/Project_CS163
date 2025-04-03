@@ -13,8 +13,10 @@ int HashTable::getKeyAt(int idx) {
 }
 
 void HashTable::insert(int key) {
+    int idx = -1;
+    if (search(key, idx)) return;
     // Linear probing to avoid collision
-    int idx = key % TABLE_SIZE;
+    idx = key % TABLE_SIZE;
     while (occ[idx]) idx = (idx + 1) % TABLE_SIZE;
     table[idx] = key;
     occ[idx] = true;
@@ -22,10 +24,13 @@ void HashTable::insert(int key) {
 
 bool HashTable::search(int key, int &idx) {
     int cur = key % TABLE_SIZE;
+    int cnt = 0;    
 
     // No element in current index or the element does not match
     while (occ[cur] && table[cur] != key) { 
         cur = (cur + 1) % TABLE_SIZE;
+        cnt++;
+        if (cnt == TABLE_SIZE) return false;
     }
     if (occ[cur] && table[cur] == key) {
         idx = cur;
