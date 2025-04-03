@@ -9,7 +9,7 @@ const Color HOVERED = {245, 162, 178, 255};
 const Color BORDER = {194, 24, 91, 255};
 const Color TEXT = {255, 254, 206, 255};
 
-typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON} ButtonState;
+typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS} ButtonState;
 ButtonState CurrentButton = NULLBUTTON;
 
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -17,6 +17,7 @@ long long rand(long long l, long long r) {return rng() % (r - l + 1) + l;}
 
 string Number;
 int CurrentCursor = 0;
+bool STEPBYSTEPBUTTON = false;
 
 struct AVLTree {
     struct Node {
@@ -41,16 +42,22 @@ struct AVLTree {
     Node *root = nullptr;
     stack<Node*> History;
     stack<Node*> RedoHistory;
+    queue<tuple<Node*, Node*, int>> Q;
+    Node *prep;
 
     int height(Node *p);
     Node *rightrotate(Node *p);
     Node *leftrotate(Node *p);
     Node *insert(Node *p, int x);
+    Node *insertSBS(Node *parent, Node *prep, Node *p, int x);
     Node *MaxNode(Node *p);
     Node *remove(Node *p, int x);
     void clear(Node *&p);
+    void UpdateDepth(Node *p);
     void UpdatePosition(Node *p, int u, int v);
     void insert(int x);
+    void insertSBS(int x);
+    bool insertStepByStep();
     void remove(int x);
     void find(int x);
     void Draw(Node *p);
@@ -60,9 +67,10 @@ struct AVLTree {
     void PushHistory();
     void PopHistory();
     void PopRedoHistory();
-};
+} S;
 
 void InsertAVL();
+void InsertAVLSBS();
 void RemoveAVL();
 void FindAVL();
 void DrawTree();
