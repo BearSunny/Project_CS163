@@ -1,7 +1,5 @@
 #include "../header/treevisual.h"
 
-AVLTree S;
-
 int AVLTree::height(Node *p) {
     if(p == nullptr)
         return 0;
@@ -48,6 +46,42 @@ AVLTree::Node *AVLTree::insert(Node *p, int x) {
             p->right = rightrotate(p->right);
         if(height(p->right->right) - height(p->left) == 1)
             p = leftrotate(p);
+    }
+    return p;
+}
+
+AVLTree::Node *AVLTree::insertSBS(Node *parent, Node *prep, Node *p, int x) {
+    if(p == nullptr) {
+        Q.emplace(parent, nullptr, x);
+        p = new Node(x);
+        return p;
+    }
+    Q.emplace(parent, prep, 0);
+    if(p->data > x) {
+        p->left = insertSBS(prep, prep->left, p->left, x);
+        Q.emplace(parent, prep, 0);
+        p->depth = max(height(p->left), height(p->right)) + 1;
+        if(height(p->left->right) - height(p->right) == 1) {
+            p->left = leftrotate(p->left);
+            Q.emplace(prep, prep->left, 1);
+        }
+        if(height(p->left->left) - height(p->right) == 1) {
+            p = rightrotate(p);
+            Q.emplace(parent, prep, 2);
+        }
+    }
+    if(p->data < x) {
+        p->right = insertSBS(prep, prep->right, p->right, x);
+        Q.emplace(parent, prep, 0);
+        p->depth = max(height(p->left), height(p->right)) + 1;
+        if(height(p->right->left) - height(p->left) == 1) {
+            p->right = rightrotate(p->right);
+            Q.emplace(prep, prep->right, 2);
+        }
+        if(height(p->right->right) - height(p->left) == 1) {
+            p = leftrotate(p);
+            Q.emplace(parent, prep, 1);
+        }
     }
     return p;
 }
@@ -105,6 +139,14 @@ void AVLTree::clear(Node *&p) {
     p = nullptr;
 }
 
+void AVLTree::UpdateDepth(Node *p) {
+    if(p == nullptr)
+        return;
+    UpdateDepth(p->left);
+    UpdateDepth(p->right);
+    p->depth = max(height(p->left), height(p->right)) + 1;
+}
+
 void AVLTree::UpdatePosition(Node *p, int u, int v) {
     p->newx = u;
     p->newy = v;
@@ -125,6 +167,52 @@ void AVLTree::insert(int x) {
     PushHistory();
     root = insert(root, x);
     UpdatePosition(root, 1000, 100);
+}
+
+void AVLTree::insertSBS(int x) {
+    PushHistory();
+    Node *p = nullptr;
+    CopyData(p, root);
+    p = insertSBS(nullptr, root, p, x);
+    clear(p);
+}
+
+bool AVLTree::insertStepByStep() {
+    Node *parent = get<0>(Q.front());
+    Node *p = get<1>(Q.front());
+    int query = get<2>(Q.front());
+    Q.pop();
+    if(p == nullptr) {
+        p = new Node(query);
+        p->findselected = true;
+    }
+    else {
+        if(query == 0)
+            p->findselected = true;
+        else if(query == 1)
+            p = leftrotate(p);
+        else
+            p = rightrotate(p);
+    }
+    if(parent == nullptr)
+        root = p;
+    else {
+        if(parent->data > p->data)
+            parent->left = p;
+        else
+            parent->right = p;
+    }
+    UpdateDepth(root);
+    UpdatePosition(root, 1000, 100);
+    if(prep)
+        prep->findselected = false;
+    prep = p;
+    if(Q.empty()) {
+        prep->findselected = false;
+        prep = nullptr;
+        return false;
+    }
+    return true;
 }
 
 void AVLTree::remove(int x) {
@@ -267,6 +355,15 @@ void InsertAVL() {
     for(char c : Number)
         x = 10 * x + c - '0';
     S.insert(x);
+}
+
+void InsertAVLSBS() {
+    if(Number.empty())
+        return;
+    int x = 0;
+    for(char c : Number)
+        x = 10 * x + c - '0';
+    S.insertSBS(x);
 }
 
 void RemoveAVL() {
@@ -484,6 +581,16 @@ void DisplayTree() {
         DrawRectangle(120, 260, 100, 30, HOVERED);
     DrawText("Redo", 170 - MeasureText("Redo", 20) / 2, 265, 20, TEXT);
 
+    DrawRectangle(9, 309, 212, 32, BORDER);
+    if(MouseButtonPressed(10, 310, 220, 340))
+        DrawRectangle(10, 310, 210, 30, BUTTON);
+    else
+        DrawRectangle(10, 310, 210, 30, HOVERED);
+    if(STEPBYSTEPBUTTON)
+        DrawText("Step by step: ON", 115 - MeasureText("Step by step: ON", 20) / 2, 315, 20, TEXT);
+    else
+        DrawText("Step by step: OFF", 115 - MeasureText("Step by step: OFF", 20) / 2, 315, 20, TEXT);    
+
     DrawTree();
 
     if(CurrentButton == INITIALIZEBUTTON)
@@ -638,6 +745,8 @@ void TREE_INTERACT() {
                 S.PopHistory();
             else if(MouseButtonPressed(120, 260, 220, 290))
                 S.PopRedoHistory();
+            else if(MouseButtonPressed(10, 310, 220, 340))
+                STEPBYSTEPBUTTON ^= true;
             S.UpdateSelectedNode(S.root);
         }
     }
@@ -685,6 +794,10 @@ void TREE_INTERACT() {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(10, 310, 220, 340)) {
+                STEPBYSTEPBUTTON ^= true;
+                CurrentButton = NULLBUTTON;
+            }
         }
     }
     else if(CurrentButton == KEYBOARDBUTTON) {
@@ -718,6 +831,10 @@ void TREE_INTERACT() {
             }
             else if(MouseButtonPressed(120, 260, 220, 290)) {
                 S.PopRedoHistory();
+                CurrentButton = NULLBUTTON;
+            }
+            else if(MouseButtonPressed(10, 310, 220, 340)) {
+                STEPBYSTEPBUTTON ^= true;
                 CurrentButton = NULLBUTTON;
             }
         }
@@ -757,6 +874,10 @@ void TREE_INTERACT() {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(10, 310, 220, 340)) {
+                STEPBYSTEPBUTTON ^= true;
+                CurrentButton = NULLBUTTON;
+            }
         }
         else
             UpdatePath();
@@ -764,8 +885,14 @@ void TREE_INTERACT() {
     else if(CurrentButton == ADDBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if(MouseButtonPressed(10, 110, 110, 140)) {
-                InsertAVL();
-                CurrentButton = NULLBUTTON;
+                if(STEPBYSTEPBUTTON) {
+                    InsertAVLSBS();
+                    CurrentButton = ADDSBS;
+                } 
+                else {
+                    InsertAVL();
+                    CurrentButton = NULLBUTTON;
+                }
             }
             else if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
@@ -789,6 +916,8 @@ void TREE_INTERACT() {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(10, 310, 220, 340))
+                STEPBYSTEPBUTTON ^= true;
         }
         else
             UpdateNumber(true);
@@ -821,6 +950,8 @@ void TREE_INTERACT() {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(10, 310, 220, 340))
+                STEPBYSTEPBUTTON ^= true;
         }
         else
             UpdateNumber(true);
@@ -853,8 +984,15 @@ void TREE_INTERACT() {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(10, 310, 220, 340))
+                STEPBYSTEPBUTTON ^= true;
         }
         else
             UpdateNumber(true);
+    }
+    else if(CurrentButton == ADDSBS) {
+        if(IsKeyPressed(KEY_RIGHT))
+            if(!S.insertStepByStep())
+                CurrentButton = NULLBUTTON;
     }
 }
