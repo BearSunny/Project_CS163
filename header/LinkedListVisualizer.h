@@ -67,6 +67,7 @@ private:
     std::vector<std::pair<float, float>> connectionAnimations;
     bool showPseudocode;
     int currentPseudocodeLine;
+    float pseudocodeProgress;
 
     void drawAnimationControls();
     void drawOperationInfo();
