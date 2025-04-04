@@ -52,7 +52,7 @@ LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
     manualInputValues(), showFileDialog(false), filePath{0}, fileError(false),
     fileErrorMessage(""), arrowProgress(0.0f), isPaused(false), animationSpeed(1.0f),
     animationProgress(0.0f), operationHistory(), undoHistory(), currentStep(0),
-    lastOperation(""), connectionAnimations(), showPseudocode(false), currentPseudocodeLine(0) {}
+    lastOperation(""), connectionAnimations(), showPseudocode(false), currentPseudocodeLine(0), pseudocodeProgress(0.0f) {}
 
 Operation::Operation(Type t, int idx, int oldVal, int newVal)
     : type(t), nodeIndex(idx), oldValue(oldVal), newValue(newVal) {}
@@ -290,9 +290,9 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
 
 void LinkedListVisualizer::drawPseudocodeBox() {
     int boxWidth = GetScreenWidth() * 0.4f;
-    int boxHeight = GetScreenHeight() * 0.3f;
-    int boxX = (GetScreenWidth() - boxWidth) / 2;
-    int boxY = GetScreenHeight() * 0.7f; // Position the box below the linked list
+    int boxHeight = GetScreenHeight() * 0.2f;
+    int boxX = GetScreenWidth() * 0.55f;
+    int boxY = GetScreenHeight() * 0.9f - boxHeight - 10; // Position the box below the linked list
 
     // Draw the box
     DrawRectangle(boxX, boxY, boxWidth, boxHeight, (Color){245, 162, 178, 255});
@@ -325,14 +325,13 @@ void LinkedListVisualizer::drawPseudocodeBox() {
             case Operation::DELETE:
                 pseudocodeLines[0] = "DELETE Operation:\n";
                 pseudocodeLines[1] = "1. If the list is empty:\n";
-                pseudocodeLines[2] = "   a. Print 'List is empty.'\n";
-                pseudocodeLines[3] = "   b. Exit.\n";
-                pseudocodeLines[4] = "2. Find the node at the given index:\n";
-                pseudocodeLines[5] = "   a. Traverse the list to the index.\n";
-                pseudocodeLines[6] = "   b. Keep track of the previous node.\n";
-                pseudocodeLines[7] = "3. Remove the node:\n";
-                pseudocodeLines[8] = "   a. Update the previous node's link to skip the target node.\n";
-                lineCount = 9;
+                pseudocodeLines[2] = "   b. Exit.\n";
+                pseudocodeLines[3] = "2. Find the node at the given index:\n";
+                pseudocodeLines[4] = "   a. Traverse the list to the index.\n";
+                pseudocodeLines[5] = "   b. Keep track of the previous node.\n";
+                pseudocodeLines[6] = "3. Remove the node:\n";
+                pseudocodeLines[7] = "   a. Update the previous node's link to skip the target node.\n";
+                lineCount = 8;
                 break;
             case Operation::UPDATE:
                 pseudocodeLines[0] = "UPDATE Operation:\n";
@@ -347,15 +346,14 @@ void LinkedListVisualizer::drawPseudocodeBox() {
             case Operation::SEARCH:
                 pseudocodeLines[0] = "SEARCH Operation:\n";
                 pseudocodeLines[1] = "1. If the list is empty:\n";
-                pseudocodeLines[2] = "   a. Print 'List is empty.'\n";
-                pseudocodeLines[3] = "   b. Exit.\n";
-                pseudocodeLines[4] = "2. Traverse the list:\n";
-                pseudocodeLines[5] = "   a. Compare each node's value with the target value.\n";
-                pseudocodeLines[6] = "3. If found:\n";
-                pseudocodeLines[7] = "   a. Print 'Value found at index X.'\n";
-                pseudocodeLines[8] = "4. Else:\n";
-                pseudocodeLines[9] = "   a. Print 'Value not found.'";
-                lineCount = 10;
+                pseudocodeLines[2] = "   b. Exit.\n";
+                pseudocodeLines[3] = "2. Traverse the list:\n";
+                pseudocodeLines[4] = "   a. Compare each node's value with the target value.\n";
+                pseudocodeLines[5] = "3. If found:\n";
+                pseudocodeLines[6] = "   a. Print 'Value found at index X.'\n";
+                pseudocodeLines[7] = "4. Else:\n";
+                pseudocodeLines[8] = "   a. Print 'Value not found.'";
+                lineCount = 9;
                 break;
             default:
                 pseudocodeLines[0] = "No operation selected.";
@@ -370,10 +368,10 @@ void LinkedListVisualizer::drawPseudocodeBox() {
     // Draw the pseudocode text
     int textX = boxX + 20;
     int textY = boxY + 20;
-    int lineSpacing = 20;
+    int lineSpacing = 18;
     for (int i = 0; i < lineCount; i++) {
         Color textColor = (i == currentPseudocodeLine) ? (Color){208, 135, 112, 255} : (Color){255, 254, 206, 255}; // Highlight current line
-        DrawText(pseudocodeLines[i], textX, textY + i * lineSpacing, 18, textColor);
+        DrawText(pseudocodeLines[i], textX, textY + i * lineSpacing, 16, textColor);
     }
 }
 
@@ -389,7 +387,7 @@ void LinkedListVisualizer::drawAnimationControls() {
     }
     
     // Undo button
-    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "<")) {
+    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "U")) {
         if (!operationHistory.empty()) {
             Operation lastOp = operationHistory.back();
             operationHistory.pop_back();
@@ -410,7 +408,7 @@ void LinkedListVisualizer::drawAnimationControls() {
     }
     
     // Redo button
-    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, ">")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, "R")) {
         if (!undoHistory.empty()) {
             // Redo the last undone operation
             Operation lastUndo = undoHistory.back();
@@ -435,10 +433,16 @@ void LinkedListVisualizer::drawAnimationControls() {
     animationSpeed = GuiSlider(sliderRect, "0.5x", "2.0x", animationSpeed, 0.5f, 2.0f);
 
     // Toggle pseudocode box button (lower-right corner)
-    float toggleButtonX = sliderX + sliderWidth + 20; // Position to the right of the slider
-    float toggleButtonY = controlsY - 60;            // Slightly above the slider
+    float boxWidth = GetScreenWidth() * 0.4f;
+    float boxHeight = GetScreenHeight() * 0.2f;
+    float boxX = GetScreenWidth() * 0.55f;
+    float boxY = GetScreenHeight() * 0.9f - boxHeight - 10; // Position the box below the linked list
+    float toggleButtonWidth = 40;
+    float toggleButtonHeight = 40;
+    float toggleButtonX = boxX + boxWidth + 20; // Positioned to the right of the pseudocode box
+    float toggleButtonY = boxY + (boxHeight - toggleButtonHeight) / 2; // Vertically aligned with the pseudocode box
     const char* toggleButtonText = showPseudocode ? ">" : "<";
-    if (DrawButton(toggleButtonX, toggleButtonY, buttonWidth, buttonWidth, toggleButtonText)) {
+    if (DrawButton(toggleButtonX, toggleButtonY, toggleButtonWidth, toggleButtonHeight, toggleButtonText)) {
         showPseudocode = !showPseudocode; // Toggle the pseudocode box
     }
 }
@@ -875,11 +879,17 @@ void LinkedListVisualizer::handleEvent() {
 
 void LinkedListVisualizer::updateAnimation() {    
     if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size())) {
-        animationProgress += GetFrameTime() * animationSpeed;
+        if (!isPaused) {
+            animationProgress += GetFrameTime() * animationSpeed;
+            pseudocodeProgress += GetFrameTime() * (animationSpeed * 0.2f);
+        }
         if (animationProgress >= 1.0f) {
             animationProgress = 0.0f;
             // Don't automatically advance to next step
             // This gives users time to see the completed operation
+        }
+        if (pseudocodeProgress >= 1.0f) {
+            pseudocodeProgress = 0.0f;
         }
     }
 }
@@ -909,6 +919,9 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
         case Operation::ADD:
             list->deleteAt(op.nodeIndex);
             break;
+        case Operation::ADD_HEAD:
+            list->addAtHead(op.nodeIndex);
+            break;
         case Operation::DELETE:
             if (op.nodeIndex <= list->getSize()) {
                 list->insertAt(op.nodeIndex, op.oldValue);
@@ -927,6 +940,7 @@ void LinkedListVisualizer::stepForward() {
     if (currentStep < static_cast<int>(operationHistory.size())) {
         currentStep++;
         animationProgress = 0.0f; // Reset animation progress
+        pseudocodeProgress = 0.0f;
     }
 }
 
@@ -934,6 +948,7 @@ void LinkedListVisualizer::stepBackward() {
     if (currentStep > 0) {
         currentStep--;
         animationProgress = 0.0f; // Reset animation progress
+        pseudocodeProgress = 0.0f;
     }
 }
 
@@ -944,16 +959,16 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::ADD:
             if (index == currentOp.nodeIndex) {
                 // Highlight pseudocode lines based on animation progress
-                if (animationProgress < 0.3f) {
+                if (pseudocodeProgress < 0.3f) {
                     currentPseudocodeLine = 0; // "1. Create a new node."
-                } else if (animationProgress < 0.6f) {
+                } else if (pseudocodeProgress < 0.6f) {
                     currentPseudocodeLine = 1; // "2. Set the value of the new node."
-                } else if (animationProgress < 0.6f) {
+                } else if (pseudocodeProgress < 0.75f) {
                     currentPseudocodeLine = 2; // "3. If the list is empty:"
-                } else if (animationProgress < 0.8f) {
+                } else if (pseudocodeProgress < 0.85f) {
                     currentPseudocodeLine = 5; // "4. Else: Traverse to the last node."
                 } else {
-                    currentPseudocodeLine = 6; // "   b. Link the last node to the new node."
+                    currentPseudocodeLine = 7; // "   b. Link the last node to the new node."
                 }
 
                 // Fade in effect for new node
@@ -969,13 +984,13 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
             break;
         case Operation::ADD_HEAD:
             if (index == currentOp.nodeIndex) {
-                if (animationProgress < 0.25f) {
+                if (pseudocodeProgress < 0.25f) {
                     currentPseudocodeLine = 0; 
-                } else if (animationProgress < 0.5f) {
+                } else if (pseudocodeProgress < 0.5f) {
                     currentPseudocodeLine = 1; // "2. Set the value of the new node."
-                } else if (animationProgress < 0.65f) {
+                } else if (pseudocodeProgress < 0.65f) {
                     currentPseudocodeLine = 2; // "3. Link the new node to the head."
-                } else if (animationProgress < 0.75f) {
+                } else if (pseudocodeProgress < 0.75f) {
                     currentPseudocodeLine = 3;
                 }
 
@@ -994,10 +1009,12 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::DELETE:
             if (index == currentOp.nodeIndex) {
                 // Highlight pseudocode lines based on animation progress
-                if (animationProgress < 0.5f) {
+                if (pseudocodeProgress < 0.25f) {
                     currentPseudocodeLine = 3; // "2. Find the node at the given index:"
-                } else {
+                } else if (pseudocodeProgress < 0.5f) {
                     currentPseudocodeLine = 6; // "3. Remove the node:"
+                } else {
+                    currentPseudocodeLine = 7;
                 }
 
                 // Fade out effect for deleted node
@@ -1015,7 +1032,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::UPDATE:
             if (index == currentOp.nodeIndex) {
                 // Highlight pseudocode lines based on animation progress
-                if (animationProgress < 0.5f) {
+                if (pseudocodeProgress < 0.5f) {
                     currentPseudocodeLine = 4; // "2. Find the node at the given index:"
                 } else {
                     currentPseudocodeLine = 6; // "3. Update the value of the node."
@@ -1034,10 +1051,18 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         case Operation::SEARCH:
             if (node->val == currentOp.newValue) {
                 // Highlight pseudocode lines based on animation progress
-                if (animationProgress < 0.5f) {
-                    currentPseudocodeLine = 4; // "2. Traverse the list:"
+                if (pseudocodeProgress < 0.25f) {
+                    currentPseudocodeLine = 3; // "2. Traverse the list:"
+                } else if (pseudocodeProgress < 0.45f) {
+                    currentPseudocodeLine = 4; // "3. If found: Print 'Value found at index X.'"
+                } else if (pseudocodeProgress < 0.65f) {
+                    currentPseudocodeLine = 5;
+                } else if (pseudocodeProgress < 0.78f) {
+                    currentPseudocodeLine = 6;
+                } else if (pseudocodeProgress < 0.95f) {
+                    currentPseudocodeLine = 7;
                 } else {
-                    currentPseudocodeLine = 6; // "3. If found: Print 'Value found at index X.'"
+                    currentPseudocodeLine = 8;
                 }
 
                 // Pulse effect for found node
