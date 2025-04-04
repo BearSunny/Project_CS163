@@ -1,5 +1,8 @@
 #include "../header/HashTable.h"
 
+#include <fstream>
+#include <sstream>
+
 int HashTable::getTableSize() {
     return TABLE_SIZE;
 }
@@ -13,11 +16,15 @@ int HashTable::getKeyAt(int idx) {
 }
 
 void HashTable::insert(int key) {
-    int idx = -1;
+    int idx = -1, cnt = 0;
     if (search(key, idx)) return;
     // Linear probing to avoid collision
     idx = key % TABLE_SIZE;
-    while (occ[idx]) idx = (idx + 1) % TABLE_SIZE;
+    while (occ[idx]) {
+        idx = (idx + 1) % TABLE_SIZE;
+        cnt++;
+        if (cnt == TABLE_SIZE) return;
+    }
     table[idx] = key;
     occ[idx] = true;
 }

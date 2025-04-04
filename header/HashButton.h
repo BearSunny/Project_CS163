@@ -43,3 +43,21 @@ public:
 
     void draw() override;
 };
+
+class CircleSlideButton {
+private:
+    float x;
+    float y;
+    float radius;
+    bool hovered;
+
+public:
+    CircleSlideButton(float x, float y, float radius);
+
+    void handleInput();
+    bool isHold();
+    virtual void draw();
+
+    float getX() { return x; }
+    void setX(float x) { this->x = x; }
+};

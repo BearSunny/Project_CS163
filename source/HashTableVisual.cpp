@@ -5,6 +5,7 @@ HashTablePage::HashTablePage() :
     filePathInput((screenWidth - 400)/2, (screenHeight - 50)/2, 400, 50),
     table(nullptr),
     startX(450), startY(170), offsetX(30),
+    cellSize(80),
     highlightedIdx(-1),
 
     createButton(10, 170, 250, 40, "Create Table", 30), // Modidy the coordinate after
@@ -16,10 +17,12 @@ HashTablePage::HashTablePage() :
     loadFileButton(10, 470, 250, 40, "Load File", 30),
     randomButton(10, 520, 250, 40, "Random", 30),
     closeLoadFileButton((screenWidth - 400)/2.0 + 400, (screenHeight - 50)/2.0, 100, 50, "Close", 30),
+    speedSlider(1200 + 30/2 + (300 - 2*15)/4, 100 + 30/2, 30/2),
 
     stepModeButton(10, 570, 250, 40, "Run Step by Step", 30),
     OnOffButton(270, 570, 100, 40, "Off", 30),
     browseButton(270, 470, 100, 40, "Browse", 30),
+    playButton(380, 570, 100, 40, "Pause", 30),
 
     tableCreated(false),
     stepModeOn(false),
@@ -31,12 +34,15 @@ HashTablePage::HashTablePage() :
     filePathInput.setActive(false);
 
     codeLinesForInsert = {
-        "int idx = -1;",
+        "int idx = -1, cnt = 0;",
         "if (search(key, idx))", 
         "   return;",
         "idx = key % TABLE_SIZE;",
-        "while (occ[idx])",
+        "while (occ[idx]) {",
         "   idx = (idx + 1) % TABLE_SIZE;",
+        "   cnt++;",
+        "   if (cnt == TABLE_SIZE) return;",
+        "}",
         "table[idx] = key;",
         "occ[idx] = true;"
     };
@@ -98,6 +104,34 @@ void HashTablePage::handleInput()
         inputField.setActive(true);
     } 
 
+    browseButton.handleInput();
+    // if (browseButton.isClicked()) {
+    //     const char* filterPatterns[1] = { "*.txt" };
+
+    //     // Hiển thị hộp thoại mở file
+    //     const char* filePath = tinyfd_openFileDialog(
+    //         "Chọn tệp cần mở",    // Tiêu đề của hộp thoại
+    //         "",                   // Đường dẫn mặc định (để trống nếu không có)
+    //         1,                    // Số lượng filter
+    //         filterPatterns,       // Mảng các filter
+    //         "Text files (*.txt)", // Mô tả filter
+    //         0                     // Kiểu hộp thoại (0: mở file, 1: mở nhiều file)
+    //     );
+        
+    //     // Kiểm tra nếu người dùng đã chọn file
+    //     if (filePath) {
+    //         if (table == nullptr) {           // Tránh gây crash khi gọi loadHashTableFromFile()
+    //             table = new HashTable(1);     // Size tạm, sẽ được cập nhật khi load file
+    //         }
+    //         table->loadHashTableFromFile(std::string(filePath));
+    //         tableCreated = true;
+    //         highlightedIdx = -1;
+    //         filePathInput.setActive(false);
+    //     } else {
+    //         TraceLog(LOG_WARNING, "Cannot open the file!");
+    //     }
+    // }
+
     // Chỉ xử lý 1 trong 2 trước
     if (filePathInput.IsActive()) { 
         filePathInput.handleInput();
@@ -147,7 +181,6 @@ void HashTablePage::handleInput()
         }
     }
     else {
-        browseButton.handleInput();
         inputField.handleInput();
     }
 
@@ -199,6 +232,7 @@ void HashTablePage::handleInput()
     clearButton.handleInput();
     newButton.handleInput();
     OnOffButton.handleInput();
+    playButton.handleInput();
 
     if (OnOffButton.isClicked()) {
         stepModeOn = !stepModeOn;
@@ -207,6 +241,7 @@ void HashTablePage::handleInput()
         } else {
             OnOffButton.setText("Off");
         }
+        highlightedIdx = -1;
     }
 
     if (stepModeOn) {
@@ -248,21 +283,21 @@ void HashTablePage::handleInput()
                 }
             } 
             if (searchStepModeOn) {
-                
+                // Don't need to do anything
             }
 
             if (currentStep > 0) {
                 currentStep--;
             }
         }
-    }
 
-    // Should be handled after creation
-    insertButton.handleInput(); 
-    deleteButton.handleInput();
-    searchButton.handleInput();
-    clearButton.handleInput();
-    newButton.handleInput();
+        // Xử lý thanh speedSlider
+        speedSlider.handleInput();
+        if (speedSlider.isHold()) {
+            speedSlider.setX(Clamp(GetMousePosition().x, 1200 + 30/2, 1500 - 30/2)); 
+            playSpeed = ((speedSlider.getX() - (1200 + 30/2)) / (300 - 2*15)) * playSpeedMax;
+        }
+    }
 
     if (insertButton.isClicked() || IsKeyPressed(KEY_ENTER))
     {
@@ -368,8 +403,12 @@ void HashTablePage::handleInput()
         }
     }
 
-    if (browseButton.isClicked()) {
-
+    if (playButton.isClicked()) {
+        isPlaying = !isPlaying;
+        if (isPlaying)
+            playButton.setText("Play");
+        else
+            playButton.setText("Pause");
     }
 }
 
@@ -377,6 +416,30 @@ void HashTablePage::update(float deltaTime)
 {
     inputField.update(deltaTime);
     filePathInput.update(deltaTime);
+
+    if (stepModeOn && isPlaying && steps.size() > 0) 
+    {
+        animationProgress += playSpeed * deltaTime;
+        if (animationProgress >= 1.0f) {
+            animationProgress = 0.0f;
+
+            if (currentStep < (int)steps.size() - 1) {
+                currentStep++;
+                if (insertStepModeOn && currentStep == (int)steps.size() - 2) 
+                    table->insert(pendingInsertKey);
+                if (deleteStepModeOn && currentStep == (int)steps.size() - 2) {
+                    int temp = -1;
+                    table->remove(pendingInsertKey, temp);
+                }
+                // Nothing to do with searchStepModeOn
+            } 
+        }
+        progressValue = (float)currentStep / (steps.size() - 1) + (animationProgress / (steps.size() - 1));
+    } 
+    else if (stepModeOn && !isPlaying && steps.size() > 0) 
+    {
+        progressValue = (float)currentStep / (steps.size() - 1);
+    }
 }
 
 void HashTablePage::draw() 
@@ -395,6 +458,7 @@ void HashTablePage::draw()
     stepModeButton.draw();
     OnOffButton.draw();
     browseButton.draw();
+    playButton.draw();
 
     if (filePathInput.IsActive()) {
         const char *text = "Drag and drop input file or type the file path into the below box";
@@ -419,75 +483,124 @@ void HashTablePage::draw()
         DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, Color{87, 143, 202, 255});
     }
 
-    // Nếu bảng đã được tạo, biểu diễn HashTable dưới dạng các ô vuông
-    if (tableCreated && table != nullptr)
-    {
-        if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
-            highlightedIdx = steps[currentStep].highlightedIndex;
-        }
+   // Vẽ trước các ô vuông (Layer 1)
+   if (tableCreated && table != nullptr)
+   {
+       int tableSize = table->getTableSize();
+       for (int i = 0; i < tableSize; i++) // Traverse the whole table
+       {
+           float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
+           float cellY = startY + (i / 10)*(cellSize + 40);
 
-        int tableSize = table->getTableSize();
-        const int cellSize = 80;  
-        for (int i = 0; i < tableSize; i++) // Traverse the whole table
-        {
-            float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
-            float cellY = startY + (i / 10)*(cellSize + 40);
+           Color cellColor = (i == highlightedIdx) ? Color {255, 254, 206, 255} : RAYWHITE;
+           DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
+           DrawRectangleLines(cellX, cellY, cellSize, cellSize, BLACK);
+       }
+   }
 
-            Color cellColor = (i == highlightedIdx) ? Color {255, 254, 206, 255} : RAYWHITE;
-            DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
-            DrawRectangleLines(cellX, cellY, cellSize, cellSize, BLACK);
+   // Vẽ ô highlighted với animation chuyển động (nếu đang ở chế độ stepModeOn) (Layer 2)
+   if (tableCreated && table != nullptr && stepModeOn && steps.size() > 0) {
+       int currentIndex = steps[currentStep].highlightedIndex;
+       Vector2 currentPos = {startX + (currentIndex%10 + 0.5f)*(cellSize + offsetX), startY + (currentIndex/10)*(cellSize + 40)};
+       // Tính vị trí của ô tiếp theo nếu có bước kế tiếp
+       Vector2 targetPos = currentPos;
+       if (currentStep < (int)steps.size() - 1) {
+           int nextIndex = steps[currentStep + 1].highlightedIndex;
+           targetPos = {startX + (nextIndex%10 + 0.5f)*(cellSize + offsetX), startY + (nextIndex/10)*(cellSize + 40)};
+       }
+       // Vị trí theo animationProgress 
+       Vector2 animPos = {
+           currentPos.x + (targetPos.x - currentPos.x) * animationProgress,
+           currentPos.y + (targetPos.y - currentPos.y) * animationProgress
+       };
+       // Vẽ ô highlight tại vị trí animPos (cùng kích thước ô vuông)
+       DrawRectangle(animPos.x, animPos.y, 80, 80, Color{255, 254, 206, 255});
+       DrawRectangleLines(animPos.x, animPos.y, 80, 80, RED);
+   }
 
-            if (table->isOccupied(i))
-            {
-                std::string keyStr = std::to_string(table->getKeyAt(i));
-                int fontSize = 25;
-                Vector2 textSizeKey = MeasureTextEx(FONT, keyStr.c_str(), fontSize, 1);
-                DrawTextEx(FONT, keyStr.c_str(), 
-                           Vector2{ cellX + (cellSize - textSizeKey.x) / 2, cellY + (cellSize - textSizeKey.y) / 2 },
-                           fontSize, 1, BLACK);
-            }
+   // Nếu bảng đã được tạo, vẽ key và index (Layer 3)
+   if (tableCreated && table != nullptr)
+   {
+       int tableSize = table->getTableSize();
+       for (int i = 0; i < tableSize; i++) // Traverse the whole table
+       {
+           float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
+           float cellY = startY + (i / 10)*(cellSize + 40);
 
-            std::string idxStr = std::to_string(i);
-            int idxFontSize = 20;
-            Vector2 idxTextSize = MeasureTextEx(FONT, idxStr.c_str(), idxFontSize, 1);
-            DrawTextEx(FONT, idxStr.c_str(), 
-                       Vector2{ cellX + (cellSize - idxTextSize.x) / 2, cellY + cellSize + 5 },
-                       idxFontSize, 1, BLACK);
-        }
-    }
+           if (table->isOccupied(i))
+           {
+               std::string keyStr = std::to_string(table->getKeyAt(i));
+               int fontSize = 25;
+               Vector2 textSizeKey = MeasureTextEx(FONT, keyStr.c_str(), fontSize, 1);
+               DrawTextEx(FONT, keyStr.c_str(), 
+                          Vector2{ cellX + (cellSize - textSizeKey.x) / 2, cellY + (cellSize - textSizeKey.y) / 2 },
+                          fontSize, 1, BLACK);
+           }
 
-    if (stepModeOn) {
-        DrawRectangle(0, 620, 450, screenHeight - 620, Color {248, 186, 200, 255});
-        DrawRectangleLines(0, 620, 450, screenHeight - 620, Color {194, 24, 91, 255});
+           std::string idxStr = std::to_string(i);
+           int idxFontSize = 20;
+           Vector2 idxTextSize = MeasureTextEx(FONT, idxStr.c_str(), idxFontSize, 1);
+           DrawTextEx(FONT, idxStr.c_str(), 
+                      Vector2{ cellX + (cellSize - idxTextSize.x) / 2, cellY + cellSize + 5 },
+                      idxFontSize, 1, BLACK);
+       }
+   }
 
-        // Nếu stepModeOn == true, highlight dòng code = steps[currentStep].codeLine
-        int highlightLine = -1;
-        if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
-            highlightLine = steps[currentStep].codeLine;
-        }
+   if (stepModeOn) {
+       DrawRectangle(0, 620, 450,screenHeight - 620, Color {248, 186, 200, 255});
+       DrawRectangleLines(0, 620, 450, screenHeight - 620, Color {194, 24, 91, 255});
 
-        // Vẽ từng dòng code
-        float lineHeight = 16.0f;
-        std::vector<std::string> curCodeLines;
-        if (insertStepModeOn)
-            curCodeLines = codeLinesForInsert;
-        if (deleteStepModeOn)
-            curCodeLines = codeLinesForDelete;
-        if (searchStepModeOn)
-            curCodeLines = codeLinesForSearch;
-        for (int i = 0; i < (int)curCodeLines.size(); i++) {
-            float lineY = 620 + 10 + i * lineHeight;
-            if (i == highlightLine) {
-                DrawRectangle(0, lineY, 450, lineHeight, Color {245, 162, 178, 255});
-            }
-            DrawTextEx(FONT, curCodeLines[i].c_str(), {5, lineY}, 16, 1, BLACK);
-        }
+       // Nếu stepModeOn == true, highlight dòng code = steps[currentStep].codeLine
+       int highlightLine = -1;
+       if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
+           highlightLine = steps[currentStep].codeLine;
+       }
 
-        // Nếu muốn vẽ mô tả step hiện tại
-        if (stepModeOn && currentStep < (int)steps.size()) {
-            DrawTextEx(FONT, steps[currentStep].description.c_str(), {5, screenHeight - 25}, 16, 1, RED);
-        }
-    }
+       // Vẽ từng dòng code
+       float lineHeight = 20.0f;
+       std::vector<std::string> curCodeLines;
+       if (insertStepModeOn)
+           curCodeLines = codeLinesForInsert;
+       if (deleteStepModeOn)
+           curCodeLines = codeLinesForDelete;
+       if (searchStepModeOn)
+           curCodeLines = codeLinesForSearch;
+       for (int i = 0; i < (int)curCodeLines.size(); i++) {
+           float lineY = 620 + 10 + i * lineHeight;
+           if (i == highlightLine) {
+               DrawRectangle(0, lineY, 450, lineHeight, Color {245, 162, 178, 255});
+           }
+           DrawTextEx(FONT, curCodeLines[i].c_str(), {5, lineY}, 20, 1, BLACK);
+       }
+
+       // Nếu muốn vẽ mô tả step hiện tại
+       if (stepModeOn && currentStep < (int)steps.size()) {
+           DrawTextEx(FONT, steps[currentStep].description.c_str(), {5, float(screenHeight) - 25}, 20, 1, RED);
+       }
+
+       // Vẽ thanh progressBar dọc 
+       int barWidth = 30;
+       int barHeight = screenHeight - 620; 
+       int barX = 450;
+       int barY = 620;
+
+       DrawRectangleLines(450, 620, 30, screenHeight - 620, Color {194, 24, 91, 255});
+
+       // Vẽ phần đã hoàn thành (filled) từ dưới lên
+       barHeight--;
+       int filledHeight = ((int)(barHeight * progressValue) > barHeight) ? barHeight : (int)(barHeight * progressValue);
+       // Vì progress bar chạy từ dưới lên nên vị trí y của phần filled sẽ là barY + (barHeight - filledHeight)
+       DrawRectangle(barX + 1, barY + 1 + (barHeight - filledHeight), barWidth - 2, filledHeight, Color{245, 162, 178, 255});
+
+       // Vẽ thanh playSpeed slider nằm ngang
+       int playSpeedWidth = MeasureTextEx(FONT, "Playing Speed", 30, 1).x;
+       DrawTextEx(FONT, "Playing Speed", {1200 + 300/2 - playSpeedWidth/2.0f, 50}, 30, 1, Color{87, 143, 202, 255});
+       DrawRectangleRounded({1200, 100, 300, 30}, 1.0f, 10, Color {248, 186, 200, 255});
+       DrawRectangleRoundedLines({1200, 100, 300, 30}, 1.0f, 10, Color {194, 24, 91, 255});
+
+       // Vẽ nút slider
+       speedSlider.draw();
+   }
 
     // EndDrawing();
 }
@@ -500,16 +613,17 @@ void HashTablePage::buildInsertSteps(int key) {
     int idx = key % table->getTableSize();
     Step s;
 
+    s.highlightedIndex = idx;
     s.codeLine = 0; 
-    s.description = "Initialize a dummy idx to serve for search().";
+    s.description = "Initialize cnt = 0!";
     steps.push_back(s);
 
     // Bước 1: Checking the existence
+    s.highlightedIndex = idx;
     s.codeLine = 1; 
     s.description = "Checking the existence...";
     steps.push_back(s);
-    int temp = -1;
-    if (table->search(key, temp)) {
+    if (table->search(key, idx)) {
         s.highlightedIndex = idx;
         s.codeLine = 2;
         s.description = "The key is already existed in the table!";
@@ -524,6 +638,7 @@ void HashTablePage::buildInsertSteps(int key) {
     steps.push_back(s);
 
     // Bước 3+: Vòng while
+    int cnt = 0;
     while (table->isOccupied(idx)) {
         // Mỗi vòng lặp => 1 bước
         s.highlightedIndex = idx;
@@ -538,29 +653,30 @@ void HashTablePage::buildInsertSteps(int key) {
         s.description = "Collision, so idx++ (Linear Probing)!";
         steps.push_back(s);
 
-        // // Bước 3c: cnt++
-        // s.highlightedIndex = idx;
-        // s.codeLine = 4;
-        // s.description = "Increment cnt!";
-        // steps.push_back(s);
+        // Bước 3c: cnt++
+        cnt++;
+        s.highlightedIndex = idx;
+        s.codeLine = 6;
+        s.description = "Increment cnt!";
+        steps.push_back(s);
 
-        // // Bước 3d: if (cnt == TABLE_SIZE) return false;
-        // if (cnt == table->getTableSize()) {
-        //     s.highlightedIndex = -1;
-        //     s.codeLine = 5;
-        //     s.description = "The table is full, key was not founded!";
-        //     steps.push_back(s);
-        //     return; // Kết thúc buildSteps
-        // }
+        // Bước 3d: if (cnt == TABLE_SIZE) return false;
+        if (cnt == table->getTableSize()) {
+            s.highlightedIndex = -1;
+            s.codeLine = 7;
+            s.description = "The table is full, key is not inserted!";
+            steps.push_back(s);
+            return; // Kết thúc buildSteps
+        }
     }
 
     s.highlightedIndex = idx;
-    s.codeLine = 6;
+    s.codeLine = 9;
     s.description = "Add key into the table!";
     steps.push_back(s);
     
     s.highlightedIndex = idx;
-    s.codeLine = 7;
+    s.codeLine = 10;
     s.description = "Set the occurence of key is true!";
     steps.push_back(s);
 }
@@ -595,6 +711,7 @@ void HashTablePage::buildDeleteSteps(int key) {
         steps.push_back(s);
     }
 
+    s.highlightedIndex = idx;
     s.codeLine = 4;
     s.description = "Check the last condition!";
     steps.push_back(s);
@@ -627,7 +744,7 @@ void HashTablePage::buildSearchSteps(int key) {
     
     int cnt = 0;
     // Bước 1: cnt = 0
-    s.highlightedIndex = idx;
+    s.highlightedIndex = -1;
     s.codeLine = 0; 
     s.description = "Initialize cnt = 0;";
     steps.push_back(s);
@@ -648,13 +765,13 @@ void HashTablePage::buildSearchSteps(int key) {
 
         // Bước 3b: idx = (idx + 1) % TABLE_SIZE;
         idx = (idx + 1) % table->getTableSize();
-        cnt++;
         s.highlightedIndex = idx;
         s.codeLine = 3; 
         s.description = "Collision, so idx++ (Linear Probing)!";
         steps.push_back(s);
 
         // Bước 3c: cnt++
+        cnt++;
         s.highlightedIndex = idx;
         s.codeLine = 4;
         s.description = "Increment cnt!";

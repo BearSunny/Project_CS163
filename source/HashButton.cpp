@@ -19,11 +19,7 @@ void HashButton::handleInput() {
 }
 
 bool HashButton::isClicked() {
-    if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        return true;
-    }
-    return false;
+    return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 }
 
 void HashButton::draw() {
@@ -52,4 +48,28 @@ void BackHashButton::draw() {
     float textY = shape.y + (shape.height - textSize.y) / 2.0f;
 
     DrawTextEx(FONT, text.c_str(), {textX, textY}, fontSize, 1, BLACK);
+}
+
+CircleSlideButton::CircleSlideButton(float x, float y, float radius) {
+    this->x = x;
+    this->y = y;
+    this->radius = radius;
+}
+
+void CircleSlideButton::handleInput() {
+    Vector2 mousePos = GetMousePosition();
+    hovered = CheckCollisionPointCircle(mousePos, {x, y}, radius);
+}
+
+bool CircleSlideButton::isHold() {
+    return hovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+}
+
+void CircleSlideButton::draw() {
+    // Đổi màu nếu hovered
+    Vector2 mousePos = GetMousePosition();
+    bool hovered = CheckCollisionPointCircle(mousePos, {x, y}, radius);
+    Color currentColor = hovered ? GRAY : LIGHTGRAY;
+    DrawCircle(x, y, radius, currentColor);
+    DrawCircleLines(x, y, radius, BLACK);
 }

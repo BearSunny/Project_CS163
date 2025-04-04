@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 const double DEFAULT_LOAD_FACTOR = 0.75;
 
