@@ -9,7 +9,7 @@ const Color HOVERED = {245, 162, 178, 255};
 const Color BORDER = {194, 24, 91, 255};
 const Color TEXT = {255, 254, 206, 255};
 
-typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS} ButtonState;
+typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS, DELETESBS} ButtonState;
 ButtonState CurrentButton = NULLBUTTON;
 
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -52,6 +52,7 @@ struct AVLTree {
     Node *insertSBS(Node *parent, Node *prep, Node *p, int x);
     Node *MaxNode(Node *p);
     Node *remove(Node *p, int x);
+    Node *removeSBS(Node *parent, Node *prep, Node *p, int x);
     void clear(Node *&p);
     void UpdateDepth(Node *p);
     void UpdatePosition(Node *p, int u, int v);
@@ -59,6 +60,8 @@ struct AVLTree {
     void insertSBS(int x);
     bool insertStepByStep();
     void remove(int x);
+    void removeSBS(int x);
+    bool removeStepByStep();
     void find(int x);
     void Draw(Node *p);
     bool UpdateSelectedNode(Node *p);
@@ -72,6 +75,7 @@ struct AVLTree {
 void InsertAVL();
 void InsertAVLSBS();
 void RemoveAVL();
+void RemoveAVLSBS();
 void FindAVL();
 void DrawTree();
 void DrawInitialize();
