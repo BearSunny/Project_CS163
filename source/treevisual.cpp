@@ -130,6 +130,62 @@ AVLTree::Node *AVLTree::remove(Node *p, int x) {
     return p;
 }
 
+AVLTree::Node *AVLTree::removeSBS(Node *parent, Node *prep, Node *p, int x) {
+    if(p == nullptr)
+        return nullptr;
+    Q.emplace(parent, prep, -1);
+    if(p->data > x) {
+        p->left = removeSBS(prep, prep->left, p->left, x);
+        Q.emplace(parent, prep, -1);
+    }
+    else if(p->data < x) {
+        p->right = removeSBS(prep, prep->right, p->right, x);
+        Q.emplace(parent, prep, -1);
+    }
+    else if(p->left == nullptr && p->right == nullptr) {
+        delete p;
+        p = nullptr;
+        Q.emplace(parent, prep, -2);
+        return p;
+    }
+    else if(p->left == nullptr) {
+        p->data = p->right->data;
+        delete p->right;
+        p->right = nullptr;
+        Q.emplace(parent, prep, -3);
+    }
+    else {
+        Node *tmp = MaxNode(p->left);
+        p->data = tmp->data;
+        Q.emplace(nullptr, MaxNode(prep->left), -1);
+        Q.emplace(parent, prep, tmp->data);
+        p->left = removeSBS(prep, prep->left, p->left, p->data);
+        Q.emplace(parent, prep, -1);
+    }
+    if(p->left != nullptr)
+        p->left->depth = max(height(p->left->left), height(p->left->right)) + 1;
+    if(p->right != nullptr)
+        p->right->depth = max(height(p->right->left), height(p->right->right)) + 1;
+    p->depth = max(height(p->left), height(p->right)) + 1;
+    if(p->left && height(p->left->right) > height(p->left->left) && height(p->left->right) - height(p->right) == 1) {
+        p->left = leftrotate(p->left);
+        Q.emplace(prep, prep->left, -4);
+    }
+    if(p->left && height(p->left->left) - height(p->right) == 1) {
+        p = rightrotate(p);
+        Q.emplace(parent, prep, -5);
+    }
+    if(p->right && height(p->right->left) > height(p->right->right) && height(p->right->left) - height(p->left) == 1) {
+        p->right = rightrotate(p->right);
+        Q.emplace(prep, prep->right, -5);
+    }
+    if(p->right && height(p->right->right) - height(p->left) == 1) {
+        p = leftrotate(p);
+        Q.emplace(parent, prep, -4);
+    }
+    return p;
+}
+
 void AVLTree::clear(Node *&p) {
     if(p->left)
         clear(p->left);
@@ -175,6 +231,7 @@ void AVLTree::insertSBS(int x) {
     CopyData(p, root);
     p = insertSBS(nullptr, root, p, x);
     clear(p);
+    Q.emplace(nullptr, nullptr, 0);
 }
 
 bool AVLTree::insertStepByStep() {
@@ -182,6 +239,10 @@ bool AVLTree::insertStepByStep() {
     Node *p = get<1>(Q.front());
     int query = get<2>(Q.front());
     Q.pop();
+    if(prep)
+        prep->findselected = false;
+    if(Q.empty())
+        return false;
     if(p == nullptr) {
         p = new Node(query);
         p->findselected = true;
@@ -202,16 +263,9 @@ bool AVLTree::insertStepByStep() {
         else
             parent->right = p;
     }
+    prep = p;
     UpdateDepth(root);
     UpdatePosition(root, 1000, 100);
-    if(prep)
-        prep->findselected = false;
-    prep = p;
-    if(Q.empty()) {
-        prep->findselected = false;
-        prep = nullptr;
-        return false;
-    }
     return true;
 }
 
@@ -220,6 +274,78 @@ void AVLTree::remove(int x) {
     root = remove(root, x);
     if(root)
         UpdatePosition(root, 1000, 100);
+}
+
+void AVLTree::removeSBS(int x){
+    PushHistory();
+    Node *p = nullptr;
+    CopyData(p, root);
+    p = removeSBS(nullptr, root, p, x);
+    clear(p);
+    Q.emplace(nullptr, nullptr, 0);
+}
+
+bool AVLTree::removeStepByStep() {
+    Node *parent = get<0>(Q.front());
+    Node *p = get<1>(Q.front());
+    int query = get<2>(Q.front());
+    Q.pop();
+    if(prep)
+        prep->findselected = false;
+    if(Q.empty())
+        return false;
+    if(query >= 0) {
+        p->findselected = true;
+        p->data = query;
+    }
+    else if(query == -1)
+        p->findselected = true;
+    else if(query == -2) {
+        if(parent == nullptr) {
+            delete p;
+            p = nullptr;
+            root = nullptr;
+        }
+        else {
+            if(parent->data >= p->data)
+                parent->left = nullptr;
+            else
+                parent->right = nullptr;
+            delete p;
+            p = nullptr;
+        }
+    }
+    else if(query == -3) {
+        p->data = p->right->data;
+        delete p->right;
+        p->right = nullptr;
+    }
+    else if(query == -4) {
+        p = leftrotate(p);
+        if(parent == nullptr)
+            root = p;
+        else {
+            if(parent->data > p->data)
+                parent->left = p;
+            else
+                parent->right = p;
+        }
+    }
+    else {
+        p = rightrotate(p);
+        if(parent == nullptr)
+            root = p;
+        else {
+            if(parent->data > p->data)
+                parent->left = p;
+            else
+                parent->right = p;
+        }
+    }
+    prep = p;
+    UpdateDepth(root);
+    UpdatePosition(root, 1000, 100);
+    return true;
 }
 
 void AVLTree::find(int x) {
@@ -375,6 +501,15 @@ void RemoveAVL() {
     S.remove(x);
 }
 
+void RemoveAVLSBS() {
+    if(Number.empty())
+        return;
+    int x = 0;
+    for(char c : Number)
+        x = 10 * x + c - '0';
+    S.removeSBS(x);
+}
+
 void FindAVL() {
     if(Number.empty())
         return;
@@ -433,12 +568,7 @@ void DrawInitialize() {
 }
 
 void DrawNumber(int x, int y, int fs) {
-    char* c = new char[Number.size() + 1];
-    for(int i = 0; i < Number.size(); ++i)
-        c[i] = Number[i];
-    c[Number.size()] = '\0';
-    DrawText(c, x, y, fs, BLACK);
-    delete[] c;
+    DrawText(Number.c_str(), x, y, fs, BLACK);
 }
 
 int MeasureNumber(int Cursor) {
@@ -590,7 +720,31 @@ void DisplayTree() {
         DrawText("Step by step: ON", 115 - MeasureText("Step by step: ON", 20) / 2, 315, 20, TEXT);
     else
         DrawText("Step by step: OFF", 115 - MeasureText("Step by step: OFF", 20) / 2, 315, 20, TEXT);    
-
+    
+    if(CurrentButton == ADDSBS || CurrentButton == DELETESBS) {
+        DrawText("Press -> (right arrow) to go to the next step", 10, 365, 20, BLACK);
+        // DrawText("Node* insert(Node* p, int x) {", 10, 390, 20, BLACK);
+        // DrawText("    if(p == nullptr) {", 10, 415, 20, BLACK);
+        // DrawText("        p = new Node(x);", 10, 440, 20, BLACK);
+        // DrawText("        return p;", 10, 465, 20, BLACK);
+        // DrawText("    }", 10, 490, 20, BLACK);
+        // DrawText("    if(p->data > x)", 10, 515, 20, BLACK);
+        // DrawText("        p->left = insert(p->left, x);", 10, 540, 20, BLACK);
+        // DrawText("    else", 10, 565, 20, BLACK);
+        // DrawText("        p->right = insert(p->right, x);", 10, 590, 20, BLACK);
+        // DrawText("    p->depth = max(height(p->left), height(p->right)) + 1;", 10, 615, 20, BLACK);
+        // DrawText("    if(p->left && height(p->left->right) > height(p->left->left) && height(p->left->right) - height(p->right) == 1)", 10, 640, 20, BLACK);
+        // DrawText("        p->left = leftrotate(p->left);", 10, 665, 20, BLACK);
+        // DrawText("    if(p->left && height(p->left->left) - height(p->right) == 1)", 10, 690, 20, BLACK);
+        // DrawText("        p = rightrotate(p);", 10, 715, 20, BLACK);
+        // DrawText("    if(p->right && height(p->right->left) > height(p->right->right) && height(p->right->left) - height(p->left) == 1)", 10, 740, 20, BLACK);
+        // DrawText("        p->right = rightrotate(p->right);", 10, 765, 20, BLACK);
+        // DrawText("    if(p->right && height(p->right->right) - height(p->left) == 1)", 10, 790, 20, BLACK);
+        // DrawText("        p = leftrotate(p);", 10, 815, 20, BLACK);
+        // DrawText("    return p;", 10, 840, 20, BLACK);
+        // DrawText("}", 10, 865, 20, BLACK);
+    }
+    
     DrawTree();
 
     if(CurrentButton == INITIALIZEBUTTON)
@@ -925,8 +1079,14 @@ void TREE_INTERACT() {
     else if(CurrentButton == DELETEBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if(MouseButtonPressed(10, 160, 110, 190)) {
-                RemoveAVL();
-                CurrentButton = NULLBUTTON;
+                if(STEPBYSTEPBUTTON) {
+                    RemoveAVLSBS();
+                    CurrentButton = DELETESBS;
+                }
+                else {
+                    RemoveAVL();
+                    CurrentButton = NULLBUTTON;
+                }
             }
             else if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
@@ -993,6 +1153,11 @@ void TREE_INTERACT() {
     else if(CurrentButton == ADDSBS) {
         if(IsKeyPressed(KEY_RIGHT))
             if(!S.insertStepByStep())
+                CurrentButton = NULLBUTTON;
+    }
+    else if(CurrentButton == DELETESBS) {
+        if(IsKeyPressed(KEY_RIGHT))
+            if(!S.removeStepByStep())
                 CurrentButton = NULLBUTTON;
     }
 }
