@@ -18,12 +18,12 @@ void Button::draw(float radius) {
 }
 
 int Button::handle() {
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && this->isHovered) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && this->isHovered) 
+    {
         this->isHovered = false;
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        return 1;
+        return 1; // Button was clicked
     }
-    return 0;
+    return 0; // Button was not clicked
 }
 
 TittleButton::TittleButton(Rectangle rect, const std::string text, float yText, Color textColor, float fontSize, Font font) {
