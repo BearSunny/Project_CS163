@@ -36,6 +36,7 @@ public:
     
     // Add methods
     void add(int x);
+    void addAtHead(int x);
     void addMultiple(const std::vector<int>& values);
     void insertAt(int idx, int x);
     

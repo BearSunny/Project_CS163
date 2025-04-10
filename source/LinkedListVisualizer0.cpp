@@ -1,7 +1,7 @@
 #ifndef LINKEDLISTVISUALIZER0_H
 #define LINKEDLISTVISUALIZER0_H
 
-#include "../header/LinkedListVisualizer.h"
+#include "header/LinkedListVisualizer.h"
 #include <sstream>
 #include <raylib.h>
 #include <cmath>
@@ -36,15 +36,15 @@ void CleanupLinkedList() {
 }
 
 void DisplayLinkedList() {
-    DrawRectangle(0, 0, 400, 100, (Color){163, 190, 140, 255});
+    DrawRectangle(0, 0, 400, 100, (Color){245, 162, 178, 255});
     
     if (listVisualizer != nullptr) {
         listVisualizer->draw();
         listVisualizer->handleEvent();
     }
 
-    DrawRectangle(0, 0, 400, 100, (Color){163, 190, 140, 255});
-    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, BLACK);
+    DrawRectangle(0, 0, 400, 100, (Color){245, 162, 178, 255});
+    DrawText("BACK", 200 - MeasureText("BACK", 10), 40, 20, (Color){255, 254, 206, 255});
 }
 
 LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
@@ -52,7 +52,7 @@ LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
     manualInputValues(), showFileDialog(false), filePath{0}, fileError(false),
     fileErrorMessage(""), arrowProgress(0.0f), isPaused(false), animationSpeed(1.0f),
     animationProgress(0.0f), operationHistory(), undoHistory(), currentStep(0),
-    lastOperation(""), connectionAnimations() {}
+    lastOperation(""), connectionAnimations(), showPseudocode(false), currentPseudocodeLine(0), pseudocodeProgress(0.0f) {}
 
 Operation::Operation(Type t, int idx, int oldVal, int newVal)
     : type(t), nodeIndex(idx), oldValue(oldVal), newValue(newVal) {}
@@ -71,29 +71,34 @@ void LinkedListVisualizer::init() {
     fileError = false;
     fileErrorMessage = "";
 
+    // Seed the random number generator
+    srand(static_cast<unsigned>(time(0)));
+
     // User's instruction
     // lastOperation = "Press M to create a list manually or F to load from a file";
     connectionAnimations.clear();
 }
 
 void LinkedListVisualizer::draw() {
-    ClearBackground({30, 30, 46, 255});
+    ClearBackground((Color){241, 231, 231, 255});
 
-    float startX = 50.f;
-    float startY = 800 / 2.f;
-    float offsetX = 100.f;  // Horizontal spacing between nodes
+    float startX = GetScreenWidth() * 0.05f;
+    float startY = GetScreenHeight() / 2.f;
+    float offsetX = GetScreenWidth() / (list->getSize() + 1);  // Horizontal spacing between nodes
 
     drawAnimationControls();
     drawOperationInfo();
     
     if (mode == MODE_CREATE_FILE) {
         drawFileUploadInterface();
+    } else if (mode == MODE_INITIALIZE) {
+        drawInitInterface();
     } else {
         if (list->getHead() == nullptr) {
             // Draw a message prompting the user to create a list
             const char* message = "List is empty. Press A to add nodes or F to load from file.";
             int textWidth = MeasureText(message, 20);
-            DrawText(message, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() / 2, 20, (Color){163, 190, 140, 255});
+            DrawText(message, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() / 2, 20, (Color){234,179,8, 255});
         } else {
             drawLinkedList(startX, startY, offsetX);
         }
@@ -102,41 +107,44 @@ void LinkedListVisualizer::draw() {
     
     drawHelpText();
 
+    if (showPseudocode) {
+        drawPseudocodeBox();
+    }
     if (!isPaused) {
         updateAnimation();
     }
 }
 
 void LinkedListVisualizer::drawHelpText() {
-    const char* helpText = "Controls: I-Init | A-Add | D-Delete | U-Update | S-Search | F-File Upload | Click node to select";
+    const char* helpText = "Controls: I-Init | H-Add at Head | A-Add | D-Delete | U-Update | S-Search | F-File Upload | R-Random | C-Clear | Click node to select";
     int textWidth = MeasureText(helpText, 16);
-    DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, (Color){163, 190, 140, 255});
+    DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, (Color){234, 179, 8, 255});
 }
 
 void LinkedListVisualizer::drawFileUploadInterface() {
     // Draw a panel for file upload
-    int panelWidth = 600;
-    int panelHeight = 300;
+    int panelWidth = GetScreenWidth() * 0.4f;
+    int panelHeight = GetScreenWidth() * 0.4f;
     int panelX = (GetScreenWidth() - panelWidth) / 2;
     int panelY = (GetScreenHeight() - panelHeight) / 2;
     
-    DrawRectangle(panelX, panelY, panelWidth, panelHeight, LIGHTGRAY);
-    DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, DARKGRAY);
+    DrawRectangle(panelX, panelY, panelWidth, panelHeight, (Color){245, 162, 178, 255});
+    DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, (Color){194, 24, 91, 255});
     
-    DrawText("Create Linked List from File", panelX + 20, panelY + 20, 20, BLACK);
-    DrawText("Enter file path:", panelX + 20, panelY + 60, 18, DARKGRAY);
+    DrawText("Create Linked List from File", panelX + 20, panelY + 20, 20, (Color){255, 254, 206, 255});
+    DrawText("Copy file path here:", panelX + 20, panelY + 60, 18, (Color){255, 254, 206, 255});
     
     // Draw input box
-    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, WHITE);
-    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, DARKGRAY);
-    DrawText(filePath, panelX + 30, panelY + 100, 18, BLACK);
+    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){245, 162, 178, 255});
+    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){194, 24, 91, 255});
+    DrawText(filePath, panelX + 30, panelY + 100, 18, (Color){255, 254, 206, 255});
     
     // Draw cursor blink
     static float cursorTimer = 0;
     cursorTimer += GetFrameTime();
     if (fmod(cursorTimer, 1.0f) < 0.5f) {
-        float cursorX = panelX + 30 + MeasureText(filePath, 18);
-        DrawRectangle(cursorX, panelY + 100, 2, 18, BLACK);
+        float cursorX = panelX + GetScreenWidth() * 0.02f + MeasureText(filePath, 18);
+        DrawRectangle(cursorX, panelY + GetScreenHeight() * 0.1f, 2, GetScreenHeight() * 0.02f, (Color){245, 162, 178, 255});
     }
     
     // Show error message if any
@@ -145,8 +153,8 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     }
     
     // Draw buttons
-    int buttonWidth = 120;
-    int buttonHeight = 40;
+    int buttonWidth = GetScreenWidth() * 0.1f;
+    int buttonHeight = GetScreenHeight() * 0.05f;
     int buttonSpacing = 20;
     int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
     int buttonsY = panelY + panelHeight - 60;
@@ -164,13 +172,71 @@ void LinkedListVisualizer::drawFileUploadInterface() {
         // For now, we'll just simulate it with a message
         strcpy(filePath, "example.txt");
     }
-    
+
     // Cancel button
     bool cancelClicked = DrawButton(panelX + panelWidth - 100, panelY + 20, 80, 30, "Cancel");
     if (cancelClicked) {
         mode = MODE_NONE;
         memset(filePath, 0, sizeof(filePath));
         fileError = false;
+    }
+}
+
+void LinkedListVisualizer::drawInitInterface() {
+    // Draw a panel for file upload
+    int panelWidth = GetScreenWidth() * 0.4f;
+    int panelHeight = GetScreenWidth() * 0.4f;
+    int panelX = (GetScreenWidth() - panelWidth) / 2;
+    int panelY = (GetScreenHeight() - panelHeight) / 2;
+    
+    DrawRectangle(panelX, panelY, panelWidth, panelHeight, (Color){245, 162, 178, 255});
+    DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, (Color){194, 24, 91, 255});
+    
+    DrawText("Initialize Linked List", panelX + 20, panelY + 20, 20, (Color){255, 254, 206, 255});
+    DrawText("Enter numbers separated by space:", panelX + 20, panelY + 60, 18, (Color){255, 254, 206, 255});
+    
+    // Draw input box
+    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){245, 162, 178, 255});
+    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){194, 24, 91, 255});
+    DrawText(inputString.c_str(), panelX + 30, panelY + 100, 18, (Color){255, 254, 206, 255});
+
+    static float cursorTimer = 0;
+    cursorTimer += GetFrameTime();
+    if (fmod(cursorTimer, 1.0f) < 0.5f) {
+        float cursorX = panelX + 30 + MeasureText(inputString.c_str(), 18);
+        DrawRectangle(cursorX, panelY + 100, 2, 20, BLACK);
+    }
+
+    int buttonWidth = GetScreenWidth() * 0.1f;
+    int buttonHeight = GetScreenHeight() * 0.05f;
+    int buttonSpacing = 20;
+    int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
+    int buttonsY = panelY + panelHeight - 60;
+
+    // Add button
+    bool addClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Add");
+    if (addClicked && !inputString.empty()) {
+        std::istringstream iss(inputString);
+        int value;
+        list->clear();
+        while (iss >> value) {
+            list->add(value);
+        }
+
+        connectionAnimations.clear();
+        for (int i = 0; i < list->getSize(); i++) {
+            connectionAnimations.push_back({0.0f, animationSpeed});
+        }
+        
+        mode = MODE_NONE;
+        inputString.clear();
+        lastOperation = "Initialize linked list";
+    }
+
+    bool cancelClicked = DrawButton(panelX + panelWidth - 100, panelY + 20, 80, 30, "Cancel");
+    if (cancelClicked) {
+        mode = MODE_NONE;
+        inputString.clear();
     }
 }
 
@@ -222,39 +288,174 @@ bool LinkedListVisualizer::createLLFromFile(const std::string& filePath) {
     return true;
 }
 
+void LinkedListVisualizer::drawPseudocodeBox() {
+    int boxWidth = GetScreenWidth() * 0.4f;
+    int boxHeight = GetScreenHeight() * 0.2f;
+    int boxX = GetScreenWidth() * 0.55f;
+    int boxY = GetScreenHeight() * 0.9f - boxHeight - 10; // Position the box below the linked list
+
+    // Draw the box
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, (Color){245, 162, 178, 255});
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, (Color){245, 162, 178, 255});
+
+    // Display pseudocode based on the current operation
+    const char* pseudocodeLines[10] = {nullptr};
+    int lineCount = 0;
+    if (currentStep < static_cast<int>(operationHistory.size())) {
+        const Operation& op = operationHistory[currentStep];
+        switch (op.type) {
+            case Operation::ADD:
+                pseudocodeLines[0] = "ADD Operation:\n";
+                pseudocodeLines[1] = "1. Create a new node.\n";
+                pseudocodeLines[2] = "2. Set the value of the new node.\n";
+                pseudocodeLines[3] = "3. If the list is empty:\n";
+                pseudocodeLines[4] = "   a. Set head to the new node.\n";
+                pseudocodeLines[5] = "4. Else:\n";
+                pseudocodeLines[6] = "   a. Traverse to the last node.\n";
+                pseudocodeLines[7] = "   b. Link the last node to the new node.";
+                lineCount = 8;
+                break;
+            case Operation::ADD_HEAD:
+                pseudocodeLines[0] = "ADD AT HEAD Operation:\n";
+                pseudocodeLines[1] = "1. Create a new node.\n";
+                pseudocodeLines[2] = "2. Set the value of the new node.\n";
+                pseudocodeLines[3] = "3. Link the new node to the head.";
+                lineCount = 4;
+                break;
+            case Operation::DELETE:
+                pseudocodeLines[0] = "DELETE Operation:\n";
+                pseudocodeLines[1] = "1. If the list is empty:\n";
+                pseudocodeLines[2] = "   b. Exit.\n";
+                pseudocodeLines[3] = "2. Find the node at the given index:\n";
+                pseudocodeLines[4] = "   a. Traverse the list to the index.\n";
+                pseudocodeLines[5] = "   b. Keep track of the previous node.\n";
+                pseudocodeLines[6] = "3. Remove the node:\n";
+                pseudocodeLines[7] = "   a. Update the previous node's link to skip the target node.\n";
+                lineCount = 8;
+                break;
+            case Operation::UPDATE:
+                pseudocodeLines[0] = "UPDATE Operation:\n";
+                pseudocodeLines[1] = "1. If the list is empty:\n";
+                pseudocodeLines[2] = "   a. Print 'List is empty.'\n";
+                pseudocodeLines[3] = "   b. Exit.\n";
+                pseudocodeLines[4] = "2. Find the node at the given index:\n";
+                pseudocodeLines[5] = "   a. Traverse the list to the index.\n";
+                pseudocodeLines[6] = "3. Update the value of the node.";
+                lineCount = 7;
+                break;
+            case Operation::SEARCH:
+                pseudocodeLines[0] = "SEARCH Operation:\n";
+                pseudocodeLines[1] = "1. If the list is empty:\n";
+                pseudocodeLines[2] = "   b. Exit.\n";
+                pseudocodeLines[3] = "2. Traverse the list:\n";
+                pseudocodeLines[4] = "   a. Compare each node's value with the target value.\n";
+                pseudocodeLines[5] = "3. If found:\n";
+                pseudocodeLines[6] = "   a. Print 'Value found at index X.'\n";
+                pseudocodeLines[7] = "4. Else:\n";
+                pseudocodeLines[8] = "   a. Print 'Value not found.'";
+                lineCount = 9;
+                break;
+            default:
+                pseudocodeLines[0] = "No operation selected.";
+                lineCount = 1;
+                break;
+        }
+    } else {
+        pseudocodeLines[0] = "No operation selected.";
+        lineCount = 1;
+    }
+
+    // Draw the pseudocode text
+    int textX = boxX + 20;
+    int textY = boxY + 20;
+    int lineSpacing = 18;
+    for (int i = 0; i < lineCount; i++) {
+        Color textColor = (i == currentPseudocodeLine) ? (Color){208, 135, 112, 255} : (Color){255, 254, 206, 255}; // Highlight current line
+        DrawText(pseudocodeLines[i], textX, textY + i * lineSpacing, 16, textColor);
+    }
+}
+
 void LinkedListVisualizer::drawAnimationControls() {
     float controlsY = GetScreenHeight() - 80;
     float buttonWidth = 30;
     float buttonSpacing = 10;
     float startX = GetScreenWidth() * 0.25 - (buttonWidth * 4 + buttonSpacing * 3) / 2;
 
-    // Backward button
-    if (DrawButton(startX, controlsY, buttonWidth, buttonWidth, "<")) {
-        stepBackward();
+    // Step backward button ("<<")
+    if (DrawButton(startX, controlsY, buttonWidth, buttonWidth, "<<")) {
+        stepBackward(); // Step backward through operations
+    }
+    
+    // Undo button
+    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "U")) {
+        if (!operationHistory.empty()) {
+            Operation lastOp = operationHistory.back();
+            operationHistory.pop_back();
+            undoHistory.push_back(lastOp);
+            undoOperation(lastOp);
+            lastOperation = "Undid operation: " + lastOp.toString();
+        }
     }
 
     // Play button
-    if (DrawButton(startX + buttonWidth + buttonSpacing, controlsY, buttonWidth, buttonWidth, "||")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 2, controlsY, buttonWidth, buttonWidth, "||")) {
         isPaused = false;
     }
 
     // Pause button
-    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 2, controlsY, buttonWidth, buttonWidth, "|>")) {
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 3, controlsY, buttonWidth, buttonWidth, "|>")) {
         isPaused = true;
     }
     
-    // Forward button
-    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 3, controlsY, buttonWidth, buttonWidth, ">")) {
-        stepForward();
+    // Redo button
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, "R")) {
+        if (!undoHistory.empty()) {
+            // Redo the last undone operation
+            Operation lastUndo = undoHistory.back();
+            undoHistory.pop_back();
+            operationHistory.push_back(lastUndo);
+            applyOperation(lastUndo);
+            lastOperation = "Redid operation: " + lastUndo.toString();
+        }
+    }
+
+    // Step forward button (">>")
+    if (DrawButton(startX + (buttonWidth + buttonSpacing) * 5, controlsY, buttonWidth, buttonWidth, ">>")) {
+        stepForward(); // Step forward through operations
     }
 
     // Speed control slider
     float sliderWidth = 200;
     float sliderX = GetScreenWidth() * 0.6;
-    DrawText("Speed:", sliderX, controlsY, 20, (Color){163, 190, 140, 255});
+    DrawText("Speed:", sliderX, controlsY, 20, (Color){234, 179, 8, 255});
     Rectangle sliderRect = { sliderX + 110, controlsY, sliderWidth, 20 };
     // Update animation speed dynamically
     animationSpeed = GuiSlider(sliderRect, "0.5x", "2.0x", animationSpeed, 0.5f, 2.0f);
+
+    // Toggle pseudocode box button (lower-right corner)
+    float boxWidth = GetScreenWidth() * 0.4f;
+    float boxHeight = GetScreenHeight() * 0.2f;
+    float boxX = GetScreenWidth() * 0.55f;
+    float boxY = GetScreenHeight() * 0.9f - boxHeight - 10; // Position the box below the linked list
+    float toggleButtonWidth = 40;
+    float toggleButtonHeight = 40;
+    float toggleButtonX = boxX + boxWidth + 20; // Positioned to the right of the pseudocode box
+    float toggleButtonY = boxY + (boxHeight - toggleButtonHeight) / 2; // Vertically aligned with the pseudocode box
+    const char* toggleButtonText = showPseudocode ? ">" : "<";
+    if (DrawButton(toggleButtonX, toggleButtonY, toggleButtonWidth, toggleButtonHeight, toggleButtonText)) {
+        showPseudocode = !showPseudocode; // Toggle the pseudocode box
+    }
+}
+
+std::string Operation::toString() {
+    switch (type) {
+        case ADD: return "Add node with value " + std::to_string(newValue);
+        case DELETE: return "Delete node at index " + std::to_string(nodeIndex);
+        case UPDATE: return "Update node at index " + std::to_string(nodeIndex) +
+                             " from " + std::to_string(oldValue) + " to " + std::to_string(newValue);
+        case SEARCH: return "Search for value " + std::to_string(newValue);
+        default: return "Unknown operation";
+    }
 }
 
 void LinkedListVisualizer::drawOperationInfo() {
@@ -263,9 +464,9 @@ void LinkedListVisualizer::drawOperationInfo() {
     int topMargin = 10;
     int rectHeight = 30;
     int rectWidth = 200;
-    DrawRectangle(screenWidth - rectWidth - rightMargin, topMargin, rectWidth, rectHeight, (Color){30, 30, 46, 255});
+    DrawRectangle(screenWidth - rectWidth - rightMargin, topMargin, rectWidth, rectHeight,  (Color){245, 162, 178, 255});
     string stepInfo = "Step " + to_string(currentStep) + " of " + to_string(operationHistory.size());
-    DrawText(stepInfo.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + 5, 20, (Color){124, 156, 191, 255});
+    DrawText(stepInfo.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + 5, 20, (Color){255, 254, 206, 255});
 
     string modeText = "Mode: ";
     switch(mode) {
@@ -275,11 +476,11 @@ void LinkedListVisualizer::drawOperationInfo() {
         case MODE_SEARCH: modeText += "Search"; break;
         default: modeText += "None"; break;
     }
-    DrawText(modeText.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 5, 18, (Color){163, 190, 140, 255});
-    
+    DrawText(modeText.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 5, 18, (Color){234, 179, 8, 255});
+   
     // Display last operation
     if (!lastOperation.empty()) {
-        DrawText(lastOperation.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 30, 16, (Color){208, 135, 112, 255});
+        DrawText(lastOperation.c_str(), screenWidth - rectWidth - rightMargin + 10, topMargin + rectHeight + 30, 16, (Color){234, 179, 8, 255});
     }
 }
 
@@ -323,11 +524,11 @@ void LinkedListVisualizer::drawLinkedList(float startX, float startY, float offs
 }
 
 void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int index) {
-    Color nodeColor = {180, 142, 173, 255};
+    Color nodeColor = (Color){245, 162, 178, 255};
     
     // Selected node
     if (index == selectedNodeIndex) {
-        nodeColor = {208, 135, 112, 255};
+        nodeColor = {245, 162, 178, 255};
     } 
     // Search highlighted node
     else if (mode == MODE_SEARCH && !inputString.empty() && 
@@ -336,7 +537,7 @@ void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int inde
     }
     
     DrawCircle(posX, posY, 30.f, nodeColor);
-    DrawCircleLines(posX, posY, 30.f, WHITE);
+    DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255});
     
     // Draw node value
     const char* valueText = TextFormat("%d", node->val);
@@ -346,12 +547,12 @@ void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int inde
     // Draw index
     const char* indexText = TextFormat("%d", index);
     float indexWidth = MeasureText(indexText, 16);
-    DrawText(indexText, posX - indexWidth/2, posY - 50, 16, WHITE);
+    DrawText(indexText, posX - indexWidth/2, posY - 50, 16, BLACK);
 }
 
 void LinkedListVisualizer::drawConnection(float startX, float startY, float offsetX, int connectionIndex) {
-    float arrowEndX = startX + offsetX - 30;
-    float arrowStartX = startX + 30;
+    float arrowEndX = startX + offsetX - GetScreenWidth() * 0.02f;
+    float arrowStartX = startX + GetScreenWidth() * 0.02f;
      // Get the progress and speed for this connection
     auto& [arrowProgress, speed] = connectionAnimations[connectionIndex];
 
@@ -367,7 +568,7 @@ void LinkedListVisualizer::drawConnection(float startX, float startY, float offs
     float currentArrowX = arrowStartX + (arrowEndX - arrowStartX) * arrowProgress;
 
     // Draw the line up to the current arrow position
-    DrawLine(startX + 30, startY, currentArrowX, startY, WHITE);
+    DrawLine(startX + 30, startY, currentArrowX, startY, BLACK);
 
     // Draw the arrow tip at the current position
     if (arrowProgress >= 1.0f) {
@@ -375,13 +576,13 @@ void LinkedListVisualizer::drawConnection(float startX, float startY, float offs
         Vector2 arrowTip = {arrowEndX, startY};
         Vector2 arrowLeft = {arrowEndX - 10, startY - 5};
         Vector2 arrowRight = {arrowEndX - 10, startY + 5};
-        DrawTriangle(arrowTip, arrowLeft, arrowRight, WHITE);
+        DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
     } else {
         // Draw the arrow tip at the current position during animation
         Vector2 arrowTip = {currentArrowX, startY};
         Vector2 arrowLeft = {currentArrowX - 10, startY - 5};
         Vector2 arrowRight = {currentArrowX - 10, startY + 5};
-        DrawTriangle(arrowTip, arrowLeft, arrowRight, WHITE);
+        DrawTriangle(arrowTip, arrowLeft, arrowRight, BLACK);
     }
 }
 
@@ -395,12 +596,13 @@ void LinkedListVisualizer::drawInputBox() {
     int rectX = screenWidth - rectWidth - rightMargin;
     int rectY = topMargin + 40;
 
-    DrawRectangle(rectX, rectY, rectWidth, rectHeight, (Color){163, 190, 140, 255});
-    DrawRectangleLines(rectX, rectY, rectWidth, rectHeight, (Color){163, 190, 140, 255});
+    DrawRectangle(rectX, rectY, rectWidth, rectHeight, (Color){245, 162, 178, 255});
+    DrawRectangleLines(rectX, rectY, rectWidth, rectHeight, (Color){194, 24, 91, 255} );
     
     // Show appropriate prompt based on mode
     string prompt = "";
     switch(mode) {
+        case MODE_ADD_HEAD: prompt = "Enter value to add at head: "; break;
         case MODE_ADD: prompt = "Enter value to add: "; break;
         case MODE_UPDATE: 
             prompt = "Enter new value for node " + to_string(selectedNodeIndex) + ": "; 
@@ -411,8 +613,8 @@ void LinkedListVisualizer::drawInputBox() {
     
     int textX = rectX + 10;  // Padding from the left
     int textY = rectY + 15; 
-    DrawText(prompt.c_str(), textX, textY, 18, BLACK);
-    DrawText(inputString.c_str(), textX + MeasureText(prompt.c_str(), 18), textY, 18, BLACK);
+    DrawText(prompt.c_str(), textX, textY, 18, (Color){255, 254, 206, 255});
+    DrawText(inputString.c_str(), textX + MeasureText(prompt.c_str(), 18), textY, 18, (Color){255, 254, 206, 255});
     
     // Draw cursor blink
     static float cursorTimer = 0;
@@ -426,9 +628,8 @@ void LinkedListVisualizer::drawInputBox() {
 void LinkedListVisualizer::handleEvent() {
     // Handle mode selection
     if (IsKeyPressed(KEY_I)) {
-        list->reset();
-        init();
-        lastOperation = "Initialized list";
+        mode = MODE_INITIALIZE;
+        inputString.clear();
     } else if (IsKeyPressed(KEY_A)) {
         mode = MODE_ADD;
         inputString = "";
@@ -446,12 +647,42 @@ void LinkedListVisualizer::handleEvent() {
         mode = MODE_CREATE_FILE;
         memset(filePath, 0, sizeof(filePath));
         fileError = false;
+    } else if (IsKeyPressed(KEY_R)) {
+        list->clear();
+
+        for (int i = 0; i < 10; i++) {
+            int randomValue = rand() % 100;
+            list->add(randomValue);
+        }
+
+        lastOperation = "Generate random linked list with 10 nodes";
+        operationHistory.clear();
+        undoHistory.clear();
+        currentStep = 0;
+        animationProgress = 0.0f;
+
+        connectionAnimations.clear();
+        for (int i = 0; i < 9; i++) {
+            connectionAnimations.push_back({0.0f, animationSpeed});
+        }
+    } else if (IsKeyPressed(KEY_C)) {
+        list->clear();
+        lastOperation = "Clear the existing linked list";
+        operationHistory.clear();
+        undoHistory.clear();
+        currentStep = 0;
+        animationProgress = 0.0f;
+
+        connectionAnimations.clear();
+    } else if (IsKeyPressed(KEY_H)) {
+        mode = MODE_ADD_HEAD;
+        inputString.clear();
     }
 
     // Handle text input
-    if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH) {
+    if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH || mode == MODE_INITIALIZE) {
         int key = GetCharPressed();
-        if (key >= '0' && key <= '9') {
+        if (key >= '0' && key <= '9' || key == ' ') {
             inputString += (char)key;
         }
         
@@ -472,6 +703,53 @@ void LinkedListVisualizer::handleEvent() {
         if (IsKeyPressed(KEY_BACKSPACE) && strlen(filePath) > 0) {
             filePath[strlen(filePath) - 1] = '\0';
         }
+
+        // Handle Ctrl+V for pasting from clipboard
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_V)) {
+            const char* clipboardText = GetClipboardText();
+            if (clipboardText != nullptr) {
+                size_t len = strlen(filePath);
+                size_t clipboardLen = strlen(clipboardText);
+                size_t availableSpace = sizeof(filePath) - len - 1;
+
+                // Append clipboard text to the file path, ensuring it doesn't exceed the buffer size
+                strncat(filePath, clipboardText, availableSpace);
+            }
+        }
+
+        // Handle Ctrl+C for copying the current file path to the clipboard
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C)) {
+            SetClipboardText(filePath);
+        }
+    } else if (mode == MODE_ADD_HEAD) {
+        int key = GetCharPressed();
+        if (key >= '0' && key <= '9') {
+            inputString += (char)key;
+        }
+        if (IsKeyPressed(KEY_BACKSPACE) && !inputString.empty()) {
+            inputString.pop_back();
+        }
+        if (IsKeyPressed(KEY_ENTER) && !inputString.empty()) {
+            try {
+                int value = std::stoi(inputString);
+
+                // Create operation and add to history
+                Operation op(Operation::ADD_HEAD, 0, 0, value);
+                operationHistory.push_back(op);
+
+                list->addAtHead(value); // Add node at head
+                lastOperation = "Added node with value " + inputString + " at head";
+
+                // Update connection animations
+                connectionAnimations.insert(connectionAnimations.begin(), {0.0f, animationSpeed});
+
+                currentStep = static_cast<int>(operationHistory.size() - 1);
+                inputString.clear();
+                mode = MODE_NONE; // Reset mode
+            } catch (std::exception& e) {
+                lastOperation = "Invalid input: " + std::string(e.what());
+            }
+        }
     }
 
     // Handle node selection via mouse
@@ -479,7 +757,7 @@ void LinkedListVisualizer::handleEvent() {
         Vector2 mousePos = GetMousePosition();
         float startX = 50.f;
         float startY = GetScreenHeight() / 2.f;
-        float offsetX = 100.f;
+        float offsetX = GetScreenWidth() / (list->getSize() + 1);;
         int index = 0;
         Node* current = list->getHead();
         
@@ -487,7 +765,8 @@ void LinkedListVisualizer::handleEvent() {
             float posX = startX + index * offsetX;
             float posY = startY;
             
-            if (CheckCollisionPointCircle(mousePos, (Vector2){posX, posY}, 30.f)) {
+            float nodeRadius = GetScreenHeight() * 0.04f;
+            if (CheckCollisionPointCircle(mousePos, (Vector2){posX, posY}, nodeRadius)) {
                 selectedNodeIndex = index;
                 
                 // If in delete mode, handle delete operation immediately
@@ -598,13 +877,19 @@ void LinkedListVisualizer::handleEvent() {
     }
 }
 
-void LinkedListVisualizer::updateAnimation() {
+void LinkedListVisualizer::updateAnimation() {    
     if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size())) {
-        animationProgress += GetFrameTime() * animationSpeed;
+        if (!isPaused) {
+            animationProgress += GetFrameTime() * animationSpeed;
+            pseudocodeProgress += GetFrameTime() * (animationSpeed * 0.2f);
+        }
         if (animationProgress >= 1.0f) {
             animationProgress = 0.0f;
             // Don't automatically advance to next step
             // This gives users time to see the completed operation
+        }
+        if (pseudocodeProgress >= 1.0f) {
+            pseudocodeProgress = 0.0f;
         }
     }
 }
@@ -613,6 +898,9 @@ void LinkedListVisualizer::applyOperation(const Operation& op) {
     switch (op.type) {
         case Operation::ADD:
             list->add(op.newValue);
+            break;
+        case Operation::ADD_HEAD:
+            list->addAtHead(op.newValue);
             break;
         case Operation::DELETE:
             list->deleteAt(op.nodeIndex);
@@ -631,6 +919,9 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
         case Operation::ADD:
             list->deleteAt(op.nodeIndex);
             break;
+        case Operation::ADD_HEAD:
+            list->addAtHead(op.nodeIndex);
+            break;
         case Operation::DELETE:
             if (op.nodeIndex <= list->getSize()) {
                 list->insertAt(op.nodeIndex, op.oldValue);
@@ -646,16 +937,18 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
 }
 
 void LinkedListVisualizer::stepForward() {
-    if (currentStep < static_cast<int>(operationHistory.size()) - 1) {
+    if (currentStep < static_cast<int>(operationHistory.size())) {
         currentStep++;
-        animationProgress = 0.0f;
+        animationProgress = 0.0f; // Reset animation progress
+        pseudocodeProgress = 0.0f;
     }
 }
 
 void LinkedListVisualizer::stepBackward() {
     if (currentStep > 0) {
         currentStep--;
-        animationProgress = 0.0f;
+        animationProgress = 0.0f; // Reset animation progress
+        pseudocodeProgress = 0.0f;
     }
 }
 
@@ -665,20 +958,65 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
     switch (currentOp.type) {
         case Operation::ADD:
             if (index == currentOp.nodeIndex) {
+                // Highlight pseudocode lines based on animation progress
+                if (pseudocodeProgress < 0.3f) {
+                    currentPseudocodeLine = 0; // "1. Create a new node."
+                } else if (pseudocodeProgress < 0.6f) {
+                    currentPseudocodeLine = 1; // "2. Set the value of the new node."
+                } else if (pseudocodeProgress < 0.75f) {
+                    currentPseudocodeLine = 2; // "3. If the list is empty:"
+                } else if (pseudocodeProgress < 0.85f) {
+                    currentPseudocodeLine = 5; // "4. Else: Traverse to the last node."
+                } else {
+                    currentPseudocodeLine = 7; // "   b. Link the last node to the new node."
+                }
+
                 // Fade in effect for new node
-                Color nodeColor = {180, 142, 173, 255};
+                Color nodeColor = {245, 162, 178, 255};
                 float alpha = animationProgress;
                 DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
-                DrawCircleLines(posX, posY, 30.f, WHITE);
+                DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255} );
                 
                 const char* valueText = TextFormat("%d", node->val);
                 float textWidth = MeasureText(valueText, 20);
                 DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
             }
             break;
-            
+        case Operation::ADD_HEAD:
+            if (index == currentOp.nodeIndex) {
+                if (pseudocodeProgress < 0.25f) {
+                    currentPseudocodeLine = 0; 
+                } else if (pseudocodeProgress < 0.5f) {
+                    currentPseudocodeLine = 1; // "2. Set the value of the new node."
+                } else if (pseudocodeProgress < 0.65f) {
+                    currentPseudocodeLine = 2; // "3. Link the new node to the head."
+                } else if (pseudocodeProgress < 0.75f) {
+                    currentPseudocodeLine = 3;
+                }
+
+                // Fade in effect for new node
+                Color nodeColor = {245, 162, 178, 255};
+                float alpha = animationProgress;
+                DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
+                DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255} );
+                
+                const char* valueText = TextFormat("%d", node->val);
+                float textWidth = MeasureText(valueText, 20);
+                DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+            }
+            break;
+
         case Operation::DELETE:
             if (index == currentOp.nodeIndex) {
+                // Highlight pseudocode lines based on animation progress
+                if (pseudocodeProgress < 0.25f) {
+                    currentPseudocodeLine = 3; // "2. Find the node at the given index:"
+                } else if (pseudocodeProgress < 0.5f) {
+                    currentPseudocodeLine = 6; // "3. Remove the node:"
+                } else {
+                    currentPseudocodeLine = 7;
+                }
+
                 // Fade out effect for deleted node
                 Color nodeColor = {208, 135, 112, 255};
                 float alpha = 1.0f - animationProgress;
@@ -693,6 +1031,13 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
             
         case Operation::UPDATE:
             if (index == currentOp.nodeIndex) {
+                // Highlight pseudocode lines based on animation progress
+                if (pseudocodeProgress < 0.5f) {
+                    currentPseudocodeLine = 4; // "2. Find the node at the given index:"
+                } else {
+                    currentPseudocodeLine = 6; // "3. Update the value of the node."
+                }
+
                 // Transition effect for updated value
                 DrawCircle(posX, posY, 30.f, (Color){ 124, 156, 191, 255 });
                 DrawCircleLines(posX, posY, 30.f, WHITE);
@@ -705,6 +1050,21 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
             
         case Operation::SEARCH:
             if (node->val == currentOp.newValue) {
+                // Highlight pseudocode lines based on animation progress
+                if (pseudocodeProgress < 0.25f) {
+                    currentPseudocodeLine = 3; // "2. Traverse the list:"
+                } else if (pseudocodeProgress < 0.45f) {
+                    currentPseudocodeLine = 4; // "3. If found: Print 'Value found at index X.'"
+                } else if (pseudocodeProgress < 0.65f) {
+                    currentPseudocodeLine = 5;
+                } else if (pseudocodeProgress < 0.78f) {
+                    currentPseudocodeLine = 6;
+                } else if (pseudocodeProgress < 0.95f) {
+                    currentPseudocodeLine = 7;
+                } else {
+                    currentPseudocodeLine = 8;
+                }
+
                 // Pulse effect for found node
                 Color nodeColor = {163, 190, 140, 255};
                 float pulse = 0.5f + 0.5f * sin(animationProgress * PI * 4);
@@ -727,20 +1087,20 @@ bool LinkedListVisualizer::DrawButton(float x, float y, float width, float heigh
     bool clicked = false;
     
     if (CheckCollisionPointRec(GetMousePosition(), btnRect)) {
-        DrawRectangleRec(btnRect, {200, 200, 200, 255});
+        DrawRectangleRec(btnRect, (Color){245, 162, 178, 255});
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             clicked = true;
         }
     } else {
-        DrawRectangleRec(btnRect, WHITE);
+        DrawRectangleRec(btnRect, (Color){245, 162, 178, 255});
     }
     
-    DrawRectangleLinesEx(btnRect, 1, WHITE);
+    DrawRectangleLinesEx(btnRect, 1, (Color){194, 24, 91, 255});
     
     float textWidth = MeasureText(text, 20);
     float textX = x + (width - textWidth) / 2;
     float textY = y + (height - 20) / 2;
-    DrawText(text, textX, textY, 20, (Color){208, 135, 112, 255});
+    DrawText(text, textX, textY, 20, (Color){255, 254, 206, 255});
     
     return clicked;
 }
@@ -748,22 +1108,22 @@ bool LinkedListVisualizer::DrawButton(float x, float y, float width, float heigh
 float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, const char* textRight, 
     float value, float minValue, float maxValue) {
     // Draw slider background
-    DrawRectangleRec(bounds, WHITE);
-    DrawRectangleLinesEx(bounds, 1, WHITE);
+    DrawRectangleRec(bounds, (Color){245, 162, 178, 255});
+    DrawRectangleLinesEx(bounds, 1, (Color){194, 24, 91, 255});
 
     // Calculate slider position based on current value
     float range = maxValue - minValue;
     float sliderPos = bounds.x + (bounds.width * ((value - minValue) / range));
 
     // Draw slider knob
-    DrawCircle(sliderPos, bounds.y + bounds.height/2, 10, (Color){208, 135, 112, 255});
-    DrawCircleLines(sliderPos, bounds.y + bounds.height/2, 10, (Color){208, 135, 112, 255});
+    DrawCircle(sliderPos, bounds.y + bounds.height/2, 10, (Color){255, 254, 206, 255});
+    DrawCircleLines(sliderPos, bounds.y + bounds.height/2, 10, (Color){194, 24, 91, 255});
 
     // Draw min/max labels
     DrawText(textLeft, bounds.x - MeasureText(textLeft, 16) - 5, 
-    bounds.y + bounds.height/2 - 8, 16, (Color){163, 190, 140, 255});
+    bounds.y + bounds.height/2 - 8, 16, (Color){234, 179, 8, 255});
     DrawText(textRight, bounds.x + bounds.width + 5, 
-    bounds.y + bounds.height/2 - 8, 16, (Color){163, 190, 140, 255});
+    bounds.y + bounds.height/2 - 8, 16, (Color){234, 179, 8, 255});
 
     // Handle mouse input
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
@@ -788,4 +1148,5 @@ void LINKEDLIST_INTERACT() {
         }
     }
 }
+
 #endif // LINKEDLISTVISUALIZER0_H

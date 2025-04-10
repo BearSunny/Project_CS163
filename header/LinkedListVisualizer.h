@@ -1,14 +1,14 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "LinkedList.h"
+#include "header/LinkedList.h"
 #include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>
 #include <deque>
 #include <fstream>
-#include "declare.h"
+#include "header/declare.h"
 using namespace std;
 
 enum VisualizerMode {
@@ -18,15 +18,17 @@ enum VisualizerMode {
     MODE_DELETE,
     MODE_UPDATE,
     MODE_SEARCH,
-    MODE_CREATE_FILE
+    MODE_CREATE_FILE,
+    MODE_ADD_HEAD
 };
 
 struct Operation {
-    enum Type { ADD, DELETE, UPDATE, SEARCH } type;
+    enum Type { ADD, ADD_HEAD, DELETE, UPDATE, SEARCH } type;
     int nodeIndex;
     int oldValue;
     int newValue;
     Operation(Type t, int idx, int oldVal = 0, int newVal = 0);
+    std::string toString();
 };
 
 void InitLinkedList();
@@ -41,6 +43,7 @@ public:
     void handleEvent();
     bool createLLFromFile(const std::string& filePath);
     void drawFileUploadInterface();
+    void drawInitInterface();
 
 private:
     LinkedList* list;
@@ -61,7 +64,10 @@ private:
     deque<Operation> undoHistory;
     int currentStep;
     string lastOperation;
-    std::vector<std::pair<float, float>> connectionAnimations; // Pair of (arrowProgress, animationSpeed)
+    std::vector<std::pair<float, float>> connectionAnimations;
+    bool showPseudocode;
+    int currentPseudocodeLine;
+    float pseudocodeProgress;
 
     void drawAnimationControls();
     void drawOperationInfo();
@@ -70,6 +76,7 @@ private:
     void drawConnection(float startX, float startY, float offsetX, int connectionIndex);
     void drawInputBox();
     void drawHelpText();
+    void drawPseudocodeBox();
 
     void updateAnimation();
     void stepForward();
@@ -82,8 +89,7 @@ private:
     bool DrawButton(float x, float y, float width, float height, const char* text);
     float GuiSlider(Rectangle bounds, const char* textLeft, const char* textRight, 
                    float value, float minValue, float maxValue);
+    void LINKEDLIST_INTERACT();
 };
-
-void LINKEDLIST_INTERACT();
 
 #endif // LINKEDLISTVISUALIZER_H

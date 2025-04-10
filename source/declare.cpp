@@ -14,25 +14,20 @@ Texture2D BACK_PAGE;
 theme THEME;
 Font FONT;
 
-const int screenWidth = 1000;
-const int screenHeight = 800;
+const int screenWidth = 1600;
+const int screenHeight = 900;
 const Vector2 ORIGIN = {0.0f, 0.0f};
 const float CODE_SIZE = 15;
 
-GameScreen currentScreen;
-bool InsertButton, DeleteButton, FindButton;
-int FindQuerry, FindNumber, framecount, length;
-char number[10];
+GameScreen currentScreen = MAINMENU;
+bool InsertButton = false, DeleteButton = false, FindButton = false;
+int FindQuerry = -1, FindNumber = 0, framecount = 0, length = 0;
+char number[10] = {};
 
 // Function implementations
 
 void initResource() 
 {
-    GameScreen currentScreen = MAINMENU;
-    bool InsertButton = false, DeleteButton = false, FindButton = false;
-    int FindQuerry = -1, FindNumber = 0, framecount = 0, length = 0;
-    char number[10] = {};
-
     PLAY = LoadTexture("./asset/Play.png");
     PAUSE = LoadTexture("./asset/Pause.png");
     REPLAY = LoadTexture("./asset/Replay.png");
@@ -78,25 +73,17 @@ void Deletenumber() {
 }
 
 void DrawNumber(int data, int x, int y, int fs) {
-    int len = 0;
-    int tmp = data;
-    while (data) {
-        ++len;
-        data /= 10;
-    }
-    if (len == 0) {
+    if (data == 0) {
         DrawText("0", x - MeasureText("0", fs) / 2, y - fs / 2, fs, BLACK);
         return;
     }
-    char* c = new char[len + 1];
-    c[len] = 0;
-    while (tmp) {
-        --len;
-        c[len] = tmp % 10 + '0';
-        tmp /= 10;
+    string c;
+    while (data) {
+        c += data % 10 + '0';
+        data /= 10;
     }
-    DrawText(c, x - MeasureText(c, fs) / 2, y - fs / 2, fs, BLACK);
-    delete[] c;
+    reverse(c.begin(), c.end());
+    DrawText(c.c_str(), x - MeasureText(c.c_str(), fs) / 2, y - fs / 2, fs, BLACK);
 }
 
 bool MouseButtonPressed(float x, float y, float u, float v) {
@@ -127,6 +114,15 @@ void Updatenumber() {
         Insertnumber(9);
     else if (IsKeyPressed(KEY_BACKSPACE))
         Deletenumber();
+}
+
+void Updatenumbercopy() {
+    const char* n = GetClipboardText();
+    for(int i = 0; n[i] != '\0'; ++i)
+        if(n[i] < '0' || n[i] > '9')
+            return;
+    for(int i = 0; n[i] != '\0'; ++i)
+        Insertnumber(n[i] - '0');
 }
 
 void drawPicture(const char* path, Rectangle desRec, float rotation, Vector2 origin, Color color) {
