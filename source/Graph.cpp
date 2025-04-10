@@ -1,5 +1,13 @@
 #include "../header/graphvisual.h"
 
+Graph::Graph()
+{
+    for (int i = 0; i < 200; i++)
+    {
+        checkValidNode[i] = nullptr;
+    }
+}
+
 Graph::~Graph() {
     clearGraph();
 }
@@ -10,6 +18,10 @@ void Graph::clearGraph() {
     }
     this->nodes.clear();
     this->frameCounting = 0;
+    for (int i = 0; i < 200; i++)
+    {
+        checkValidNode[i] = nullptr;
+    }
 }
 
 int Graph::findParent(std::vector<int>& parent, int node) {
@@ -45,64 +57,119 @@ void Graph::addNode(GraphNode* node) {
 
 void Graph::addNode() {
     auto* node = new GraphNode();
+    int i = 0;
+    for (i; i < 200; i++)
+    {
+        if (checkValidNode[i] == nullptr)
+        {
+            break;
+        }
+    }
+    node->data = i;
+    checkValidNode[i] = node;
     node->pos = {500.f + rand() % 950, 100.f + rand() % 650};
     addNode(node);
 }
 
-int Graph::addEdge(int from, int to, int weight) {
-    if (from < nodes.size() && to < nodes.size() && from != to && weight != 0) {
+int Graph::addEdge(int from, int to, int weight) 
+{
+    if (checkValidNode[from] != nullptr && checkValidNode[to] != nullptr && from != to && weight != 0)
+    {
+        GraphNode* fr = checkValidNode[from];
+        GraphNode* t = checkValidNode[to];
+    
         bool edgeExists = false;
         // Check if the edge already exists
-        for (auto& edge : nodes[from]->neighbors) {
-            if (edge.neighborNode == nodes[to]) {
+        for (auto& edge : fr->neighbors) 
+        {
+            if (edge.neighborNode == t) 
+            {
                 edgeExists = true;
                 edge.weight = weight;
                 break;
             }
         }
-        for (auto& edge : nodes[to]->neighbors) {
-            if (edge.neighborNode == nodes[from]) {
+            
+        for (auto& edge : t->neighbors) 
+        {
+            if (edge.neighborNode == fr) 
+            {
                 edgeExists = true;
                 edge.weight = weight;
                 break;
             }
         }
 
-        if (!edgeExists) {
-            nodes[from]->neighbors.push_back({nodes[to], weight, 0});
-            nodes[to]->neighbors.push_back({nodes[from], weight, 0});
+        if (!edgeExists) 
+        {
+            fr->neighbors.push_back({t, weight, 0});
+            t->neighbors.push_back({fr, weight, 0});
             return 1;
         }
     }
+
     return 0;
+}
+
+int Graph::addUserEdge(int from, int to, int weight)
+{
+    if (checkValidNode[from] == nullptr || checkValidNode[to] == nullptr)
+    {
+        return -1;
+    }
+    return addEdge(from, to, weight);
 }
 
 void Graph::randomize(int nodeCount, int edgeCount, int maxWeight) {
     clearGraph();
-    for (int i = 0; i < nodeCount; ++i) {
+
+    // Add all nodes
+    for (int i = 0; i < nodeCount; ++i) 
+    {
         addNode();
     }
 
-    srand((int)time(nullptr));
-    for (int i = 0; i < edgeCount;) {
-        int from = rand() % nodeCount;
-        int to = rand() % nodeCount;
-        if (from != to) {
-            int weight = rand() % maxWeight + 1;
-            i += addEdge(from, to, weight);
+    // Initialize random seed
+    srand(static_cast<unsigned int>(time(nullptr)));
+
+    // Generate all possible unique edges
+    std::vector<std::pair<int, int>> possibleEdges;
+    for (int from = 0; from < nodeCount; ++from) {
+        for (int to = 0; to < nodeCount; ++to) {
+            if (from != to) { // No self-loops
+                possibleEdges.emplace_back(from, to);
+            }
         }
+    }
+
+    // Shuffle edges randomly
+    std::random_shuffle(possibleEdges.begin(), possibleEdges.end());
+
+    // Add edges to the graph
+    for (int i = 0; i < edgeCount && i < possibleEdges.size(); ++i) {
+        int from = possibleEdges[i].first;
+        int to = possibleEdges[i].second;
+        int weight = rand() % maxWeight + 1;
+        addEdge(from, to, weight);
     }
 }
 
 void Graph::initFromFile(const char* filename) {
     clearGraph();
     std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        cout << "Cannot open file" << endl;
+        return;
+    }
     int n;
     file >> n;
 
     for (int i = 0; i < n; ++i) {
         addNode();
     }
+
+    cout << "Add node success" << endl;
     
     int weight;
     for (int i = 0; i < n; i++) {
@@ -111,6 +178,8 @@ void Graph::initFromFile(const char* filename) {
             addEdge(i, j, weight);
         }
     }
+
+    cout << "Add edge success" << endl;
 
     file.close();
 }
@@ -210,7 +279,7 @@ void Graph::drawGraph(Font font, std::vector<Color> color) {
             Vector2 size = MeasureTextEx(font, TextFormat("%d", i), 15, 2);
             DrawCircleV(nodes[i]->pos, 15, color[nodes[i]->color]);
             printf("Color: (%d, %d, %d, %d)\n", color[nodes[i]->color].r, color[nodes[i]->color].g, color[nodes[i]->color].b, color[nodes[i]->color].a);
-            DrawTextEx(font, TextFormat("%d", i), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
+            DrawTextEx(font, TextFormat("%d", nodes[i]->data), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
         }
     } else {
         for (auto node : nodes) {
@@ -223,7 +292,7 @@ void Graph::drawGraph(Font font, std::vector<Color> color) {
         for(int i = 0; i < nodes.size(); i++) {
             Vector2 size = MeasureTextEx(font, TextFormat("%d", i), 15, 2);
             DrawCircleV(nodes[i]->pos, 15, nodes[i]->color ? RED : THEME.NODE);
-            DrawTextEx(font, TextFormat("%d", i), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
+            DrawTextEx(font, TextFormat("%d", nodes[i]->data), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
         }
     }
 }
@@ -277,6 +346,8 @@ GraphVisualize::GraphVisualize(Font font) {
     this->font = font;
     this->progressBar = ProgressBar(font);
     this->isCreateChosen = false;
+    this->isUpdateChosen = false;
+    this->isDeleteChosen = false;
     std::string infor = "";
     this->numComponent = 0;
 
@@ -287,6 +358,26 @@ GraphVisualize::GraphVisualize(Font font) {
     this->loadFileButton = Button({156.5, 552 , 110, 30}, "LoadFile", -1, BLACK, 20, font);
     this->inputEdges = InputStr(151.5, 422, 120, 25, "Num edge", 20, this->font);
     this->inputNodes = InputStr(151.5, 466, 120, 25, "Num vertex", 20, this->font);
+
+    this->fromInput = InputStr(20, 200, 110, 30, "From", 20, this->font);      // Input for "From"
+    this->toInput = InputStr(150, 200, 110, 30, "To", 20, this->font);        // Input for "To"
+    this->weightInput = InputStr(280, 200, 110, 30, "Weight", 20, this->font); // Input for "Weight"
+    this->submitButton = Button({410, 200, 110, 30}, "Update Edge", -1, BLACK, 20, font);
+
+    this->nodeNumberInput = InputStr(50, 290, 110, 30, "Node #", 20, this->font);
+    this->updateValueInput = InputStr(180, 290, 110, 30, "Node Value", 20, this->font);
+    this->updateSubmitButton = Button({310, 290, 110, 30}, "Update Node", -1, BLACK, 20, font);
+    
+    //this->nodeNumberInput = InputStr(50, 290, 110, 30, "Node #", 20, this->font);
+    //this->updateValueInput = InputStr(180, 290, 110, 30, "Node Value", 20, this->font);
+    this->deleteSubmitButton = Button({310, 290, 110, 30}, "Delete Node", -1, BLACK, 20, font);
+
+    this->cancelButton = Button({250, 320, 110, 30}, "Cancel", -1, BLACK, 20, font);
+
+    this->addVertexButton = Button({11.5, 370, 110, 30}, "Add Vertex", -1, BLACK, 20, font);
+    this->updateButton = Button({156.5, 370, 110, 30}, "Update", -1, BLACK, 20, font);
+    this->deleteButton = Button({301.5, 370, 110, 30}, "Delete", -1, BLACK, 20, font);
+
 }
 
 std::vector<Color> GraphVisualize::generateRandomColors(int n) {
@@ -303,7 +394,23 @@ std::vector<Color> GraphVisualize::generateRandomColors(int n) {
     return colors;
 }
 
-void GraphVisualize::drawButton() {
+void GraphVisualize::drawButton() 
+{
+/* 
+    fromInput.draw();
+    fromInput.update();
+    toInput.draw();
+    toInput.update();
+    weightInput.draw();
+    weightInput.update();
+    submitButton.draw(70);
+
+    // Draw buttons in the lower blank space
+    addVertexButton.draw();
+    updateButton.draw();
+    deleteButton.draw();
+
+
     this->createButton.draw(50);
     this->connectedComponentButton.draw(50);
     this->mstKruskalButton.draw(50);
@@ -316,6 +423,65 @@ void GraphVisualize::drawButton() {
         DrawLineEx({126, 501}, {297, 501}, 1.3, THEME.SEPERATOR);
         this->randomButton.draw(50);
         this->loadFileButton.draw(50);
+    } */
+   drawForm();
+   drawButtons();
+}
+
+void GraphVisualize::drawForm() 
+{
+    fromInput.draw();
+    fromInput.update();
+    toInput.draw();
+    toInput.update();
+    weightInput.draw();
+    weightInput.update();
+    submitButton.draw(50);
+}
+
+void GraphVisualize::drawButtons() 
+{
+    addVertexButton.draw();
+    updateButton.draw();
+    deleteButton.draw();
+
+    createButton.draw(50);
+    connectedComponentButton.draw(50);
+    mstKruskalButton.draw(50);
+    
+    if (isCreateChosen) 
+    {
+        inputNodes.draw();
+        inputNodes.update();
+        inputEdges.draw();
+        inputEdges.update();
+        DrawLineEx({126, 501}, {297, 501}, 1.3, THEME.SEPERATOR);
+        randomButton.draw(50);
+        loadFileButton.draw(50);
+    }
+
+    if (isUpdateChosen || isDeleteChosen)
+    {
+        nodeNumberInput.draw();
+        nodeNumberInput.update();
+        cancelButton.draw(50);
+    }
+
+    if (isUpdateChosen)
+    {
+        //cout << "Form update" << endl;
+        isCreateChosen = false;
+        isDeleteChosen = false;
+        updateValueInput.draw();
+        updateValueInput.update();
+        updateSubmitButton.draw(30);
+    }
+
+    if (isDeleteChosen)
+    {
+        isCreateChosen = false;
+        isUpdateChosen = false;
+        deleteSubmitButton.draw(30);
     }
 }
 
@@ -330,8 +496,59 @@ void GraphVisualize::draw() {
 }
 
 int GraphVisualize::handle() {
-    if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-        if (this->createButton.getIsHovered()) {
+    //cout << isUpdateChosen << endl;
+    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (this->submitButton.getIsHovered()) 
+        {
+            // Retrieve values from the inputs
+            int from = std::stoi(fromInput.getText());
+            int to = std::stoi(toInput.getText());
+            int weight = std::stoi(weightInput.getText());
+    
+            // Add edge to the graph using these values
+            graph.addUserEdge(from, to, weight);
+        }
+
+        if (this->addVertexButton.getIsHovered())
+        {
+            graph.addNode();
+        }
+
+        if (this->updateButton.getIsHovered())
+        {
+            this->isUpdateChosen = true;
+        }
+
+        if (this->deleteButton.getIsHovered())
+        {
+            this->isDeleteChosen = true;
+        }
+
+        /* if (this->isUpdateChosen && this->updateSubmitButton.getIsHovered())
+        {
+            int nodeNumber = std::stoi(nodeNumberInput.getText());
+            int n_val = std::stoi(updateValueInput.getText());
+            graph.updateNodeValue(nodeNumber, n_val);
+            isUpdateChosen = false;
+            cout << "Update" << endl;
+        } */
+
+        /* if (this->isDeleteChosen && this->deleteSubmitButton.getIsHovered())
+        {
+            int nodeNumber = std::stoi(nodeNumberInput.getText());
+            graph.deleteNode(nodeNumber);
+            isDeleteChosen = false;
+        }
+
+        if (this->cancelButton.getIsHovered())
+        {
+            isCreateChosen = false;
+            isUpdateChosen = false;
+            isDeleteChosen = false;
+        }
+     */
+        if (this->createButton.getIsHovered()) 
+        {
             this->graph.resetMark();
             this->isCreateChosen = true;
             this->numComponent = 0;
@@ -353,7 +570,32 @@ int GraphVisualize::handle() {
         }
     }
 
+    if (this->updateSubmitButton.handle())
+    {
+        int nodeNumber = std::stoi(nodeNumberInput.getText());
+        int n_val = std::stoi(updateValueInput.getText());
+        graph.updateNodeValue(nodeNumber, n_val);
+        isUpdateChosen = false;
+        //cout << "Update" << endl;
+    }
+
+    if (this->deleteSubmitButton.handle())
+    {
+        int nodeNumber = std::stoi(nodeNumberInput.getText());
+        graph.deleteNode(nodeNumber);
+        isDeleteChosen = false;
+    }
+
+    if (this->cancelButton.handle())
+    {
+        isCreateChosen = false;
+        isUpdateChosen = false;
+        isDeleteChosen = false;
+    }
+    
+
     if (this->randomButton.handle()) {
+        //cout << "Randommmmmmmmmmmm" << endl;
         randomize();
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         return 1;
@@ -385,7 +627,7 @@ void GraphVisualize::randomize() {
 int GraphVisualize::loadFile() {
     std::string path;
 
-    // Prompt the user for the file path
+    /* // Prompt the user for the file path
     std::cout << "Name of the file to load (Enter to load default graph): ";
     std::getline(std::cin, path);
 
@@ -393,12 +635,14 @@ int GraphVisualize::loadFile() {
     if (path.empty()) {
         std::cout << "No file selected." << std::endl;
         return 0;
-    }
-    path = "../Sample/Graph.txt";
+    } */
+    path = "Sample/Graph.txt";
+    cout << "GEt here\n";
     // Update infor and attempt to load the file
     this->infor = TextFormat("Load graph from file %s", path.c_str());
+    cout << "Begin load file\n";
     this->graph.initFromFile(path.c_str());
-
+    cout << "Load success\n";
     // Update progress bar
     this->progressBar.updateMaxStep(1);
     this->progressBar.updateStep(1);
@@ -437,4 +681,63 @@ void GraphVisualize::mstKruskal() {
     this->graph.mstKruskal();
     this->progressBar.updateMaxStep(1);
     this->progressBar.updateStep(1);
+}
+
+void Graph::updateNodeValue(int nodeNum, int n_val)
+{
+    GraphNode* tmp = getNode(nodeNum);
+    GraphNode* n_tmp = getNode(n_val);
+    if (tmp == nullptr || n_tmp != nullptr)
+    {
+        return;
+    }
+    tmp->data = n_val;
+    updateCheckArray(n_val, nodeNum, tmp);
+}
+
+void Graph::updateCheckArray(int change, int old, GraphNode* node)
+{
+    checkValidNode[change] = node;
+    if (old != -1) checkValidNode[old] = nullptr;
+}
+
+void Graph::deleteNode(int nodeNumber)
+{
+    GraphNode* tmp = getNode(nodeNumber);
+    if (tmp == nullptr)
+    {
+        return;
+    }
+    vector<GraphNode*> q;
+
+    for (auto e:tmp->neighbors)
+    {
+        q.push_back(e.neighborNode);
+    }
+
+    for (auto node:q)
+    {
+        for (int i = 0; i < node->neighbors.size(); i++)
+        {
+            if (node->neighbors[i].neighborNode == tmp)
+            {
+                node->neighbors.erase(node->neighbors.begin() + i);
+            }
+        }
+    }
+
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        if (tmp == nodes[i])
+        {
+            nodes.erase(nodes.begin() + i);
+        }
+    }
+
+    updateCheckArray(nodeNumber, -1, nullptr);
+}
+
+GraphNode* Graph::getNode(int index)
+{
+    return checkValidNode[index];
 }
