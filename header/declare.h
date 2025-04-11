@@ -8,6 +8,7 @@ using namespace std;
 
 // Enums and structs
 typedef enum GameScreen { MAINMENU, LINKEDLIST, HASH, TREE, GRAPH } GameScreen;
+extern GameScreen currentScreen;
 
 struct theme {
     Color BACKGROUND;

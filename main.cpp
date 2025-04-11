@@ -1,13 +1,5 @@
 #include "source/declare.cpp"
 #include "source/mainmenu.cpp"
-#include "source/LinkedListVisualizer0.cpp"
-#include "source/LinkedList0.cpp"
-#include "source/treevisual.cpp"
-#include "source/Graph.cpp"
-#include "source/GraphButton.cpp"
-#include "header/hashvisual.h"
-#include "header/HashTableVisual.h"
-#include "source/HashTableVisual.cpp"
 
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
@@ -16,12 +8,14 @@ int main () {
     GraphVisualize graph = GraphVisualize(FONT);
     TittleButton title = TittleButton({465, 34, 350, 40}, "Graph", -1, BLACK, 20);
     HashTablePage hashPage;
+    MainPage mainmenu;
 
     while(!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
         switch(currentScreen) {
             case MAINMENU:
-                MAINMENU_INTERACT();
+                mainmenu.handleInput();
+                mainmenu.update(deltaTime);
                 break;
             case LINKEDLIST:
                 LINKEDLIST_INTERACT();
@@ -52,7 +46,7 @@ int main () {
         ClearBackground(RAYWHITE);
         switch(currentScreen) {
             case MAINMENU:
-                DisplayMainMenu();
+                mainmenu.draw();
                 break;
             case LINKEDLIST:
                 DisplayLinkedList();
