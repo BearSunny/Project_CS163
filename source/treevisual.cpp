@@ -58,10 +58,10 @@ AVLTree::Node *AVLTree::insertSBS(Node *parent, Node *prep, Node *p, int x) {
         Q.emplace(parent, prep, 3);
         return p;
     }
-    bool goleft = false;
+    bool check = false;
     Q.emplace(parent, prep, 5);
     if(p->data > x) {
-        goleft = true;
+        check = true;
         Q.emplace(parent, prep, 6);
         p->left = insertSBS(prep, prep->left, p->left, x);
         Q.emplace(parent, prep, 7);
@@ -77,7 +77,7 @@ AVLTree::Node *AVLTree::insertSBS(Node *parent, Node *prep, Node *p, int x) {
             p = rightrotate(p);
         }
     }
-    if(goleft == false)
+    if(check == false)
         Q.emplace(parent, prep, 13);
     if(p->data < x) {
         Q.emplace(parent, prep, 14);
@@ -127,10 +127,6 @@ AVLTree::Node *AVLTree::remove(Node *p, int x) {
         p->data = tmp->data;
         p->left = remove(p->left, p->data);
     }
-    if(p->left != nullptr)
-        p->left->depth = max(height(p->left->left), height(p->left->right)) + 1;
-    if(p->right != nullptr)
-        p->right->depth = max(height(p->right->left), height(p->right->right)) + 1;
     p->depth = max(height(p->left), height(p->right)) + 1;
     if(p->left && height(p->left->right) > height(p->left->left) && height(p->left->right) - height(p->right) == 1)
         p->left = leftrotate(p->left);
@@ -144,58 +140,82 @@ AVLTree::Node *AVLTree::remove(Node *p, int x) {
 }
 
 AVLTree::Node *AVLTree::removeSBS(Node *parent, Node *prep, Node *p, int x) {
-    if(p == nullptr)
+    bool check = false;
+    Q.emplace(parent, prep, 1);
+    if(p == nullptr) {
+        check = true;
+        Q.emplace(parent, prep, 2);
         return nullptr;
-    Q.emplace(parent, prep, -1);
-    if(p->data > x) {
-        p->left = removeSBS(prep, prep->left, p->left, x);
-        Q.emplace(parent, prep, -1);
     }
-    else if(p->data < x) {
-        p->right = removeSBS(prep, prep->right, p->right, x);
-        Q.emplace(parent, prep, -1);
+    if(!check) {
+        Q.emplace(parent, prep, 3);
+        if(p->data > x) {
+            check = true;
+            Q.emplace(parent, prep, 4);
+            p->left = removeSBS(prep, prep->left, p->left, x);
+        }
     }
-    else if(p->left == nullptr && p->right == nullptr) {
-        delete p;
-        p = nullptr;
-        Q.emplace(parent, prep, -2);
-        return p;
+    if(!check) {
+        Q.emplace(parent, prep, 5);
+        if(p->data < x) {
+            check = true;
+            Q.emplace(parent, prep, 6);
+            p->right = removeSBS(prep, prep->right, p->right, x);
+        }
     }
-    else if(p->left == nullptr) {
-        p->data = p->right->data;
-        delete p->right;
-        p->right = nullptr;
-        Q.emplace(parent, prep, -3);
+    if(!check) {
+        Q.emplace(parent, prep, 7);
+        if(p->left == nullptr && p->right == nullptr) {
+            check = true;
+            Q.emplace(parent, prep, 8);
+            delete p;
+            p = nullptr;
+            Q.emplace(parent, prep, 9);
+            return p;
+        }
     }
-    else {
+    if(!check) {
+        Q.emplace(parent, prep, 11);
+        if(p->left == nullptr) {
+            check = true;
+            Q.emplace(parent, prep, 12);
+            p->data = p->right->data;
+            Q.emplace(parent, prep, 13);
+            delete p->right;
+            p->right = nullptr;
+        }
+    }
+    if(!check) {
+        Q.emplace(parent, prep, 16);
         Node *tmp = MaxNode(p->left);
+        Q.emplace(parent, prep, 17);
         p->data = tmp->data;
-        Q.emplace(nullptr, MaxNode(prep->left), -1);
-        Q.emplace(parent, prep, tmp->data);
+        Q.emplace(parent, prep, 18);
         p->left = removeSBS(prep, prep->left, p->left, p->data);
-        Q.emplace(parent, prep, -1);
     }
-    if(p->left != nullptr)
-        p->left->depth = max(height(p->left->left), height(p->left->right)) + 1;
-    if(p->right != nullptr)
-        p->right->depth = max(height(p->right->left), height(p->right->right)) + 1;
+    Q.emplace(parent, prep, 20);
     p->depth = max(height(p->left), height(p->right)) + 1;
+    Q.emplace(parent, prep, 21);
     if(p->left && height(p->left->right) > height(p->left->left) && height(p->left->right) - height(p->right) == 1) {
+        Q.emplace(parent, prep, 22);
         p->left = leftrotate(p->left);
-        Q.emplace(prep, prep->left, -4);
     }
+    Q.emplace(parent, prep, 23);
     if(p->left && height(p->left->left) - height(p->right) == 1) {
+        Q.emplace(parent, prep, 24);
         p = rightrotate(p);
-        Q.emplace(parent, prep, -5);
     }
+    Q.emplace(parent, prep, 25);
     if(p->right && height(p->right->left) > height(p->right->right) && height(p->right->left) - height(p->left) == 1) {
+        Q.emplace(parent, prep, 26);
         p->right = rightrotate(p->right);
-        Q.emplace(prep, prep->right, -5);
     }
+    Q.emplace(parent, prep, 27);
     if(p->right && height(p->right->right) - height(p->left) == 1) {
+        Q.emplace(parent, prep, 28);
         p = leftrotate(p);
-        Q.emplace(parent, prep, -4);
     }
+    Q.emplace(parent, prep, 29);
     return p;
 }
 
@@ -209,6 +229,7 @@ void AVLTree::clear(Node *&p) {
 }
 
 void AVLTree::ResetFindSelected() {
+    stack<Node*> SS;
     queue<Node*> Q;
     Q.emplace(root);
     while(!Q.empty()) {
@@ -348,71 +369,83 @@ void AVLTree::removeSBS(int x){
     CopyData(p, root);
     p = removeSBS(nullptr, root, p, x);
     clear(p);
-    Q.emplace(nullptr, nullptr, 0);
+    Q.emplace(nullptr, nullptr, -1);
 }
 
 bool AVLTree::removeStepByStep() {
     Node *parent = get<0>(Q.front());
     Node *p = get<1>(Q.front());
-    int query = get<2>(Q.front());
+    query = get<2>(Q.front());
     Q.pop();
     if(prep)
         prep->findselected = false;
-    if(Q.empty()) {
-        prep = nullptr;
-        return false;
-    }
-    if(query >= 0) {
-        p->findselected = true;
-        p->data = query;
-    }
-    else if(query == -1)
-        p->findselected = true;
-    else if(query == -2) {
-        if(parent == nullptr) {
-            delete p;
-            p = nullptr;
-            root = nullptr;
-        }
-        else {
-            if(parent->data >= p->data)
+    switch(query) {
+        case 8:
+            if(parent == nullptr)
+                root = nullptr;
+            else if(parent->data >= p->data)
                 parent->left = nullptr;
             else
                 parent->right = nullptr;
             delete p;
             p = nullptr;
-        }
-    }
-    else if(query == -3) {
-        p->data = p->right->data;
-        delete p->right;
-        p->right = nullptr;
-    }
-    else if(query == -4) {
-        p = leftrotate(p);
-        if(parent == nullptr)
-            root = p;
-        else {
-            if(parent->data > p->data)
+            break;
+        case 9:
+            p = prep;
+            break;
+        case 12:
+            p->data = p->right->data;
+            break;
+        case 13:
+            delete p->right;
+            p->right = nullptr;
+            break;
+        case 17:
+            p->data = MaxNode(p->left)->data;
+            break;
+        case 22:
+            p->left = leftrotate(p->left);
+            break;
+        case 24:
+            p = rightrotate(p);
+            if(parent == nullptr)
+                root = p;
+            else if(parent->data > p->data)
                 parent->left = p;
             else
                 parent->right = p;
-        }
-    }
-    else {
-        p = rightrotate(p);
-        if(parent == nullptr)
-            root = p;
-        else {
-            if(parent->data > p->data)
+            break;
+        case 25:
+            p = prep;
+            break;
+        case 26:
+            p->right = rightrotate(p->right);
+            break;
+        case 27:
+            p = prep;
+            break;
+        case 28:
+            p = leftrotate(p);
+            if(parent == nullptr)
+                root = p;
+            else if(parent->data > p->data)
                 parent->left = p;
             else
                 parent->right = p;
-        }
+            break;
+        case 29:
+            p = prep;
+            break;
+        default:
+            break;
     }
+    if(p != nullptr)
+        p->findselected = true;
     prep = p;
     UpdateDepth(root);
     UpdatePosition(root, rootx, rooty);
+    if(Q.empty())
+        return false;
     return true;
 }
 
@@ -779,8 +812,19 @@ void DrawAddSBS() {
     }
 }
 
+void DrawDeleteSBS() {
+    DrawText("Press -> (right arrow) to go to the next step", 230, 10, 20, BLACK);
+    DrawText("Press Enter to go to the result", 230, 35, 20, BLACK);
+    if(query != -1)
+        DrawRectangle(10 + MeasureText(DELETESTEPBYSTEP2[query].first.second.c_str(), 20), 300 + 25 * DELETESTEPBYSTEP2[query].first.first, MeasureText(DELETESTEPBYSTEP2[query].second.c_str(), 20), 20, GRAY);
+    for(int i = 0; i < 24; ++i)
+        DrawText(DELETESTEPBYSTEP[i].c_str(), 10, 300 + 25 * i, 20, BLACK);
+}
+
 void DisplayTree() {
     ClearBackground(BACKGROUND);
+
+    DrawTree();
 
     DrawRectangle(9, 9, 212, 42, BORDER);
     DrawRectangle(10, 10, 210, 40, HOVERED);
@@ -856,8 +900,6 @@ void DisplayTree() {
         DrawText("Step by step: ON", 115 - MeasureText("Step by step: ON", 20) / 2, 265, 20, TEXT);
     else
         DrawText("Step by step: OFF", 115 - MeasureText("Step by step: OFF", 20) / 2, 265, 20, TEXT);    
-    
-    DrawTree();
 
     if(CurrentButton == INITIALIZEBUTTON)
         DrawInitialize();
@@ -873,6 +915,8 @@ void DisplayTree() {
         DrawFind();
     else if(CurrentButton == ADDSBS)
         DrawAddSBS();
+    else if(CurrentButton == DELETESBS)
+        DrawDeleteSBS();
 }
 
 void UpdateNumber(bool NumberOnly) {
