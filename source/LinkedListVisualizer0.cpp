@@ -36,8 +36,8 @@ void CleanupLinkedList() {
 }
 
 void DisplayLinkedList() {
-    DrawRectangle(0, 0, 400, 100, (Color){245, 162, 178, 255});
-    
+    ClearBackground(RAYWHITE);
+
     if (listVisualizer != nullptr) {
         listVisualizer->draw();
         listVisualizer->handleEvent();
@@ -1141,10 +1141,25 @@ float LinkedListVisualizer::GuiSlider(Rectangle bounds, const char* textLeft, co
 }
 
 void LINKEDLIST_INTERACT() {
+    /*
     if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if(MouseButtonPressed(0, 0, 400, 100)) {
             currentScreen = MAINMENU;
             CleanupLinkedList();
+        }
+    }
+    */
+    // Handle input for the linked list visualizer
+    if (listVisualizer != nullptr) {
+        listVisualizer->handleEvent();
+    }
+
+    // Check if the "BACK" button is clicked
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        Vector2 mousePos = GetMousePosition();
+        if (mousePos.x >= 0 && mousePos.x <= 400 && mousePos.y >= 0 && mousePos.y <= 100) {
+            currentScreen = MAINMENU; // Switch back to the main menu
+            CleanupLinkedList();     // Cleanup the linked list visualizer
         }
     }
 }
