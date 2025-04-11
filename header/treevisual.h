@@ -168,7 +168,7 @@ struct AVLTree {
 void InsertAVL();
 bool InsertAVLSBS();
 void RemoveAVL();
-void RemoveAVLSBS();
+bool RemoveAVLSBS();
 void FindAVL();
 void FindAVLSBS();
 void DrawTree();
