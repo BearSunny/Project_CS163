@@ -148,7 +148,7 @@ void MainPage::handleInput()
     isTransitioning = true;
 
     // Kiểm tra click
-    if (dsModeButton.isClicked()) {
+    if (dsModeButton.isClicked() || IsKeyPressed(KEY_ENTER)) {
         switch (dsMode) {
             case DSMode::LINKEDLIST:    
                 currentScreen = LINKEDLIST;

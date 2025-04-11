@@ -43,7 +43,7 @@ int main () {
         }
 
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground((Color){241, 231, 231, 255});
         switch(currentScreen) {
             case MAINMENU:
                 mainmenu.draw();
