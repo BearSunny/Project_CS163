@@ -74,6 +74,5 @@ int main () {
         }
         EndDrawing();
     }
-    CleanupLinkedList();
     CloseWindow();
 }
