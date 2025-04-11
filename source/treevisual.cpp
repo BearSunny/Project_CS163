@@ -39,7 +39,7 @@ AVLTree::Node *AVLTree::insert(Node *p, int x) {
         if(height(p->left->left) - height(p->right) == 1)
             p = rightrotate(p);
     }
-    if(p->data < x) {
+    else if(p->data < x) {
         p->right = insert(p->right, x);
         p->depth = max(height(p->left), height(p->right)) + 1;
         if(height(p->right->left) - height(p->left) == 1)
@@ -51,38 +51,51 @@ AVLTree::Node *AVLTree::insert(Node *p, int x) {
 }
 
 AVLTree::Node *AVLTree::insertSBS(Node *parent, Node *prep, Node *p, int x) {
+    Q.emplace(parent, prep, 1);
     if(p == nullptr) {
-        Q.emplace(parent, nullptr, x);
+        Q.emplace(parent, prep, 2);
         p = new Node(x);
+        Q.emplace(parent, prep, 3);
         return p;
     }
-    Q.emplace(parent, prep, 0);
+    bool goleft = false;
+    Q.emplace(parent, prep, 5);
     if(p->data > x) {
+        goleft = true;
+        Q.emplace(parent, prep, 6);
         p->left = insertSBS(prep, prep->left, p->left, x);
-        Q.emplace(parent, prep, 0);
+        Q.emplace(parent, prep, 7);
         p->depth = max(height(p->left), height(p->right)) + 1;
+        Q.emplace(parent, prep, 8);
         if(height(p->left->right) - height(p->right) == 1) {
+            Q.emplace(parent, prep, 9);
             p->left = leftrotate(p->left);
-            Q.emplace(prep, prep->left, 1);
         }
+        Q.emplace(parent, prep, 10);
         if(height(p->left->left) - height(p->right) == 1) {
+            Q.emplace(parent, prep, 11);
             p = rightrotate(p);
-            Q.emplace(parent, prep, 2);
         }
     }
+    if(goleft == false)
+        Q.emplace(parent, prep, 13);
     if(p->data < x) {
+        Q.emplace(parent, prep, 14);
         p->right = insertSBS(prep, prep->right, p->right, x);
-        Q.emplace(parent, prep, 0);
+        Q.emplace(parent, prep, 15);
         p->depth = max(height(p->left), height(p->right)) + 1;
+        Q.emplace(parent, prep, 16);
         if(height(p->right->left) - height(p->left) == 1) {
+            Q.emplace(parent, prep, 17);
             p->right = rightrotate(p->right);
-            Q.emplace(prep, prep->right, 2);
         }
+        Q.emplace(parent, prep, 18);
         if(height(p->right->right) - height(p->left) == 1) {
+            Q.emplace(parent, prep, 19);
             p = leftrotate(p);
-            Q.emplace(parent, prep, 1);
         }
     }
+    Q.emplace(parent, prep, 21);
     return p;
 }
 
@@ -187,12 +200,26 @@ AVLTree::Node *AVLTree::removeSBS(Node *parent, Node *prep, Node *p, int x) {
 }
 
 void AVLTree::clear(Node *&p) {
-    if(p->left)
-        clear(p->left);
-    if(p->right)
-        clear(p->right);
+    if(p == nullptr)
+        return;
+    clear(p->left);
+    clear(p->right);
     delete p;
     p = nullptr;
+}
+
+void AVLTree::ResetFindSelected() {
+    queue<Node*> Q;
+    Q.emplace(root);
+    while(!Q.empty()) {
+        Node *p = Q.front();
+        Q.pop();
+        if(p == nullptr)
+            continue;
+        p->findselected = false;
+        Q.emplace(p->left);
+        Q.emplace(p->right);
+    }
 }
 
 void AVLTree::UpdateDepth(Node *p) {
@@ -204,6 +231,8 @@ void AVLTree::UpdateDepth(Node *p) {
 }
 
 void AVLTree::UpdatePosition(Node *p, int u, int v) {
+    if(p == nullptr)
+        return;
     p->newx = u;
     p->newy = v;
     if(p->x == -1) {
@@ -212,17 +241,26 @@ void AVLTree::UpdatePosition(Node *p, int u, int v) {
     }
     if(p->depth > 1) {
         int d = 35 * (1 << (p->depth - 2));
-        if(p->left)
-            UpdatePosition(p->left, u - d, v + 100);
-        if(p->right)
-            UpdatePosition(p->right, u + d, v + 100);
+        UpdatePosition(p->left, u - d, v + 100);
+        UpdatePosition(p->right, u + d, v + 100);
     }
+}
+
+void AVLTree::UpdatePosition2(Node *p, int u, int v) {
+    if(p == nullptr)
+        return;
+    p->newx += u;
+    p->x += u;
+    p->newy += v;
+    p->y += v;
+    UpdatePosition2(p->left, u, v);
+    UpdatePosition2(p->right, u, v);
 }
 
 void AVLTree::insert(int x) {
     PushHistory();
     root = insert(root, x);
-    UpdatePosition(root, 1000, 100);
+    UpdatePosition(root, rootx, rooty);
 }
 
 void AVLTree::insertSBS(int x) {
@@ -231,41 +269,69 @@ void AVLTree::insertSBS(int x) {
     CopyData(p, root);
     p = insertSBS(nullptr, root, p, x);
     clear(p);
-    Q.emplace(nullptr, nullptr, 0);
+    Q.emplace(nullptr, nullptr, -1);
 }
 
 bool AVLTree::insertStepByStep() {
     Node *parent = get<0>(Q.front());
     Node *p = get<1>(Q.front());
-    int query = get<2>(Q.front());
+    query = get<2>(Q.front());
     Q.pop();
     if(prep)
         prep->findselected = false;
-    if(Q.empty())
-        return false;
-    if(p == nullptr) {
-        p = new Node(query);
-        p->findselected = true;
-    }
-    else {
-        if(query == 0)
-            p->findselected = true;
-        else if(query == 1)
-            p = leftrotate(p);
-        else
+    switch(query) {
+        case 2:
+            p = new Node(InsertNumber);
+            if(parent == nullptr)
+                root = p;
+            else if(parent->data > p->data)
+                parent->left = p;
+            else
+                parent->right = p;
+            break;
+        case 3:
+            p = prep;
+            break;
+        case 9:
+            p->left = leftrotate(p->left);
+            break;
+        case 11:
             p = rightrotate(p);
+            if(parent == nullptr)
+                root = p;
+            else if(parent->data > p->data)
+                parent->left = p;
+            else
+                parent->right = p;
+            break;
+        case 13:
+            p = prep;
+            break;
+        case 17:
+            p->right = rightrotate(p->right);
+            break;
+        case 19:
+            p = leftrotate(p);
+            if(parent == nullptr)
+                root = p;
+            else if(parent->data > p->data)
+                parent->left = p;
+            else
+                parent->right = p;
+            break;
+        case 21:
+            p = prep;
+            break;
+        default:
+            break;
     }
-    if(parent == nullptr)
-        root = p;
-    else {
-        if(parent->data > p->data)
-            parent->left = p;
-        else
-            parent->right = p;
-    }
+    if(p != nullptr)
+        p->findselected = true;
     prep = p;
     UpdateDepth(root);
-    UpdatePosition(root, 1000, 100);
+    UpdatePosition(root, rootx, rooty);
+    if(Q.empty())
+        return false;
     return true;
 }
 
@@ -273,7 +339,7 @@ void AVLTree::remove(int x) {
     PushHistory();
     root = remove(root, x);
     if(root)
-        UpdatePosition(root, 1000, 100);
+        UpdatePosition(root, rootx, rooty);
 }
 
 void AVLTree::removeSBS(int x){
@@ -292,8 +358,10 @@ bool AVLTree::removeStepByStep() {
     Q.pop();
     if(prep)
         prep->findselected = false;
-    if(Q.empty())
+    if(Q.empty()) {
+        prep = nullptr;
         return false;
+    }
     if(query >= 0) {
         p->findselected = true;
         p->data = query;
@@ -344,11 +412,12 @@ bool AVLTree::removeStepByStep() {
     }
     prep = p;
     UpdateDepth(root);
-    UpdatePosition(root, 1000, 100);
+    UpdatePosition(root, rootx, rooty);
     return true;
 }
 
-void AVLTree::find(int x) {
+bool AVLTree::find(int x) {
+    bool res = false;
     queue<Node*> Q;
     Q.emplace(root);
     while(!Q.empty()) {
@@ -360,9 +429,45 @@ void AVLTree::find(int x) {
             p->findselected = true;
         else
             p->findselected = false;
+        res |= p->findselected;
         Q.emplace(p->left);
         Q.emplace(p->right);
     }
+    return res;
+}
+
+void AVLTree::findSBS(int x) {
+    Node *parent = nullptr;
+    Node *p = root;
+    while(p != nullptr) {
+        Q.emplace(parent, p, 0);
+        if(p->data == x)
+            return;
+        parent = p;
+        if(p->data > x)
+            p = p->left;
+        else
+            p = p->right;
+    }
+    Q.emplace(parent, p, 0);
+}
+
+bool AVLTree::findStepByStep() {
+    Node *parent = get<0>(Q.front());
+    Node *p = get<1>(Q.front());
+    Q.pop();
+    if(parent)
+        parent->findselected = false;
+    if(p)
+        p->findselected = true;
+    if(Q.empty()) {
+        if(p == nullptr)
+            CheckFind = 1;
+        else
+            CheckFind = 2;
+        return false;
+    }
+    return true;
 }
 
 void AVLTree::Draw(Node *p) {
@@ -483,13 +588,14 @@ void InsertAVL() {
     S.insert(x);
 }
 
-void InsertAVLSBS() {
+bool InsertAVLSBS() {
     if(Number.empty())
-        return;
-    int x = 0;
+        return false;
+    InsertNumber = 0;
     for(char c : Number)
-        x = 10 * x + c - '0';
-    S.insertSBS(x);
+        InsertNumber = 10 * InsertNumber + c - '0';
+    S.insertSBS(InsertNumber);
+    return true;
 }
 
 void RemoveAVL() {
@@ -516,7 +622,16 @@ void FindAVL() {
     int x = 0;
     for(char c : Number)
         x = 10 * x + c - '0';
-    S.find(x);
+    CheckFind = S.find(x) + 1;
+}
+
+void FindAVLSBS() {
+    if(Number.empty())
+        return;
+    int x = 0;
+    for(char c : Number)
+        x = 10 * x + c - '0';
+    S.findSBS(x);
 }
 
 void DrawTree() {
@@ -572,11 +687,10 @@ void DrawNumber(int x, int y, int fs) {
 }
 
 int MeasureNumber(int Cursor) {
-    char *c = new char[Cursor + 1];
+    string c;
     for(int i = 0; i < Cursor; ++i)
-        c[i] = Number[i];
-    c[Cursor] = '\0';
-    return MeasureText(c, 20);
+        c += Number[i];
+    return MeasureText(c.c_str(), 20);
 }
 
 void DrawKeyboard() {
@@ -633,24 +747,34 @@ void DrawFile() {
 }
 
 void DrawAdd() {
-    DrawNumber(130, 115, 20);
+    DrawNumber(130, 105, 20);
     framecount = (framecount + 1) % 60;
     if(framecount < 30)
-        DrawText("|", 130 + MeasureNumber(CurrentCursor), 115, 20, BLACK);
+        DrawText("|", 130 + MeasureNumber(CurrentCursor), 105, 20, BLACK);
 }
 
 void DrawDelete() {
-    DrawNumber(130, 165, 20);
+    DrawNumber(130, 145, 20);
     framecount = (framecount + 1) % 60;
     if(framecount < 30)
-        DrawText("|", 130 + MeasureNumber(CurrentCursor), 165, 20, BLACK);
+        DrawText("|", 130 + MeasureNumber(CurrentCursor), 145, 20, BLACK);
 }
 
 void DrawFind() {
-    DrawNumber(130, 215, 20);
+    DrawNumber(130, 185, 20);
     framecount = (framecount + 1) % 60;
     if(framecount < 30)
-        DrawText("|", 130 + MeasureNumber(CurrentCursor), 215, 20, BLACK);
+        DrawText("|", 130 + MeasureNumber(CurrentCursor), 185, 20, BLACK);
+}
+
+void DrawAddSBS() {
+    DrawText("Press -> (right arrow) to go to the next step", 230, 10, 20, BLACK);
+    DrawText("Press Enter to go to the result", 230, 35, 20, BLACK);
+    for(int i = 0; i < 23; ++i) {
+        if(query == i)
+            DrawRectangle(10, 300 + 25 * i, MeasureText(ADDSTEPBYSTEP[i].c_str(), 20), 20, GRAY);
+        DrawText(ADDSTEPBYSTEP[i].c_str(), 10, 300 + 25 * i, 20, BLACK);
+    }
 }
 
 void DisplayTree() {
@@ -660,6 +784,13 @@ void DisplayTree() {
     DrawRectangle(10, 10, 210, 40, HOVERED);
     DrawText("AVL Tree", 115 - MeasureText("AVL Tree", 30) / 2, 15, 30, TEXT);
 
+    DrawRectangle(1379, 9, 212, 42, BORDER);
+    if(MouseButtonPressed(1380, 10, 1590, 50))
+        DrawRectangle(1380, 10, 210, 40, BUTTON);
+    else
+        DrawRectangle(1380, 10, 210, 40, HOVERED);
+    DrawText("BACK", 1485 - MeasureText("BACK", 30) / 2, 15, 30, TEXT);
+
     DrawRectangle(9, 59, 102, 32, BORDER);
     if(MouseButtonPressed(10, 60, 110, 90))
         DrawRectangle(10, 60, 100, 30, BUTTON);
@@ -667,83 +798,62 @@ void DisplayTree() {
         DrawRectangle(10, 60, 100, 30, HOVERED);
     DrawText("Initialize", 60 - MeasureText("Initialize", 20) / 2, 65, 20, TEXT);
 
-    DrawRectangle(9, 109, 102, 32, BORDER);
-    if(MouseButtonPressed(10, 110, 110, 140))
-        DrawRectangle(10, 110, 100, 30, BUTTON);
+    DrawRectangle(9, 99, 102, 32, BORDER);
+    if(MouseButtonPressed(10, 100, 110, 130))
+        DrawRectangle(10, 100, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 110, 100, 30, HOVERED);
-    DrawText("Add", 60 - MeasureText("Add", 20) / 2, 115, 20, TEXT);
+        DrawRectangle(10, 100, 100, 30, HOVERED);
+    DrawText("Add", 60 - MeasureText("Add", 20) / 2, 105, 20, TEXT);
 
-    DrawRectangle(119, 109, 102, 32, BORDER);
-    DrawRectangle(120, 110, 100, 30, WHITE);
+    DrawRectangle(119, 99, 102, 32, BORDER);
+    DrawRectangle(120, 100, 100, 30, WHITE);
 
-    DrawRectangle(9, 159, 102, 32, BORDER);
-    if(MouseButtonPressed(10, 160, 110, 190))
-        DrawRectangle(10, 160, 100, 30, BUTTON);
+    DrawRectangle(9, 139, 102, 32, BORDER);
+    if(MouseButtonPressed(10, 140, 110, 170))
+        DrawRectangle(10, 140, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 160, 100, 30, HOVERED);
-    DrawText("Delete", 60 - MeasureText("Delete", 20) / 2, 165, 20, TEXT);
+        DrawRectangle(10, 140, 100, 30, HOVERED);
+    DrawText("Delete", 60 - MeasureText("Delete", 20) / 2, 145, 20, TEXT);
 
-    DrawRectangle(119, 159, 102, 32, BORDER);
-    DrawRectangle(120, 160, 100, 30, WHITE);
+    DrawRectangle(119, 139, 102, 32, BORDER);
+    DrawRectangle(120, 140, 100, 30, WHITE);
 
-    DrawRectangle(9, 209, 102, 32, BORDER);
-    if(MouseButtonPressed(10, 210, 110, 240))
-        DrawRectangle(10, 210, 100, 30, BUTTON);
+    DrawRectangle(9, 179, 102, 32, BORDER);
+    if(MouseButtonPressed(10, 180, 110, 210))
+        DrawRectangle(10, 180, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 210, 100, 30, HOVERED);
-    DrawText("Find", 60 - MeasureText("Find", 20) / 2, 215, 20, TEXT);
+        DrawRectangle(10, 180, 100, 30, HOVERED);
+    DrawText("Find", 60 - MeasureText("Find", 20) / 2, 185, 20, TEXT);
 
-    DrawRectangle(119, 209, 102, 32, BORDER);
-    DrawRectangle(120, 210, 100, 30, WHITE);
+    DrawRectangle(119, 179, 102, 32, BORDER);
+    DrawRectangle(120, 180, 100, 30, WHITE);
 
-    DrawRectangle(9, 259, 102, 32, BORDER);
-    if(MouseButtonPressed(10, 260, 110, 290))
-        DrawRectangle(10, 260, 100, 30, BUTTON);
+    if(CheckFind > 0)
+        DrawText(CheckFind == 2 ? "YES" : "NO", 230, 185, 20, BLACK);
+
+    DrawRectangle(9, 219, 102, 32, BORDER);
+    if(MouseButtonPressed(10, 220, 110, 250))
+        DrawRectangle(10, 220, 100, 30, BUTTON);
     else
-        DrawRectangle(10, 260, 100, 30, HOVERED);
-    DrawText("Undo", 60 - MeasureText("Undo", 20) / 2, 265, 20, TEXT);
+        DrawRectangle(10, 220, 100, 30, HOVERED);
+    DrawText("Undo", 60 - MeasureText("Undo", 20) / 2, 225, 20, TEXT);
 
-    DrawRectangle(119, 259, 102, 32, BORDER);
-    if(MouseButtonPressed(120, 260, 220, 290))
-        DrawRectangle(120, 260, 100, 30, BUTTON);
+    DrawRectangle(119, 219, 102, 32, BORDER);
+    if(MouseButtonPressed(120, 220, 220, 250))
+        DrawRectangle(120, 220, 100, 30, BUTTON);
     else
-        DrawRectangle(120, 260, 100, 30, HOVERED);
-    DrawText("Redo", 170 - MeasureText("Redo", 20) / 2, 265, 20, TEXT);
+        DrawRectangle(120, 220, 100, 30, HOVERED);
+    DrawText("Redo", 170 - MeasureText("Redo", 20) / 2, 225, 20, TEXT);
 
-    DrawRectangle(9, 309, 212, 32, BORDER);
-    if(MouseButtonPressed(10, 310, 220, 340))
-        DrawRectangle(10, 310, 210, 30, BUTTON);
+    DrawRectangle(9, 259, 212, 32, BORDER);
+    if(MouseButtonPressed(10, 260, 220, 290))
+        DrawRectangle(10, 260, 210, 30, BUTTON);
     else
-        DrawRectangle(10, 310, 210, 30, HOVERED);
+        DrawRectangle(10, 260, 210, 30, HOVERED);
     if(STEPBYSTEPBUTTON)
-        DrawText("Step by step: ON", 115 - MeasureText("Step by step: ON", 20) / 2, 315, 20, TEXT);
+        DrawText("Step by step: ON", 115 - MeasureText("Step by step: ON", 20) / 2, 265, 20, TEXT);
     else
-        DrawText("Step by step: OFF", 115 - MeasureText("Step by step: OFF", 20) / 2, 315, 20, TEXT);    
-    
-    if(CurrentButton == ADDSBS || CurrentButton == DELETESBS) {
-        DrawText("Press -> (right arrow) to go to the next step", 10, 365, 20, BLACK);
-        // DrawText("Node* insert(Node* p, int x) {", 10, 390, 20, BLACK);
-        // DrawText("    if(p == nullptr) {", 10, 415, 20, BLACK);
-        // DrawText("        p = new Node(x);", 10, 440, 20, BLACK);
-        // DrawText("        return p;", 10, 465, 20, BLACK);
-        // DrawText("    }", 10, 490, 20, BLACK);
-        // DrawText("    if(p->data > x)", 10, 515, 20, BLACK);
-        // DrawText("        p->left = insert(p->left, x);", 10, 540, 20, BLACK);
-        // DrawText("    else", 10, 565, 20, BLACK);
-        // DrawText("        p->right = insert(p->right, x);", 10, 590, 20, BLACK);
-        // DrawText("    p->depth = max(height(p->left), height(p->right)) + 1;", 10, 615, 20, BLACK);
-        // DrawText("    if(p->left && height(p->left->right) > height(p->left->left) && height(p->left->right) - height(p->right) == 1)", 10, 640, 20, BLACK);
-        // DrawText("        p->left = leftrotate(p->left);", 10, 665, 20, BLACK);
-        // DrawText("    if(p->left && height(p->left->left) - height(p->right) == 1)", 10, 690, 20, BLACK);
-        // DrawText("        p = rightrotate(p);", 10, 715, 20, BLACK);
-        // DrawText("    if(p->right && height(p->right->left) > height(p->right->right) && height(p->right->left) - height(p->left) == 1)", 10, 740, 20, BLACK);
-        // DrawText("        p->right = rightrotate(p->right);", 10, 765, 20, BLACK);
-        // DrawText("    if(p->right && height(p->right->right) - height(p->left) == 1)", 10, 790, 20, BLACK);
-        // DrawText("        p = leftrotate(p);", 10, 815, 20, BLACK);
-        // DrawText("    return p;", 10, 840, 20, BLACK);
-        // DrawText("}", 10, 865, 20, BLACK);
-    }
+        DrawText("Step by step: OFF", 115 - MeasureText("Step by step: OFF", 20) / 2, 265, 20, TEXT);    
     
     DrawTree();
 
@@ -759,6 +869,8 @@ void DisplayTree() {
         DrawDelete();
     else if(CurrentButton == FINDBUTTON)
         DrawFind();
+    else if(CurrentButton == ADDSBS)
+        DrawAddSBS();
 }
 
 void UpdateNumber(bool NumberOnly) {
@@ -871,37 +983,74 @@ void InitializeEmpty() {
         S.clear(S.root);
 }
 
+void BackToMainMenu() {
+    while(S.insertStepByStep());
+    currentScreen = MAINMENU;
+    Number = "";
+    CurrentCursor = 0;
+    STEPBYSTEPBUTTON = false;
+    CheckFind = 0;
+    rootx = 1000;
+    rooty = 100;
+    oldx = 0;
+    oldy = 0;
+    Pressed = false;
+    InsertNumber = 0;
+    query = -1;
+    S.clear(S.root);
+    while(!S.History.empty()) {
+        S.clear(S.History.top());
+        S.History.pop();
+    }
+    while(!S.RedoHistory.empty()) {
+        S.clear(S.RedoHistory.top());
+        S.RedoHistory.pop();
+    }
+}
+
 void TREE_INTERACT() {
+    Pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     if(CurrentButton == NULLBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
-            else if(MouseButtonPressed(120, 110, 220, 140)) {
+            else if(MouseButtonPressed(120, 100, 220, 130)) {
                 CurrentButton = ADDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 160, 220, 190)) {
+            else if(MouseButtonPressed(120, 140, 220, 170)) {
                 CurrentButton = DELETEBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 160, 110, 190)) {
+            else if(MouseButtonPressed(10, 140, 110, 170)) {
                 Number = S.FindSelectedNode(S.root);
                 RemoveAVL();
             }
-            else if(MouseButtonPressed(120, 210, 220, 240)) {
+            else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 260, 110, 290))
+            else if(MouseButtonPressed(10, 220, 110, 250))
                 S.PopHistory();
-            else if(MouseButtonPressed(120, 260, 220, 290))
+            else if(MouseButtonPressed(120, 220, 220, 250))
                 S.PopRedoHistory();
-            else if(MouseButtonPressed(10, 310, 220, 340))
+            else if(MouseButtonPressed(10, 260, 220, 290))
                 STEPBYSTEPBUTTON ^= true;
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
             S.UpdateSelectedNode(S.root);
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
         }
     }
     else if(CurrentButton == INITIALIZEBUTTON) {
@@ -925,33 +1074,35 @@ void TREE_INTERACT() {
                 InitializeEmpty();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 110, 220, 140)) {
+            else if(MouseButtonPressed(120, 100, 220, 130)) {
                 CurrentButton = ADDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 160, 220, 190)) {
+            else if(MouseButtonPressed(120, 140, 220, 170)) {
                 CurrentButton = DELETEBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 210, 220, 240)) {
+            else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 260, 110, 290)) {
+            else if(MouseButtonPressed(10, 220, 110, 250)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 260, 220, 290)) {
+            else if(MouseButtonPressed(120, 220, 220, 250)) {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(10, 310, 220, 340)) {
+            else if(MouseButtonPressed(10, 260, 220, 290)) {
                 STEPBYSTEPBUTTON ^= true;
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
         }
     }
     else if(CurrentButton == KEYBOARDBUTTON) {
@@ -964,33 +1115,35 @@ void TREE_INTERACT() {
             }
             else if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
-            else if(MouseButtonPressed(120, 110, 220, 140)) {
+            else if(MouseButtonPressed(120, 100, 220, 130)) {
                 CurrentButton = ADDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 160, 220, 190)) {
+            else if(MouseButtonPressed(120, 140, 220, 170)) {
                 CurrentButton = DELETEBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 210, 220, 240)) {
+            else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 260, 110, 290)) {
+            else if(MouseButtonPressed(10, 220, 110, 250)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 260, 220, 290)) {
+            else if(MouseButtonPressed(120, 220, 220, 250)) {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(10, 310, 220, 340)) {
+            else if(MouseButtonPressed(10, 260, 220, 290)) {
                 STEPBYSTEPBUTTON ^= true;
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
         }
         else
             UpdateNumber(false);
@@ -1005,43 +1158,49 @@ void TREE_INTERACT() {
             }
             if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
-            else if(MouseButtonPressed(120, 110, 220, 140)) {
+            else if(MouseButtonPressed(120, 100, 220, 130)) {
                 CurrentButton = ADDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 160, 220, 190)) {
+            else if(MouseButtonPressed(120, 140, 220, 170)) {
                 CurrentButton = DELETEBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 210, 220, 240)) {
+            else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 260, 110, 290)) {
+            else if(MouseButtonPressed(10, 220, 110, 250)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 260, 220, 290)) {
+            else if(MouseButtonPressed(120, 220, 220, 250)) {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(10, 310, 220, 340)) {
+            else if(MouseButtonPressed(10, 260, 220, 290)) {
                 STEPBYSTEPBUTTON ^= true;
                 CurrentButton = NULLBUTTON;
             }
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
         }
         else
             UpdatePath();
     }
     else if(CurrentButton == ADDBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            if(MouseButtonPressed(10, 110, 110, 140)) {
+            if(MouseButtonPressed(10, 100, 110, 130)) {
+                S.ResetFindSelected();
+                CheckFind = 0;
                 if(STEPBYSTEPBUTTON) {
-                    InsertAVLSBS();
-                    CurrentButton = ADDSBS;
+                    if(InsertAVLSBS())
+                        CurrentButton = ADDSBS;
+                    else
+                        CurrentButton = NULLBUTTON;
                 } 
                 else {
                     InsertAVL();
@@ -1050,35 +1209,48 @@ void TREE_INTERACT() {
             }
             else if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
-            else if(MouseButtonPressed(120, 160, 220, 190)) {
+            else if(MouseButtonPressed(120, 140, 220, 170)) {
                 CurrentButton = DELETEBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
             else if(S.UpdateSelectedNode(S.root))
                 CurrentButton = NULLBUTTON;
-            else if(MouseButtonPressed(120, 210, 220, 240)) {
+            else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 260, 110, 290)) {
+            else if(MouseButtonPressed(10, 220, 110, 250)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 260, 220, 290)) {
+            else if(MouseButtonPressed(120, 220, 220, 250)) {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(10, 310, 220, 340))
+            else if(MouseButtonPressed(10, 260, 220, 290))
                 STEPBYSTEPBUTTON ^= true;
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
         }
         else
             UpdateNumber(true);
     }
     else if(CurrentButton == DELETEBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            if(MouseButtonPressed(10, 160, 110, 190)) {
+            if(MouseButtonPressed(10, 140, 110, 170)) {
+                S.ResetFindSelected();
+                CheckFind = 0;
                 if(STEPBYSTEPBUTTON) {
                     RemoveAVLSBS();
                     CurrentButton = DELETESBS;
@@ -1090,74 +1262,157 @@ void TREE_INTERACT() {
             }
             else if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
-            else if(MouseButtonPressed(120, 110, 220, 140)) {
+            else if(MouseButtonPressed(120, 100, 220, 130)) {
                 CurrentButton = ADDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
             else if(S.UpdateSelectedNode(S.root))
                 CurrentButton = NULLBUTTON;
-            else if(MouseButtonPressed(120, 210, 220, 240)) {
+            else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(10, 260, 110, 290)) {
+            else if(MouseButtonPressed(10, 220, 110, 250)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 260, 220, 290)) {
+            else if(MouseButtonPressed(120, 220, 220, 250)) {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(10, 310, 220, 340))
+            else if(MouseButtonPressed(10, 260, 220, 290))
                 STEPBYSTEPBUTTON ^= true;
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
         }
         else
             UpdateNumber(true);
     }
     else if(CurrentButton == FINDBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            if(MouseButtonPressed(10, 210, 110, 240)) {
-                FindAVL();
-                CurrentButton = NULLBUTTON;
+            if(MouseButtonPressed(10, 180, 110, 210)) {
+                S.ResetFindSelected();
+                CheckFind = 0;
+                if(STEPBYSTEPBUTTON) {
+                    FindAVLSBS();
+                    CurrentButton = FINDSBS;
+                }
+                else {
+                    FindAVL();
+                    CurrentButton = NULLBUTTON;
+                }
             }
             else if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
-            else if(MouseButtonPressed(120, 110, 220, 140)) {
+            else if(MouseButtonPressed(120, 100, 220, 130)) {
                 CurrentButton = ADDBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
-            else if(MouseButtonPressed(120, 160, 220, 190)) {
+            else if(MouseButtonPressed(120, 140, 220, 170)) {
                 CurrentButton = DELETEBUTTON;
                 Number.clear();
                 CurrentCursor = 0;
             }
             else if(S.UpdateSelectedNode(S.root))
                 CurrentButton = NULLBUTTON;
-            else if(MouseButtonPressed(10, 260, 110, 290)) {
+            else if(MouseButtonPressed(10, 220, 110, 250)) {
                 S.PopHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(120, 260, 220, 290)) {
+            else if(MouseButtonPressed(120, 220, 220, 250)) {
                 S.PopRedoHistory();
                 CurrentButton = NULLBUTTON;
             }
-            else if(MouseButtonPressed(10, 310, 220, 340))
+            else if(MouseButtonPressed(10, 260, 220, 290))
                 STEPBYSTEPBUTTON ^= true;
+            else if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
         }
         else
             UpdateNumber(true);
     }
     else if(CurrentButton == ADDSBS) {
-        if(IsKeyPressed(KEY_RIGHT))
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
+        }
+        else if(IsKeyPressed(KEY_RIGHT)) {
             if(!S.insertStepByStep())
                 CurrentButton = NULLBUTTON;
+        }
+        else if(IsKeyPressed(KEY_ENTER)) {
+            while(S.insertStepByStep());
+            CurrentButton = NULLBUTTON;
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
+        }
     }
     else if(CurrentButton == DELETESBS) {
-        if(IsKeyPressed(KEY_RIGHT))
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
+        }
+        else if(IsKeyPressed(KEY_RIGHT)) {
             if(!S.removeStepByStep())
                 CurrentButton = NULLBUTTON;
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
+        }
     }
+    else if(CurrentButton == FINDSBS) {
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if(MouseButtonPressed(1380, 10, 1590, 50))
+                BackToMainMenu();
+        }
+        else if(IsKeyPressed(KEY_RIGHT)) {
+            if(!S.findStepByStep())
+                CurrentButton = NULLBUTTON;
+        }
+        else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            if(Pressed) {
+                int deltax = GetMousePosition().x - oldx;
+                int deltay = GetMousePosition().y - oldy;
+                rootx += deltax;
+                rooty += deltay;
+                S.UpdatePosition2(S.root, deltax, deltay);
+            }
+        }
+    }
+    oldx = GetMousePosition().x;
+    oldy = GetMousePosition().y;
 }
