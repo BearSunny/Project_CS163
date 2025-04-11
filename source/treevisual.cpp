@@ -568,6 +568,7 @@ void AVLTree::PopHistory() {
         return;
     RedoHistory.emplace(root);
     root = History.top();
+    UpdatePosition2(root, rootx - root->x, rooty - root->y);
     History.pop();
 }
 
@@ -576,6 +577,7 @@ void AVLTree::PopRedoHistory() {
         return;
     History.emplace(root);
     root = RedoHistory.top();
+    UpdatePosition2(root, rootx - root->x, rooty - root->y);
     RedoHistory.pop();
 }
 
@@ -984,7 +986,8 @@ void InitializeEmpty() {
 }
 
 void BackToMainMenu() {
-    while(S.insertStepByStep());
+    if(!S.Q.empty())
+        while(S.insertStepByStep());
     currentScreen = MAINMENU;
     Number = "";
     CurrentCursor = 0;
