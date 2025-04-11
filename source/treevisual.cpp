@@ -642,13 +642,14 @@ void RemoveAVL() {
     S.remove(x);
 }
 
-void RemoveAVLSBS() {
+bool RemoveAVLSBS() {
     if(Number.empty())
-        return;
+        return false;
     int x = 0;
     for(char c : Number)
         x = 10 * x + c - '0';
     S.removeSBS(x);
+    return true;
 }
 
 void FindAVL() {
@@ -1299,8 +1300,10 @@ void TREE_INTERACT() {
                 S.ResetFindSelected();
                 CheckFind = 0;
                 if(STEPBYSTEPBUTTON) {
-                    RemoveAVLSBS();
-                    CurrentButton = DELETESBS;
+                    if(RemoveAVLSBS())
+                        CurrentButton = DELETESBS;
+                    else
+                        CurrentButton = NULLBUTTON;
                 }
                 else {
                     RemoveAVL();
