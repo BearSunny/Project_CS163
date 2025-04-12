@@ -89,6 +89,19 @@ const pair<pair<int, string>, string> DELETESTEPBYSTEP2[] = {
 {{21, "    if(p->right && height(p->right->right) - height(p->left) == 1) "}, "p = leftrotate(p);"},
 {{22, "    "}, "return p;"},
 {{23, ""}, "}"}};
+const string FINDSTEPBYSTEP[] {
+"bool find(int x) {",
+"    Node* p = root;",
+"    while(p != nullptr) {",
+"        if(p->data == x)",
+"            return true;",
+"        if(p->data > x)",
+"            p = p->left;",
+"        else",
+"            p = p->right;",
+"    }",
+"    return false;",
+"}"};
 
 typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS, DELETESBS, FINDSBS} ButtonState;
 ButtonState CurrentButton = NULLBUTTON;
@@ -107,6 +120,9 @@ int oldy = 0;
 bool Pressed = false;
 int InsertNumber = 0;
 int query = -1;
+float Speed = 10;
+int Startx = -1;
+int Starty = -1;
 
 struct AVLTree {
     struct Node {
@@ -170,7 +186,7 @@ bool InsertAVLSBS();
 void RemoveAVL();
 bool RemoveAVLSBS();
 void FindAVL();
-void FindAVLSBS();
+bool FindAVLSBS();
 void DrawTree();
 void DrawInitialize();
 void DrawNumber(int x, int y, int fs);
@@ -181,6 +197,7 @@ void DrawAdd();
 void DrawDelete();
 void DrawAddSBS();
 void DrawDeleteSBS();
+void DrawFindSBS();
 void DisplayTree();
 void UpdateNumber();
 void InitializeKeyboard();
