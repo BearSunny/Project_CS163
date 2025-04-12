@@ -470,36 +470,56 @@ bool AVLTree::find(int x) {
 }
 
 void AVLTree::findSBS(int x) {
-    Node *parent = nullptr;
-    Node *p = root;
+    Q.emplace(nullptr, root, 1);
+    Node* p = root;
+    Q.emplace(nullptr, p, 2);
     while(p != nullptr) {
-        Q.emplace(parent, p, 0);
-        if(p->data == x)
+        Q.emplace(nullptr, p, 3);
+        if(p->data == x) {
+            Q.emplace(nullptr, p, 4);
+            Q.emplace(nullptr, nullptr, -1);
             return;
-        parent = p;
-        if(p->data > x)
+        }
+        bool check = false;
+        Q.emplace(nullptr, p, 5);
+        if(p->data > x) {
+            check = true;
+            Q.emplace(nullptr, p, 6);
             p = p->left;
-        else
+        }
+        if(!check) {
+            Q.emplace(nullptr, p, 8);
             p = p->right;
+        }
+        Q.emplace(nullptr, p, 2);
     }
-    Q.emplace(parent, p, 0);
+    Q.emplace(nullptr, p, 10);
+    Q.emplace(nullptr, nullptr, -1);
+    return;
 }
 
 bool AVLTree::findStepByStep() {
     Node *parent = get<0>(Q.front());
     Node *p = get<1>(Q.front());
+    query = get<2>(Q.front());
     Q.pop();
-    if(parent)
-        parent->findselected = false;
-    if(p)
-        p->findselected = true;
-    if(Q.empty()) {
-        if(p == nullptr)
-            CheckFind = 1;
-        else
+    if(prep)
+        prep->findselected = false;
+    switch(query) {
+        case 4:
             CheckFind = 2;
-        return false;
+            break;
+        case 10:
+            CheckFind = 1;
+            break;
+        default:
+            break;
     }
+    if(p != nullptr)
+        p->findselected = true;
+    prep = p;
+    if(Q.empty())
+        return false;
     return true;
 }
 
@@ -508,28 +528,28 @@ void AVLTree::Draw(Node *p) {
     double dy = abs(p->y - p->newy);
     double d = sqrt(dx * dx + dy * dy);
     if(p->x < p->newx) {
-        p->x += dx / d;
+        p->x += Speed / 10 * dx / d;
         if(p->x > p->newx)
-            p->x = p->newx;       
+            p->x = p->newx;
     }
     else if(p->x > p->newx) {
-        p->x -= dx / d;
+        p->x -= Speed / 10 * dx / d;
         if(p->x < p->newx)
             p->x = p->newx;
     }
     if(p->y < p->newy) {
-        p->y += dy / d;
+        p->y += Speed / 10 * dy / d;
         if(p->y > p->newy)
-            p->y = p->newy;       
+            p->y = p->newy;
     }
     else if(p->y > p->newy) {
-        p->y -= dy / d;
+        p->y -= Speed / 10 * dy / d;
         if(p->y < p->newy)
             p->y = p->newy;
     }
     if(p->left) {
         DrawLine(p->x, p->y, p->left->x, p->left->y, BLACK);
-        Draw(p->left);        
+        Draw(p->left);
     }
     if(p->right) {
         DrawLine(p->x, p->y, p->right->x, p->right->y, BLACK);
@@ -661,13 +681,14 @@ void FindAVL() {
     CheckFind = S.find(x) + 1;
 }
 
-void FindAVLSBS() {
+bool FindAVLSBS() {
     if(Number.empty())
-        return;
+        return false;
     int x = 0;
     for(char c : Number)
         x = 10 * x + c - '0';
     S.findSBS(x);
+    return true;
 }
 
 void DrawTree() {
@@ -822,6 +843,16 @@ void DrawDeleteSBS() {
         DrawText(DELETESTEPBYSTEP[i].c_str(), 10, 300 + 25 * i, 20, BLACK);
 }
 
+void DrawFindSBS() {
+    DrawText("Press -> (right arrow) to go to the next step", 230, 10, 20, BLACK);
+    DrawText("Press Enter to go to the result", 230, 35, 20, BLACK);
+    for(int i = 0; i < 12; ++i) {
+        if(query == i)
+            DrawRectangle(10, 300 + 25 * i, MeasureText(FINDSTEPBYSTEP[i].c_str(), 20), 20, GRAY);
+        DrawText(FINDSTEPBYSTEP[i].c_str(), 10, 300 + 25 * i, 20, BLACK);
+    }
+}
+
 void DisplayTree() {
     ClearBackground(BACKGROUND);
 
@@ -902,6 +933,9 @@ void DisplayTree() {
     else
         DrawText("Step by step: OFF", 115 - MeasureText("Step by step: OFF", 20) / 2, 265, 20, TEXT);    
 
+    DrawRectangle(1350, 840, 200, 10, HOVERED);
+    DrawCircle(1349 + Speed, 845, 10, BORDER);
+
     if(CurrentButton == INITIALIZEBUTTON)
         DrawInitialize();
     else if(CurrentButton == KEYBOARDBUTTON)
@@ -918,6 +952,8 @@ void DisplayTree() {
         DrawAddSBS();
     else if(CurrentButton == DELETESBS)
         DrawDeleteSBS();
+    else if(CurrentButton == FINDSBS)
+        DrawFindSBS();
 }
 
 void UpdateNumber(bool NumberOnly) {
@@ -1045,6 +1081,9 @@ void BackToMainMenu() {
     Pressed = false;
     InsertNumber = 0;
     query = -1;
+    Speed = 10;
+    Startx = -1;
+    Starty = -1;
     S.clear(S.root);
     while(!S.History.empty()) {
         S.clear(S.History.top());
@@ -1060,6 +1099,8 @@ void TREE_INTERACT() {
     Pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     if(CurrentButton == NULLBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(10, 60, 110, 90))
                 CurrentButton = INITIALIZEBUTTON;
             else if(MouseButtonPressed(120, 100, 220, 130)) {
@@ -1093,11 +1134,20 @@ void TREE_INTERACT() {
         }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
     }
@@ -1242,6 +1292,8 @@ void TREE_INTERACT() {
     else if(CurrentButton == ADDBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if(MouseButtonPressed(10, 100, 110, 130)) {
+                Startx = GetMousePosition().x;
+                Starty = GetMousePosition().y;
                 S.ResetFindSelected();
                 CheckFind = 0;
                 if(STEPBYSTEPBUTTON) {
@@ -1284,11 +1336,20 @@ void TREE_INTERACT() {
         }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
         else
@@ -1296,6 +1357,8 @@ void TREE_INTERACT() {
     }
     else if(CurrentButton == DELETEBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(10, 140, 110, 170)) {
                 S.ResetFindSelected();
                 CheckFind = 0;
@@ -1339,11 +1402,20 @@ void TREE_INTERACT() {
         }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
         else
@@ -1351,12 +1423,16 @@ void TREE_INTERACT() {
     }
     else if(CurrentButton == FINDBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(10, 180, 110, 210)) {
                 S.ResetFindSelected();
                 CheckFind = 0;
                 if(STEPBYSTEPBUTTON) {
-                    FindAVLSBS();
-                    CurrentButton = FINDSBS;
+                    if(FindAVLSBS())
+                        CurrentButton = FINDSBS;
+                    else
+                        CurrentButton = NULLBUTTON;
                 }
                 else {
                     FindAVL();
@@ -1392,11 +1468,20 @@ void TREE_INTERACT() {
         }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
         else
@@ -1404,6 +1489,8 @@ void TREE_INTERACT() {
     }
     else if(CurrentButton == ADDSBS) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(1380, 10, 1590, 50))
                 BackToMainMenu();
         }
@@ -1417,16 +1504,27 @@ void TREE_INTERACT() {
         }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
     }
     else if(CurrentButton == DELETESBS) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(1380, 10, 1590, 50))
                 BackToMainMenu();
         }
@@ -1434,18 +1532,33 @@ void TREE_INTERACT() {
             if(!S.removeStepByStep())
                 CurrentButton = NULLBUTTON;
         }
+        else if(IsKeyPressed(KEY_ENTER)) {
+            while(S.removeStepByStep());
+            CurrentButton = NULLBUTTON;
+        }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
     }
     else if(CurrentButton == FINDSBS) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(1380, 10, 1590, 50))
                 BackToMainMenu();
         }
@@ -1453,13 +1566,26 @@ void TREE_INTERACT() {
             if(!S.findStepByStep())
                 CurrentButton = NULLBUTTON;
         }
+        else if(IsKeyPressed(KEY_ENTER)) {
+            while(S.findStepByStep());
+            CurrentButton = NULLBUTTON;
+        }
         else if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             if(Pressed) {
-                int deltax = GetMousePosition().x - oldx;
-                int deltay = GetMousePosition().y - oldy;
-                rootx += deltax;
-                rooty += deltay;
-                S.UpdatePosition2(S.root, deltax, deltay);
+                if(Startx >= 1340 && Startx < 1560 && Starty >= 835 && Starty < 855) {
+                    Speed = GetMousePosition().x - 1349;
+                    if(Speed < 1)
+                        Speed = 1;
+                    else if(Speed > 200)
+                        Speed = 200;
+                }
+                else {
+                    int deltax = GetMousePosition().x - oldx;
+                    int deltay = GetMousePosition().y - oldy;
+                    rootx += deltax;
+                    rooty += deltay;
+                    S.UpdatePosition2(S.root, deltax, deltay);
+                }
             }
         }
     }
