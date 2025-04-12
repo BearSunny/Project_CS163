@@ -52,7 +52,8 @@ LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
     manualInputValues(), showFileDialog(false), filePath{0}, fileError(false),
     fileErrorMessage(""), arrowProgress(0.0f), isPaused(false), animationSpeed(1.0f),
     animationProgress(0.0f), operationHistory(), undoHistory(), currentStep(0),
-    lastOperation(""), connectionAnimations(), showPseudocode(false), currentPseudocodeLine(0), pseudocodeProgress(0.0f) {}
+    lastOperation(""), connectionAnimations(), showPseudocode(false), currentPseudocodeLine(0), pseudocodeProgress(0.0f), stepByStepMode(false), traversalIndex(-1), 
+    animState(WAITING), nodeHighlightProgress(0.0f), pendingAddValue(0), shouldAddNode(false), pendingTraversalCount(0) {}
 
 Operation::Operation(Type t, int idx, int oldVal, int newVal)
     : type(t), nodeIndex(idx), oldValue(oldVal), newValue(newVal) {}
@@ -424,6 +425,18 @@ void LinkedListVisualizer::drawAnimationControls() {
         stepForward(); // Step forward through operations
     }
 
+    // Add step-by-step toggle
+    std::string toggleText = "Step-by-step: " + std::string(stepByStepMode ? "ON" : "OFF");
+    float toggleWidth = MeasureText(toggleText.c_str(), 20) + 20; // Add 20px padding
+    float toggleX = startX + (buttonWidth + buttonSpacing) * 6 + buttonSpacing;
+    if (DrawButton(toggleX, controlsY, toggleWidth, buttonWidth, toggleText.c_str())) {
+        stepByStepMode = !stepByStepMode;
+        isPaused = false;
+        animState      = WAITING;    // ← reset the state machine
+        traversalIndex = -1;         // ← start fresh on next ADD
+        pseudocodeProgress = 0.0f;  
+    }
+
     // Speed control slider
     float sliderWidth = 200;
     float sliderX = GetScreenWidth() * 0.6;
@@ -512,8 +525,10 @@ void LinkedListVisualizer::drawLinkedList(float startX, float startY, float offs
             animationNodeIndex = operationHistory[currentStep].nodeIndex;
         }
         
-        if (index == animationNodeIndex) {
-            applyAnimationEffects(posX, posY, current, index);
+        if (stepByStepMode && operationHistory[currentStep].type == Operation::ADD && animState == TRAVERSING && index <= traversalIndex) {
+            applyAnimationEffects(posX, posY, current, index); // Let applyAnimationEffects handle orange highlight
+        } else if (index == operationHistory[currentStep].nodeIndex) {
+            applyAnimationEffects(posX, posY, current, index); // Final node
         } else {
             drawNode(posX, posY, current, index);
         }
@@ -525,6 +540,7 @@ void LinkedListVisualizer::drawLinkedList(float startX, float startY, float offs
 
 void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int index) {
     Color nodeColor = (Color){245, 162, 178, 255};
+    Color borderColor = (Color){194, 24, 91, 255};
     
     // Selected node
     if (index == selectedNodeIndex) {
@@ -536,8 +552,18 @@ void LinkedListVisualizer::drawNode(float posX, float posY, Node* node, int inde
         nodeColor = {163, 190, 140, 255};
     }
     
+    // For step-by-step mode ADD operation, check if this node should be highlighted in traversal
+    const Operation& currentOp = operationHistory[currentStep];
+    if (stepByStepMode && 
+        currentOp.type == Operation::ADD && 
+        animState == TRAVERSING && 
+        index <= traversalIndex) {
+        // Highlight visited nodes with orange border during traversal
+        borderColor = (Color){180, 100, 0, 255}; // Orange border
+    }
+
     DrawCircle(posX, posY, 30.f, nodeColor);
-    DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255});
+    DrawCircleLines(posX, posY, 30.f, borderColor);
     
     // Draw node value
     const char* valueText = TextFormat("%d", node->val);
@@ -810,10 +836,30 @@ void LinkedListVisualizer::handleEvent() {
                 Operation op(Operation::ADD, list->getSize(), 0, value);
                 operationHistory.push_back(op);
                 
-                // Perform add
-                list->add(value);
-                lastOperation = "Added node with value: " + inputString;
+                // Store the value for later use
+                pendingAddValue = value;
+                shouldAddNode = stepByStepMode;  // only delay if step-by-step mode is ON
+
+                if (!stepByStepMode) {
+                    // Add immediately if not in step-by-step mode
+                    list->add(value);
+                    connectionAnimations.push_back({0.0f, animationSpeed});
+                }
+
+                pendingTraversalCount = list->getSize();
+
+                // Don't add yet, just stage the operation
+                lastOperation = "Adding node with value: " + inputString;
+                currentStep = operationHistory.size() - 1;
                 
+                // Reset the step‑by‑step traversal state
+                animState             = WAITING;    // next frame will start traversal
+                traversalIndex        = -1;         // WAITING → TRAVERSING sets it to 0
+                nodeHighlightProgress = 0.0f;       // reset per‑node timer
+                animationProgress = 0.0f;
+                pseudocodeProgress    = 0.0f;       // reset pseudocode highlighting
+                isPaused              = false;      // ensure updateAnimation() runs
+
                 // Add a new connection animation with the current speed
                 connectionAnimations.push_back({0.0f, animationSpeed});
 
@@ -880,16 +926,85 @@ void LinkedListVisualizer::handleEvent() {
 void LinkedListVisualizer::updateAnimation() {    
     if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size())) {
         if (!isPaused) {
-            animationProgress += GetFrameTime() * animationSpeed;
-            pseudocodeProgress += GetFrameTime() * (animationSpeed * 0.2f);
-        }
-        if (animationProgress >= 1.0f) {
-            animationProgress = 0.0f;
-            // Don't automatically advance to next step
-            // This gives users time to see the completed operation
-        }
-        if (pseudocodeProgress >= 1.0f) {
-            pseudocodeProgress = 0.0f;
+            const Operation& currentOp = operationHistory[currentStep];
+            
+            if (stepByStepMode) {
+                // Only apply this state machine behavior for ADD operations
+                if (currentOp.type == Operation::ADD) {
+                    int logicalSize = pendingTraversalCount;
+                    int targetIndex = logicalSize - 1;
+                    switch (animState) {
+                        case WAITING:
+                            // Initialize animation
+                            // if (list->getHead() != nullptr && list->getHead()->next != nullptr) {
+                            if (logicalSize > 0) {
+                                animState = TRAVERSING;
+                                traversalIndex = 0;
+                                nodeHighlightProgress = 0.0f; // Reset highlight progress when starting traversal
+                            } else {
+                                animState = FINAL_ANIMATION;
+                            }
+                            break;
+                        
+                        case TRAVERSING:
+                            nodeHighlightProgress += GetFrameTime() * animationSpeed;
+                            if (nodeHighlightProgress >= 1.0f) {
+                                nodeHighlightProgress = 0.0f;
+                        
+                                if (traversalIndex >= targetIndex) {
+                                    animState = FINAL_ANIMATION;
+                                    animationProgress = 0.0f;
+                                } else {
+                                    traversalIndex++;
+                                }
+                            }
+                            break;
+                        
+                        case FINAL_ANIMATION:
+                            // Update final animation
+                            animationProgress += GetFrameTime() * animationSpeed;
+
+                            // Perform the add here (only once)
+                            if (shouldAddNode) {
+                                list->add(pendingAddValue);         // do the actual add
+                                shouldAddNode = false;              // avoid adding again
+                                connectionAnimations.push_back({0.0f, animationSpeed});
+                            }
+
+                            if (animationProgress >= 1.0f) {
+                                animationProgress = 1.0f; // Keep at 100% instead of resetting
+                                // Don't automatically advance to next step
+                                // This gives users time to see the completed operation
+                            }
+                            break;
+                    }
+                } else {
+                    // For non-ADD operations in step-by-step mode
+                    animationProgress += GetFrameTime() * animationSpeed;
+                    if (animationProgress >= 1.0f) {
+                        animationProgress = 1.0f;
+                    }
+                }
+                
+                // Update pseudocode progress
+                pseudocodeProgress += GetFrameTime() * (animationSpeed * 0.2f);
+                if (pseudocodeProgress >= 1.0f) {
+                    pseudocodeProgress = 0.0f;
+                }
+            } else {
+                // Regular animation mode
+                animationProgress += GetFrameTime() * animationSpeed;
+                pseudocodeProgress += GetFrameTime() * (animationSpeed * 0.2f);
+                
+                // Check progress limits
+                if (animationProgress >= 1.0f) {
+                    animationProgress = 1.0f; // Keep at 100%
+                    // Don't automatically advance to next step
+                }
+                if (pseudocodeProgress >= 1.0f) {
+                    pseudocodeProgress = 0.0f;
+                }
+            }
         }
     }
 }
@@ -941,6 +1056,9 @@ void LinkedListVisualizer::stepForward() {
         currentStep++;
         animationProgress = 0.0f; // Reset animation progress
         pseudocodeProgress = 0.0f;
+        traversalIndex = -1;
+        animState = WAITING;
+        nodeHighlightProgress = 0.0f;
     }
 }
 
@@ -949,112 +1067,169 @@ void LinkedListVisualizer::stepBackward() {
         currentStep--;
         animationProgress = 0.0f; // Reset animation progress
         pseudocodeProgress = 0.0f;
+        traversalIndex = -1;
+        animState = WAITING;
+        nodeHighlightProgress = 0.0f;
     }
 }
 
 void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* node, int index) {
     const Operation& currentOp = operationHistory[currentStep];
-    
-    switch (currentOp.type) {
-        case Operation::ADD:
-            if (index == currentOp.nodeIndex) {
-                // Highlight pseudocode lines based on animation progress
-                if (pseudocodeProgress < 0.3f) {
-                    currentPseudocodeLine = 0; // "1. Create a new node."
-                } else if (pseudocodeProgress < 0.6f) {
-                    currentPseudocodeLine = 1; // "2. Set the value of the new node."
-                } else if (pseudocodeProgress < 0.75f) {
-                    currentPseudocodeLine = 2; // "3. If the list is empty:"
-                } else if (pseudocodeProgress < 0.85f) {
-                    currentPseudocodeLine = 5; // "4. Else: Traverse to the last node."
-                } else {
-                    currentPseudocodeLine = 7; // "   b. Link the last node to the new node."
-                }
 
-                // Fade in effect for new node
-                Color nodeColor = {245, 162, 178, 255};
-                float alpha = animationProgress;
-                DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
-                DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255} );
-                
-                const char* valueText = TextFormat("%d", node->val);
-                float textWidth = MeasureText(valueText, 20);
-                DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+    switch (currentOp.type) {
+        case Operation::ADD: {
+            bool isEmptyList = list->getHead() == node && node->next == nullptr;
+
+            if (stepByStepMode) {
+                switch (animState) {
+                    case WAITING:
+                        drawNode(posX, posY, node, index);
+                        currentPseudocodeLine = isEmptyList ? 4 : -1;
+                        break;
+
+                    case TRAVERSING:
+                        if (index <= traversalIndex) {
+                            float pulse = 1.0f + 0.2f * sin(GetTime() * 6);  // Pulse faster and stronger
+                            // Highlight visited nodes
+                            DrawCircle(posX, posY, 30.f, (Color){245, 162, 178, 255});
+                            DrawCircleLines(posX, posY, 30.f * pulse, (Color){234, 179, 8, 255});  // Orange border
+                            DrawCircleLines(posX, posY, 30.5f * pulse, (Color){234, 179, 8, 255});
+                            DrawCircleLines(posX, posY, 31.f * pulse, (Color){234, 179, 8, 255});
+                            DrawCircleLines(posX, posY, 31.5f * pulse, (Color){234, 179, 8, 255});
+        
+                            const char* valueText = TextFormat("%d", node->val);
+                            float textWidth = MeasureText(valueText, 20);
+                            DrawText(valueText, posX - textWidth/2, posY - 10, 20, BLACK);
+        
+                            currentPseudocodeLine = 6; // "Traverse to the last node"
+                        } else {
+                            drawNode(posX, posY, node, index);
+                        }
+                        break;
+
+                    case FINAL_ANIMATION:
+                        if (index == currentOp.nodeIndex) {
+                            // Fade in the new node
+                            Color nodeColor = {245, 162, 178, 255};
+                            float alpha = animationProgress;
+                            DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
+                            DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255});
+
+                            const char* valueText = TextFormat("%d", node->val);
+                            float textWidth = MeasureText(valueText, 20);
+                            DrawText(valueText, posX - textWidth / 2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+
+                            currentPseudocodeLine = 7;  // "Link the last node to the new node"
+                        } else {
+                            drawNode(posX, posY, node, index);
+                        }
+                        break;
+
+                    default:
+                        drawNode(posX, posY, node, index);
+                        break;
+                }
+            } else {
+                if (index == currentOp.nodeIndex) {
+                    if (pseudocodeProgress < 0.3f) {
+                        currentPseudocodeLine = 0;
+                    } else if (pseudocodeProgress < 0.6f) {
+                        currentPseudocodeLine = 1;
+                    } else if (pseudocodeProgress < 0.75f) {
+                        currentPseudocodeLine = 2;
+                    } else if (pseudocodeProgress < 0.85f) {
+                        currentPseudocodeLine = 5;
+                    } else {
+                        currentPseudocodeLine = 7;
+                    }
+
+                    Color nodeColor = {245, 162, 178, 255};
+                    float alpha = animationProgress;
+                    DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
+                    DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255});
+
+                    const char* valueText = TextFormat("%d", node->val);
+                    float textWidth = MeasureText(valueText, 20);
+                    DrawText(valueText, posX - textWidth / 2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+                } else {
+                    drawNode(posX, posY, node, index);
+                }
             }
             break;
-        case Operation::ADD_HEAD:
+        }
+
+        case Operation::ADD_HEAD: {
             if (index == currentOp.nodeIndex) {
                 if (pseudocodeProgress < 0.25f) {
-                    currentPseudocodeLine = 0; 
+                    currentPseudocodeLine = 0;
                 } else if (pseudocodeProgress < 0.5f) {
-                    currentPseudocodeLine = 1; // "2. Set the value of the new node."
+                    currentPseudocodeLine = 1;
                 } else if (pseudocodeProgress < 0.65f) {
-                    currentPseudocodeLine = 2; // "3. Link the new node to the head."
+                    currentPseudocodeLine = 2;
                 } else if (pseudocodeProgress < 0.75f) {
                     currentPseudocodeLine = 3;
                 }
 
-                // Fade in effect for new node
                 Color nodeColor = {245, 162, 178, 255};
                 float alpha = animationProgress;
                 DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
-                DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255} );
-                
+                DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255});
+
                 const char* valueText = TextFormat("%d", node->val);
                 float textWidth = MeasureText(valueText, 20);
-                DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+                DrawText(valueText, posX - textWidth / 2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+            } else {
+                drawNode(posX, posY, node, index);
             }
             break;
+        }
 
-        case Operation::DELETE:
+        case Operation::DELETE: {
             if (index == currentOp.nodeIndex) {
-                // Highlight pseudocode lines based on animation progress
                 if (pseudocodeProgress < 0.25f) {
-                    currentPseudocodeLine = 3; // "2. Find the node at the given index:"
+                    currentPseudocodeLine = 3;
                 } else if (pseudocodeProgress < 0.5f) {
-                    currentPseudocodeLine = 6; // "3. Remove the node:"
+                    currentPseudocodeLine = 6;
                 } else {
                     currentPseudocodeLine = 7;
                 }
 
-                // Fade out effect for deleted node
                 Color nodeColor = {208, 135, 112, 255};
                 float alpha = 1.0f - animationProgress;
                 DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
                 DrawCircleLines(posX, posY, 30.f, ColorAlpha(BLACK, alpha));
-                
+
                 const char* valueText = TextFormat("%d", node->val);
                 float textWidth = MeasureText(valueText, 20);
-                DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+                DrawText(valueText, posX - textWidth / 2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+            } else {
+                drawNode(posX, posY, node, index);
             }
             break;
-            
-        case Operation::UPDATE:
-            if (index == currentOp.nodeIndex) {
-                // Highlight pseudocode lines based on animation progress
-                if (pseudocodeProgress < 0.5f) {
-                    currentPseudocodeLine = 4; // "2. Find the node at the given index:"
-                } else {
-                    currentPseudocodeLine = 6; // "3. Update the value of the node."
-                }
+        }
 
-                // Transition effect for updated value
-                DrawCircle(posX, posY, 30.f, (Color){ 124, 156, 191, 255 });
+        case Operation::UPDATE: {
+            if (index == currentOp.nodeIndex) {
+                currentPseudocodeLine = (pseudocodeProgress < 0.5f) ? 4 : 6;
+
+                DrawCircle(posX, posY, 30.f, (Color){124, 156, 191, 255});
                 DrawCircleLines(posX, posY, 30.f, WHITE);
-                
+
                 const char* valueText = TextFormat("%d", currentOp.newValue);
                 float textWidth = MeasureText(valueText, 20);
-                DrawText(valueText, posX - textWidth/2, posY - 10, 20, BLACK);
+                DrawText(valueText, posX - textWidth / 2, posY - 10, 20, BLACK);
+            } else {
+                drawNode(posX, posY, node, index);
             }
             break;
-            
-        case Operation::SEARCH:
+        }
+
+        case Operation::SEARCH: {
             if (node->val == currentOp.newValue) {
-                // Highlight pseudocode lines based on animation progress
                 if (pseudocodeProgress < 0.25f) {
-                    currentPseudocodeLine = 3; // "2. Traverse the list:"
+                    currentPseudocodeLine = 3;
                 } else if (pseudocodeProgress < 0.45f) {
-                    currentPseudocodeLine = 4; // "3. If found: Print 'Value found at index X.'"
+                    currentPseudocodeLine = 4;
                 } else if (pseudocodeProgress < 0.65f) {
                     currentPseudocodeLine = 5;
                 } else if (pseudocodeProgress < 0.78f) {
@@ -1065,20 +1240,19 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                     currentPseudocodeLine = 8;
                 }
 
-                // Pulse effect for found node
                 Color nodeColor = {163, 190, 140, 255};
                 float pulse = 0.5f + 0.5f * sin(animationProgress * PI * 4);
                 DrawCircle(posX, posY, 30.f + pulse * 5.f, nodeColor);
                 DrawCircleLines(posX, posY, 30.f + pulse * 5.f, WHITE);
-                
+
                 const char* valueText = TextFormat("%d", node->val);
                 float textWidth = MeasureText(valueText, 20);
-                DrawText(valueText, posX - textWidth/2, posY - 10, 20, BLACK);
+                DrawText(valueText, posX - textWidth / 2, posY - 10, 20, BLACK);
             } else {
-                // Draw regular node
                 drawNode(posX, posY, node, index);
             }
             break;
+        }
     }
 }
 
