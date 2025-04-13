@@ -611,7 +611,7 @@ void AVLTree::PushHistory() {
     CopyData(p, root);
     History.emplace(p);
     while(!RedoHistory.empty()) {
-        delete RedoHistory.top();
+        clear(RedoHistory.top());
         RedoHistory.pop();
     }
 }
@@ -1291,6 +1291,8 @@ void TREE_INTERACT() {
     }
     else if(CurrentButton == ADDBUTTON) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Startx = GetMousePosition().x;
+            Starty = GetMousePosition().y;
             if(MouseButtonPressed(10, 100, 110, 130)) {
                 Startx = GetMousePosition().x;
                 Starty = GetMousePosition().y;
