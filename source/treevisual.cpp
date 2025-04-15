@@ -1115,7 +1115,18 @@ void TREE_INTERACT() {
             }
             else if(MouseButtonPressed(10, 140, 110, 170)) {
                 Number = S.FindSelectedNode(S.root);
-                RemoveAVL();
+                S.ResetFindSelected();
+                CheckFind = 0;
+                if(STEPBYSTEPBUTTON) {
+                    if(RemoveAVLSBS())
+                        CurrentButton = DELETESBS;
+                    else
+                        CurrentButton = NULLBUTTON;
+                }
+                else {
+                    RemoveAVL();
+                    CurrentButton = NULLBUTTON;
+                }
             }
             else if(MouseButtonPressed(120, 180, 220, 210)) {
                 CurrentButton = FINDBUTTON;
