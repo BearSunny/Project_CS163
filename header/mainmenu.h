@@ -45,9 +45,11 @@ private:
     HashButton dsModeButton;   
     DSMode dsMode; 
     std::vector<ModeTexture> modes;
-    bool isTransitioning;   // Flag đánh dấu đang chuyển động hay không
-    float transitionTime;   // Tổng thời gian chuyển động (giây)
-    float elapsedTime;      // Thời gian đã trôi qua kể từ khi bắt đầu chuyển động
+    bool isTransitioning;   
+    float transitionTime; 
+    float elapsedTime;      
+
+    Texture2D logoTexture, logoTextureNight;
 
 public:
     MainPage();

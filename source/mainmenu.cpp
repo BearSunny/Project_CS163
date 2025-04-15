@@ -37,6 +37,8 @@ MainPage::MainPage() :
     transitionTime(0.5f), 
     elapsedTime(0.0f)
 {
+    logoTexture = LoadTexture("asset/DS Visualizer Logo.png");
+
     modes.resize(NUM_MODES);
     modes[0].texture = LoadTexture("asset/LinkedListMenu.png");
     modes[1].texture = LoadTexture("asset/HashTableMenu.png");
@@ -191,6 +193,10 @@ void MainPage::update(float deltaTime)
 
 void MainPage::draw() 
 {
+    DrawTexture(logoTexture, (screenWidth - (float)logoTexture.width)/2.0f, 30, WHITE);
+    Vector2 text = MeasureTextEx(MONT, "GROUP 5 - PROJECT CS163", 40, 2);
+    DrawTextEx(MONT, "GROUP 5 - PROJECT CS163", {(screenWidth - (float)text.x)/2.0f, 300}, 40, 2, Color{16, 134, 244, 255});
+
     for (const auto mode : modes) {
         DrawTextureEx(mode.texture, mode.position, 0, mode.scale, (Color){255, 255, 255, mode.alpha});
     }
