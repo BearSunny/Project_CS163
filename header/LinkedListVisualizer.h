@@ -82,6 +82,10 @@ private:
     int pendingAddValue;
     bool shouldAddNode;
     int pendingTraversalCount;
+    int pendingUpdateValue;
+    bool updateDone;
+    bool searchDone;
+    int pendingTargetIndex;
 
     void drawAnimationControls();
     void drawOperationInfo();
