@@ -14,7 +14,7 @@ int main () {
     initResource();
     SetTargetFPS(60);
     GraphVisualize graph = GraphVisualize(FONT);
-    TittleButton title = TittleButton({465, 34, 350, 40}, "Graph", -1, BLACK, 20);
+    TittleButton title = TittleButton({800, 34, 350, 40}, "Graph", -1, Color {255, 254, 206, 255}, 30);
     HashTablePage hashPage;
     MainPage mainmenu;
 
@@ -45,6 +45,10 @@ int main () {
                     if(MouseButtonPressed(0, 0, 400, 100))
                         currentScreen = MAINMENU;
                 } */
+                if (title.handle() == 1)
+                {
+                    currentScreen = MAINMENU;
+                }
                 break;
             default:
                 break;
