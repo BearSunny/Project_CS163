@@ -27,5 +27,6 @@ public:
     void insert(int key);
     bool search(int key, int &idx);
     bool remove(int key, int &idx);
+    void update(int newKey);
     bool loadHashTableFromFile(const std::string& filePath);
 };

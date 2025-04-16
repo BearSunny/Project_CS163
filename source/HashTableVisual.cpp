@@ -16,6 +16,7 @@ HashTablePage::HashTablePage() :
 
     createButton(10, 170, 250, 40, "Create Table", 30), // Modidy the coordinate after
     insertButton(10, 220, 250, 40, "Insert", 30),
+    updateButton(270, 220, 100, 40, "Update", 30),
     deleteButton(10, 270, 250, 40, "Delete", 30),
     searchButton(10, 320, 250, 40, "Search", 30),
     clearButton(10, 370, 250, 40, "Clear", 30),
@@ -233,6 +234,7 @@ void HashTablePage::handleInput()
 
     // Should be handled after creation
     insertButton.handleInput(); 
+    updateButton.handleInput();
     deleteButton.handleInput();
     searchButton.handleInput();
     clearButton.handleInput();
@@ -324,10 +326,28 @@ void HashTablePage::handleInput()
             }
             catch (...)
             {
-                // Nếu không chuyển được, bỏ qua
+               
             }
-            // Xoá nội dung ô nhập
+
             inputField.clearText();
+        }
+    }
+
+    if (updateButton.isClicked()) 
+    {
+        std::string str = inputField.getText();
+        if (!str.empty()) 
+        {
+            inputField.clearText();
+            try 
+            {
+                int newKey = std::stoi(str);
+                table->update(newKey);
+            } 
+            catch(...) 
+            {
+
+            }
         }
     }
 
@@ -454,6 +474,7 @@ void HashTablePage::draw()
     ClearBackground((Color){241, 231, 231, 255});
     createButton.draw();
     insertButton.draw();
+    updateButton.draw();
     deleteButton.draw();
     searchButton.draw();
     clearButton.draw();

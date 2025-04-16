@@ -28,8 +28,6 @@ HashTable::~HashTable() {
     occ.clear();
 }
 
-
-
 int HashTable::getTableSize() {
     return TABLE_SIZE;
 }
@@ -88,6 +86,15 @@ bool HashTable::remove(int key, int &idx) {
     }
     
     return false;
+}
+
+void HashTable::update(int newKey) {
+    int idx = newKey % TABLE_SIZE;
+
+    occ[idx] = true;
+    table[idx] = newKey;
+
+    return;
 }
 
 bool HashTable::loadHashTableFromFile(const std::string& filePath) {
