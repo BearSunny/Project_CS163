@@ -1,13 +1,13 @@
-#include "source/declare.cpp"
-#include "source/mainmenu.cpp"
-#include "source/LinkedListVisualizer0.cpp"
-#include "source/LinkedList0.cpp"
-#include "source/treevisual.cpp"
-#include "source/Graph.cpp"
-#include "source/GraphButton.cpp"
-#include "header/hashvisual.h"
+#include "header/declare.h"
+#include "header/mainmenu.h"
+#include "header/LinkedListVisualizer.h"
+#include "header/LinkedList.h"
+#include "header/linkedlistvisual.h"
+#include "header/treevisual.h"
+#include "header/graphvisual.h"
+
 #include "header/HashTableVisual.h"
-#include "source/HashTableVisual.cpp"
+
 
 int main () {
     InitWindow(screenWidth, screenHeight, "DSA VISUALIZATION");
@@ -38,7 +38,7 @@ int main () {
                 TREE_INTERACT();
                 break;
             case GRAPH:
-                graph.handle();
+                graph.handle(deltaTime);
                 /* if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     if(MouseButtonPressed(0, 0, 400, 100))
                         currentScreen = MAINMENU;
