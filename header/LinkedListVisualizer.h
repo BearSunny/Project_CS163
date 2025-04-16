@@ -86,6 +86,8 @@ private:
     bool updateDone;
     bool searchDone;
     int pendingTargetIndex;
+    int pendingDeleteValue;
+    bool deleteDone;
 
     void drawAnimationControls();
     void drawOperationInfo();
