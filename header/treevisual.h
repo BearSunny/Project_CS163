@@ -2,22 +2,25 @@
 #define TREE_H
 
 #include "declare.h"
+#include <stack>
+#include <queue>
+#include <tuple>
+#include <random>
+#include <string>
 
-const Color BACKGROUND = {241, 231, 231, 255};
-const Color BUTTON = {77, 85, 204, 255};
-const Color HOVERED = {245, 162, 178, 255};
-const Color BORDER = {194, 24, 91, 255};
-const Color TEXT = {255, 254, 206, 255};
+extern const Color BACKGROUND;
+extern const Color BUTTON;
+extern const Color HOVERED;
+extern const Color BORDER;
+extern const Color TEXT;
 
-typedef enum ButtonState{NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS, DELETESBS} ButtonState;
-ButtonState CurrentButton = NULLBUTTON;
+typedef enum ButtonState { NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS, DELETESBS } ButtonState;
+extern ButtonState CurrentButton;
 
-mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
-long long rand(long long l, long long r) {return rng() % (r - l + 1) + l;}
-
-string Number;
-int CurrentCursor = 0;
-bool STEPBYSTEPBUTTON = false;
+extern std::mt19937_64 rng;
+extern std::string Number;
+extern int CurrentCursor;
+extern bool STEPBYSTEPBUTTON;
 
 struct AVLTree {
     struct Node {
@@ -27,22 +30,13 @@ struct AVLTree {
         bool selected;
         bool findselected;
 
-        Node(int d) {
-            x = -1;
-            y = -1;
-            data = d;
-            depth = 1;
-            left = nullptr;
-            right = nullptr;
-            selected = false;
-            findselected = false;
-        }
+        Node(int d);
     };
 
     Node *root = nullptr;
-    stack<Node*> History;
-    stack<Node*> RedoHistory;
-    queue<tuple<Node*, Node*, int>> Q;
+    std::stack<Node *> History;
+    std::stack<Node *> RedoHistory;
+    std::queue<std::tuple<Node *, Node *, int>> Q;
     Node *prep;
 
     int height(Node *p);
@@ -65,12 +59,12 @@ struct AVLTree {
     void find(int x);
     void Draw(Node *p);
     bool UpdateSelectedNode(Node *p);
-    string FindSelectedNode(Node *p);
+    std::string FindSelectedNode(Node *p);
     void CopyData(Node *&p, Node *root);
     void PushHistory();
     void PopHistory();
     void PopRedoHistory();
-} S;
+};
 
 void InsertAVL();
 void InsertAVLSBS();

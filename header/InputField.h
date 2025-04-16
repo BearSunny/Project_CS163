@@ -3,36 +3,30 @@
 #include <string>
 #include "raylib.h"
 
-class InputField
-{
+class InputField {
 private:
-    Rectangle box;        // Vùng hiển thị ô nhập
-    std::string inputText; 
-    bool isActive;        // Cho phép nhập hay không
-    int cursorPos = 0;              // Vị trí con trỏ
-    float blinkTimer = 0.0f;        // Bộ đếm thời gian nhấp nháy
-    bool showCursor = true;         // Trạng thái hiển thị caret
-    float blinkInterval = 0.5f;     // Tốc độ nhấp nháy (giây)
-    float scrollOffset = 0.0f;      // Độ dịch chuyển khi text dài
+    Rectangle box;              // Display area of the input field
+    std::string inputText;      // Text entered by the user
+    bool isActive;              // Indicates whether input is enabled
+    int cursorPos;              // Current position of the cursor
+    float blinkTimer;           // Timer for cursor blinking
+    bool showCursor;            // Whether to show the caret
+    float blinkInterval;        // Blinking speed (in seconds)
+    float scrollOffset;         // Scroll offset for long text
+
+    void UpdateScrollOffset();  // Update scroll offset internally
 
 public:
+    // Constructor
     InputField(float x, float y, float width, float height);
 
+    // Methods
     void handleInput();
     void draw();
     void update(float deltaTime);
-
-    std::string getText() const { 
-        return inputText; 
-    }
-
-    void clearText() { 
-        inputText.clear(); 
-    }
-
+    std::string getText() const;
+    void clearText();
     bool IsActive();
     void setActive(bool state);
-
     void updateCursorPosition(int mouseX);
-    void UpdateScrollOffset();
 };

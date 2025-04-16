@@ -1,14 +1,14 @@
 #ifndef LINKEDLISTVISUALIZER_H
 #define LINKEDLISTVISUALIZER_H
 
-#include "header/LinkedList.h"
+#include "LinkedList.h"
 #include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>
 #include <deque>
 #include <fstream>
-#include "header/declare.h"
+#include "declare.h"
 using namespace std;
 
 enum VisualizerMode {
@@ -34,6 +34,8 @@ struct Operation {
 void InitLinkedList();
 void CleanupLinkedList();
 void DisplayLinkedList();
+
+void LINKEDLIST_INTERACT();
 
 class LinkedListVisualizer {
 public:

@@ -3,40 +3,29 @@
 #include <vector>
 #include <string>
 
-const double DEFAULT_LOAD_FACTOR = 0.75;
+// Declare DEFAULT_LOAD_FACTOR as extern
+extern const double DEFAULT_LOAD_FACTOR;
 
 class HashTable {
 private:
-    int TABLE_SIZE;
-    std::vector<int> table;
-    std::vector<bool> occ;
-    
-    int getHash(int key) {
-        return key % TABLE_SIZE;
-    }
+    int TABLE_SIZE;                 // Size of the hash table
+    std::vector<int> table;         // Vector to store keys
+    std::vector<bool> occ;          // Vector to track occupied slots
+
+    // Private helper function to compute hash
+    int getHash(int key);
 
 public:
-    HashTable(int size) : TABLE_SIZE(size) {
-        table.resize(size);
-        occ.resize(size, false);
-    }
-    
-    ~HashTable() {
-        table.clear();
-        occ.clear();
-    }
+    // Constructor and Destructor
+    HashTable(int size);
+    ~HashTable();
 
+    // Public Methods
     int getTableSize();
     bool isOccupied(int idx);
     int getKeyAt(int idx);
-
     void insert(int key);
-
     bool search(int key, int &idx);
-
     bool remove(int key, int &idx);
-
-    // void rehashing();
-
     bool loadHashTableFromFile(const std::string& filePath);
 };
