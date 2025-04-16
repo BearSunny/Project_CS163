@@ -5,7 +5,7 @@ Button::Button(Rectangle rect, const std::string text, float yText, Color textCo
     this->content = text;
     this->font = font;
     this->fontSize = fontSize;
-    this->contentColor = textColor;
+    this->contentColor = Color {255, 254, 206, 255};
     Vector2 textSize = MeasureTextEx(this->font, text.c_str(), this->fontSize,2);
     this->contentPos = {this->outerRect.x + (this->outerRect.width-textSize.x)/2, (yText == -1) ? (rect.y + (rect.height - textSize.y)/2) : yText};
     this->isHovered = false;

@@ -6,7 +6,20 @@ const Color HOVERED = {245, 162, 178, 255};
 const Color BORDER = {194, 24, 91, 255};
 const Color TEXT = {255, 254, 206, 255};
 
+
 ButtonState CurrentButton = NULLBUTTON;
+
+int CheckFind = 0;
+int rootx = 1000;
+int rooty = 100;
+int oldx = 0;
+int oldy = 0;
+bool Pressed = false;
+int InsertNumber = 0;
+int query = -1;
+float Speed = 10;
+int Startx = -1;
+int Starty = -1;
 
 std::mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count());
 long long rand(long long l, long long r) {

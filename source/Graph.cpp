@@ -305,7 +305,8 @@ int Graph::mstKruskal() {
 
     // Kruskal's algorithm
     int i = 0, ma = nodes.size() - 1;
-    for (i; i < edges.size() && i < ma; i++) {
+    int countAccepted = 0;
+    for (i; i < edges.size() && countAccepted < ma; i++) {
         auto [weight, frm, to, cond] = edges[i];
         int u = getNodeIndex(frm);
         int v = getNodeIndex(to);
@@ -331,6 +332,7 @@ int Graph::mstKruskal() {
 
             edges[i] = std::make_tuple(weight, frm, to, true);
             nodes[u]->color = true;
+            countAccepted++;
         }
     }
     return i;
@@ -350,14 +352,17 @@ void Graph::drawGraph(Font font, std::vector<Color> color) {
         {
             DrawLineEx(u->pos, v->pos, 2, color[u->color]);
             Vector2 mid = { (u->pos.x + v->pos.x) / 2, (u->pos.y + v->pos.y) / 2 };
+            //Vector2 offset = {5, -10};
+            //Vector2 wPos = {mid.x + offset.x, mid.y + offset.y};
             DrawTextEx(font, TextFormat("%d", weight), {mid.x, mid.y}, 15, 2, THEME.WEIGHT);
         }
 
         for(int i = 0; i < nodes.size(); i++) {
             Vector2 size = MeasureTextEx(font, TextFormat("%d", i), 15, 2);
-            DrawCircleV(nodes[i]->pos, 15, color[nodes[i]->color]);
+            DrawCircleV(nodes[i]->pos, 20, color[nodes[i]->color]);
             printf("Color: (%d, %d, %d, %d)\n", color[nodes[i]->color].r, color[nodes[i]->color].g, color[nodes[i]->color].b, color[nodes[i]->color].a);
-            DrawTextEx(font, TextFormat("%d", nodes[i]->data), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
+            DrawTextEx(font, TextFormat("%d", nodes[i]->data), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 20, 2, BLACK);
+            //DrawText(TextFormat("%d", nodes[i]->data), nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2, 20, BLACK);
         }
 
     } 
@@ -373,15 +378,18 @@ void Graph::drawGraph(Font font, std::vector<Color> color) {
 
         for (auto [weight, u, v, cond]:edges)
         {
-            DrawLineEx(u->pos, v->pos, 2, cond ? RED : THEME.LINE);
+            DrawLineEx(u->pos, v->pos, 2, cond ? Color{0,200,0, 255} : THEME.LINE);
             Vector2 mid = { (u->pos.x + v->pos.x) / 2, (u->pos.y + v->pos.y) / 2 };
-            DrawTextEx(font, TextFormat("%d", weight), {mid.x, mid.y}, 15, 2, THEME.WEIGHT);
+            //Vector2 offset = {5, -10};
+            //Vector2 wPos = {mid.x + offset.x, mid.y + offset.y};
+            DrawTextEx(font, TextFormat("%d", weight), {mid.x, mid.y}, 15, 2, cond ? Color{0, 0, 139, 255} : THEME.WEIGHT);
         }
 
         for(int i = 0; i < nodes.size(); i++) {
             Vector2 size = MeasureTextEx(font, TextFormat("%d", i), 15, 2);
-            DrawCircleV(nodes[i]->pos, 15, nodes[i]->color ? RED : THEME.NODE);
-            DrawTextEx(font, TextFormat("%d", nodes[i]->data), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
+            DrawCircleV(nodes[i]->pos, 20, nodes[i]->color ? Color{255, 225, 130, 255} : THEME.NODE);
+            DrawTextEx(font, TextFormat("%d", nodes[i]->data), {nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2}, 20, 2, BLACK);
+            //DrawText(TextFormat("%d", nodes[i]->data), nodes[i]->pos.x - size.x/2, nodes[i]->pos.y - size.y/2, 25, BLACK);
         }
     }
 }
@@ -449,24 +457,29 @@ GraphVisualize::GraphVisualize(Font font) {
     this->inputEdges = InputStr(151.5, 422, 120, 25, "Num edge", 20, this->font);
     this->inputNodes = InputStr(151.5, 466, 120, 25, "Num vertex", 20, this->font);
 
-    this->fromInput = InputStr(20, 200, 110, 30, "From", 20, this->font);      // Input for "From"
-    this->toInput = InputStr(150, 200, 110, 30, "To", 20, this->font);        // Input for "To"
-    this->weightInput = InputStr(280, 200, 110, 30, "Weight", 20, this->font); // Input for "Weight"
-    this->submitButton = Button({410, 200, 110, 30}, "Update Edge", -1, BLACK, 20, font);
+    this->fromInput = InputStr(11.5, 130, 80, 30, "From", 15, this->font);      // Input for "From"
+    this->toInput = InputStr(111.5, 130, 80, 30, "To", 15, this->font);        // Input for "To"
+    this->weightInput = InputStr(211.5, 130, 80, 30, "Weight", 15, this->font); // Input for "Weight"
+    this->submitButton = Button({96.5, 180, 110, 30}, "Update Edge", -1, BLACK, 15, font);
 
-    this->nodeNumberInput = InputStr(50, 290, 110, 30, "Node #", 20, this->font);
-    this->updateValueInput = InputStr(180, 290, 110, 30, "Node Value", 20, this->font);
-    this->updateSubmitButton = Button({310, 290, 110, 30}, "Update Node", -1, BLACK, 20, font);
+    this->nodeNumberInput = InputStr(11.5, 230, 60, 30, "Node#", 15, this->font);
+    this->updateValueInput = InputStr(91.5, 230, 60, 30, "Value", 15, this->font);
+    this->updateSubmitButton = Button({171.5, 230, 110, 30}, "Update N.", -1, BLACK, 20, font);
     
     //this->nodeNumberInput = InputStr(50, 290, 110, 30, "Node #", 20, this->font);
     //this->updateValueInput = InputStr(180, 290, 110, 30, "Node Value", 20, this->font);
-    this->deleteSubmitButton = Button({310, 290, 110, 30}, "Delete Node", -1, BLACK, 20, font);
+    this->deleteSubmitButton = Button({171.5, 230, 110, 30}, "Delete Node", -1, BLACK, 20, font);
 
-    this->cancelButton = Button({250, 320, 110, 30}, "Cancel", -1, BLACK, 20, font);
+    this->cancelButton = Button({100.5, 290, 110, 30}, "Cancel", -1, BLACK, 20, font);
 
-    this->addVertexButton = Button({11.5, 370, 110, 30}, "Add Vertex", -1, BLACK, 20, font);
-    this->updateButton = Button({156.5, 370, 110, 30}, "Update", -1, BLACK, 20, font);
-    this->deleteButton = Button({301.5, 370, 110, 30}, "Delete", -1, BLACK, 20, font);
+    //this->addVertexButton = Button({11.5, 370, 110, 30}, "Add Vertex", -1, BLACK, 15, font);
+    //this->updateButton = Button({156.5, 370, 110, 30}, "Update", -1, BLACK, 20, font);
+    //this->deleteButton = Button({301.5, 370, 110, 30}, "Delete", -1, BLACK, 20, font);
+
+    this->addVertexButton = Button({11.5, 353, 80, 30}, "Add V.", -1, BLACK, 15, font);
+    this->updateButton = Button({111.5, 353, 80, 30}, "Update", -1, BLACK, 15, font);
+    this->deleteButton = Button({211.5, 353, 80, 30}, "Delete", -1, BLACK, 15, font);
+
 
 }
 
@@ -991,9 +1004,9 @@ void GraphVisualize::drawFrame()
 
         if (i < frame_count)
         {
-            DrawLineEx(Nodes[frame.comp[0]]->pos, Nodes[frame.comp[1]]->pos, 2, frame.comp[2] ? RED : THEME.LINE);
+            DrawLineEx(Nodes[frame.comp[0]]->pos, Nodes[frame.comp[1]]->pos, 2, frame.comp[2] ? Color{0,200,0, 255} : THEME.LINE);
             Vector2 mid = { (Nodes[frame.comp[0]]->pos.x + Nodes[frame.comp[1]]->pos.x) / 2, (Nodes[frame.comp[0]]->pos.y + Nodes[frame.comp[1]]->pos.y) / 2 };
-            DrawTextEx(font, TextFormat("%d", frame.comp[3]), {mid.x, mid.y}, 15, 2, THEME.WEIGHT);
+            DrawTextEx(font, TextFormat("%d", frame.comp[3]), {mid.x, mid.y}, 15, 2, frame.comp[2] ? Color{0, 0, 139, 255} : THEME.WEIGHT);
         }
 
         else if (i == frame_count)
@@ -1014,7 +1027,7 @@ void GraphVisualize::drawFrame()
     for (int i = 0; i < Nodes.size(); i++) 
     {
         Vector2 size = MeasureTextEx(font, TextFormat("%d", i), 15, 2);
-        DrawCircleV(Nodes[i]->pos, 15, THEME.NODE);
-        DrawTextEx(font, TextFormat("%d", Nodes[i]->data), {Nodes[i]->pos.x - size.x/2, Nodes[i]->pos.y - size.y/2}, 15, 2, BLACK);
+        DrawCircleV(Nodes[i]->pos, 20, THEME.NODE);
+        DrawTextEx(font, TextFormat("%d", Nodes[i]->data), {Nodes[i]->pos.x - size.x/2, Nodes[i]->pos.y - size.y/2}, 20, 2, BLACK);
     }
 }
