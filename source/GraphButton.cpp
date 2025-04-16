@@ -38,7 +38,7 @@ TittleButton::TittleButton(Rectangle rect, const std::string text, float yText, 
     this->isHoveredBackPage = false;
     this->backPage = BACK_PAGE;
     this->backPageRadius = 20;
-    this->backPagePos = {432,54};
+    this->backPagePos = {770,54};
 }
 
 void TittleButton::draw(float radius) {
@@ -48,11 +48,11 @@ void TittleButton::draw(float radius) {
     this->isHoveredBackPage = CheckCollisionPointCircle(GetMousePosition(), this->backPagePos
                                                         , this->backPageRadius);
     DrawCircleV(this->backPagePos, this->backPageRadius, this->isHoveredBackPage ? Color{234,119,119,255} : Color{249,208,208,255});
-    drawPicture(this->backPage, {421, 43,22,22}, 0.0f, ORIGIN, WHITE);
+    drawPicture(this->backPage, {762, 43,22,22}, 0.0f, ORIGIN, WHITE);
 }
 
 int TittleButton::handle() {
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && this->isHoveredBackPage) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && this->isHoveredBackPage) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         return 1;
     }
