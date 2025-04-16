@@ -196,7 +196,7 @@ void ProgressBar::updateStep(int step) {
 
 int ProgressBar::handle() {
     int flag = 10;
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (CheckCollisionPointCircle(GetMousePosition(), {33.5, 643.5}, 17.5)) {
             flag = -2;
         }

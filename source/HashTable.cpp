@@ -3,6 +3,33 @@
 #include <fstream>
 #include <sstream>
 
+
+#include "HashTable.h"
+#include <fstream>
+#include <sstream>
+
+// Define DEFAULT_LOAD_FACTOR here
+const double DEFAULT_LOAD_FACTOR = 0.75;
+
+// Private helper function to compute hash
+int HashTable::getHash(int key) {
+    return key % TABLE_SIZE;
+}
+
+// Constructor
+HashTable::HashTable(int size) : TABLE_SIZE(size) {
+    table.resize(size);
+    occ.resize(size, false);
+}
+
+// Destructor
+HashTable::~HashTable() {
+    table.clear();
+    occ.clear();
+}
+
+
+
 int HashTable::getTableSize() {
     return TABLE_SIZE;
 }

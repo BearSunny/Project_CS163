@@ -1,11 +1,23 @@
 #include "../header/InputField.h"
+#include "../header/declare.h"
 #include "raylib.h"
 #include <algorithm>
 
-InputField::InputField(float x, float y, float width, float height) {
-    box = { x, y, width, height };
-    inputText = "";
-    isActive = true; // Mặc định cho phép nhập
+
+// Constructor
+InputField::InputField(float x, float y, float width, float height)
+    : box{x, y, width, height}, inputText(""), isActive(true), 
+      cursorPos(0), blinkTimer(0.0f), showCursor(true), 
+      blinkInterval(0.5f), scrollOffset(0.0f) {}
+
+std::string InputField::getText() const {
+    return inputText;
+}
+
+// Clear the text
+void InputField::clearText() {
+    inputText.clear();
+    cursorPos = 0;
 }
 
 void InputField::handleInput() {

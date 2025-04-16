@@ -1,5 +1,35 @@
 #include "../header/treevisual.h"
 
+const Color BACKGROUND = {241, 231, 231, 255};
+const Color BUTTON = {77, 85, 204, 255};
+const Color HOVERED = {245, 162, 178, 255};
+const Color BORDER = {194, 24, 91, 255};
+const Color TEXT = {255, 254, 206, 255};
+
+ButtonState CurrentButton = NULLBUTTON;
+
+std::mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+long long rand(long long l, long long r) {
+    return rng() % (r - l + 1) + l;
+}
+
+std::string Number;
+int CurrentCursor = 0;
+bool STEPBYSTEPBUTTON = false;
+
+AVLTree::Node::Node(int d) {
+    x = -1;
+    y = -1;
+    data = d;
+    depth = 1;
+    left = nullptr;
+    right = nullptr;
+    selected = false;
+    findselected = false;
+}
+
+AVLTree S;
+
 int AVLTree::height(Node *p) {
     if(p == nullptr)
         return 0;
