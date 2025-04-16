@@ -109,7 +109,7 @@ const string ADDSTEPBYSTEP[] = {
     "    return false;",
     "}"};
 
-typedef enum ButtonState { NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS, DELETESBS } ButtonState;
+typedef enum ButtonState { NULLBUTTON, INITIALIZEBUTTON, KEYBOARDBUTTON, FILEBUTTON, EMPTYBUTTON, RANDOMBUTTON, ADDBUTTON, DELETEBUTTON, FINDBUTTON, ADDSBS, DELETESBS, FINDSBS } ButtonState;
 extern ButtonState CurrentButton;
 
 extern std::mt19937_64 rng;
@@ -117,17 +117,18 @@ extern std::string Number;
 extern int CurrentCursor;
 extern bool STEPBYSTEPBUTTON;
 
-int CheckFind = 0;
-int rootx = 1000;
-int rooty = 100;
-int oldx = 0;
-int oldy = 0;
-bool Pressed = false;
-int InsertNumber = 0;
-int query = -1;
-float Speed = 10;
-int Startx = -1;
-int Starty = -1;
+extern int CheckFind;
+extern int rootx;
+extern int rooty;
+extern int oldx;
+extern int oldy;
+extern bool Pressed;
+extern int InsertNumber;
+extern int query;
+extern float Speed;
+extern int Startx;
+extern int Starty;
+
 struct AVLTree {
     struct Node {
         double x, y, newx, newy;

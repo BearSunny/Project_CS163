@@ -4,20 +4,20 @@
 #include "declare.h"
 #include "LinkedListVisualizer.h"
 #include "hashvisual.h"
-#include "header/HashTableVisual.h"
-#include "../source/LinkedListVisualizer0.cpp"
+#include "HashTableVisual.h"
+#include "graphvisual.h"
+#include "treevisual.h"
+/* #include "../source/LinkedListVisualizer0.cpp"
 #include "../source/LinkedList0.cpp"
-#include "../source/treevisual.cpp"
-#include "../source/Graph.cpp"
-#include "../source/GraphButton.cpp"
-#include "../source/HashTableVisual.cpp"
-
+#include "../source/treevisual.cpp" */
+/* #include "../source/Graph.cpp"
+#include "../source/GraphButton.cpp" */
+/* #include "../source/HashTableVisual.cpp"
+ */
 // void DisplayMainMenu();
 // void MAINMENU_INTERACT();
 
 const int NUM_MODES = 4;
-
-float deltaTime;
 
 enum class DSMode {
     LINKEDLIST,
