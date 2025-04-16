@@ -8,6 +8,7 @@ using namespace std;
 
 // Enums and structs
 typedef enum GameScreen { MAINMENU, LINKEDLIST, HASH, TREE, GRAPH } GameScreen;
+extern GameScreen currentScreen;
 
 struct theme {
     Color BACKGROUND;
@@ -30,6 +31,7 @@ struct theme {
 // Global variable declarations
 extern theme THEME;
 extern Font FONT;
+extern Font MONT;
 extern Texture2D PLAY, PAUSE, REPLAY, BACK, DOUBLE_BACK, NEXT, DOUBLE_NEXT, SPEED_UP, SPEED_DOWN, BACK_PAGE;
 
 extern const int screenWidth;

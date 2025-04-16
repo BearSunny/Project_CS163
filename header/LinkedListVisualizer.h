@@ -22,6 +22,13 @@ enum VisualizerMode {
     MODE_ADD_HEAD
 };
 
+// Add new enum for animation states
+enum AnimationState {
+    WAITING,
+    TRAVERSING,
+    FINAL_ANIMATION
+};
+
 struct Operation {
     enum Type { ADD, ADD_HEAD, DELETE, UPDATE, SEARCH } type;
     int nodeIndex;
@@ -70,6 +77,19 @@ private:
     bool showPseudocode;
     int currentPseudocodeLine;
     float pseudocodeProgress;
+    bool stepByStepMode;
+    AnimationState animState;
+    int traversalIndex;
+    float nodeHighlightProgress;
+    int pendingAddValue;
+    bool shouldAddNode;
+    int pendingTraversalCount;
+    int pendingUpdateValue;
+    bool updateDone;
+    bool searchDone;
+    int pendingTargetIndex;
+    int pendingDeleteValue;
+    bool deleteDone;
 
     void drawAnimationControls();
     void drawOperationInfo();

@@ -13,6 +13,7 @@ Texture2D SPEED_DOWN;
 Texture2D BACK_PAGE;
 theme THEME;
 Font FONT;
+Font MONT;
 
 const int screenWidth = 1600;
 const int screenHeight = 900;
@@ -56,7 +57,7 @@ void initResource()
     THEME.WEIGHT = {6, 155, 91, 255};
     //FONT = LoadFont("./Font/Roboto-Regular.ttf");
     FONT = LoadFontEx("./Font/SF-Pro-Display-Regular.otf", 40, 0, 255);
-    
+    MONT = LoadFontEx("./Font/Montserrat-Regular.ttf", 40, 0, 255);
 }
 
 void Insertnumber(int x) {

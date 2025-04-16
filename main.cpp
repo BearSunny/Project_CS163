@@ -16,12 +16,14 @@ int main () {
     GraphVisualize graph = GraphVisualize(FONT);
     TittleButton title = TittleButton({465, 34, 350, 40}, "Graph", -1, BLACK, 20);
     HashTablePage hashPage;
+    MainPage mainmenu;
 
     while(!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
         switch(currentScreen) {
             case MAINMENU:
-                MAINMENU_INTERACT();
+                mainmenu.handleInput();
+                mainmenu.update(deltaTime);
                 break;
             case LINKEDLIST:
                 LINKEDLIST_INTERACT();
@@ -49,10 +51,10 @@ int main () {
         }
 
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground((Color){241, 231, 231, 255});
         switch(currentScreen) {
             case MAINMENU:
-                DisplayMainMenu();
+                mainmenu.draw();
                 break;
             case LINKEDLIST:
                 DisplayLinkedList();
@@ -74,6 +76,5 @@ int main () {
         }
         EndDrawing();
     }
-    CleanupLinkedList();
     CloseWindow();
 }
