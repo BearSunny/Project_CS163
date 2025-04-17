@@ -112,32 +112,32 @@ void HashTablePage::handleInput()
     } 
 
     browseButton.handleInput();
-    // if (browseButton.isClicked()) {
-    //     const char* filterPatterns[1] = { "*.txt" };
+    if (browseButton.isClicked()) {
+        const char* filterPatterns[1] = { "*.txt" };
 
-    //     // Hiển thị hộp thoại mở file
-    //     const char* filePath = tinyfd_openFileDialog(
-    //         "Chọn tệp cần mở",    // Tiêu đề của hộp thoại
-    //         "",                   // Đường dẫn mặc định (để trống nếu không có)
-    //         1,                    // Số lượng filter
-    //         filterPatterns,       // Mảng các filter
-    //         "Text files (*.txt)", // Mô tả filter
-    //         0                     // Kiểu hộp thoại (0: mở file, 1: mở nhiều file)
-    //     );
+        // Hiển thị hộp thoại mở file
+        const char* filePath = tinyfd_openFileDialog(
+            "Chọn tệp cần mở",    // Tiêu đề của hộp thoại
+            "",                   // Đường dẫn mặc định (để trống nếu không có)
+            1,                    // Số lượng filter
+            filterPatterns,       // Mảng các filter
+            "Text files (*.txt)", // Mô tả filter
+            0                     // Kiểu hộp thoại (0: mở file, 1: mở nhiều file)
+        );
         
-    //     // Kiểm tra nếu người dùng đã chọn file
-    //     if (filePath) {
-    //         if (table == nullptr) {           // Tránh gây crash khi gọi loadHashTableFromFile()
-    //             table = new HashTable(1);     // Size tạm, sẽ được cập nhật khi load file
-    //         }
-    //         table->loadHashTableFromFile(std::string(filePath));
-    //         tableCreated = true;
-    //         highlightedIdx = -1;
-    //         filePathInput.setActive(false);
-    //     } else {
-    //         TraceLog(LOG_WARNING, "Cannot open the file!");
-    //     }
-    // }
+        // Kiểm tra nếu người dùng đã chọn file
+        if (filePath) {
+            if (table == nullptr) {           // Tránh gây crash khi gọi loadHashTableFromFile()
+                table = new HashTable(1);     // Size tạm, sẽ được cập nhật khi load file
+            }
+            table->loadHashTableFromFile(std::string(filePath));
+            tableCreated = true;
+            highlightedIdx = -1;
+            filePathInput.setActive(false);
+        } else {
+            TraceLog(LOG_WARNING, "Cannot open the file!");
+        }
+    }
 
     // Chỉ xử lý 1 trong 2 trước
     if (filePathInput.IsActive()) { 
