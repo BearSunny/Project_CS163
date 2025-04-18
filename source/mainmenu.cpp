@@ -195,7 +195,7 @@ void MainPage::draw()
 {
     DrawTexture(logoTexture, (screenWidth - (float)logoTexture.width)/2.0f, 30, WHITE);
     Vector2 text = MeasureTextEx(MONT, "GROUP 5 - PROJECT CS163", 40, 2);
-    DrawTextEx(MONT, "GROUP 05 - PROJECT CS163", {(screenWidth - (float)text.x)/2.0f, 300}, 40, 2, Color{16, 134, 244, 255});
+    DrawTextEx(MONT, "GROUP 01 - PROJECT CS163", {(screenWidth - (float)text.x)/2.0f, 300}, 40, 2, Color{16, 134, 244, 255});
 
     for (const auto mode : modes) {
         DrawTextureEx(mode.texture, mode.position, 0, mode.scale, (Color){255, 255, 255, mode.alpha});
