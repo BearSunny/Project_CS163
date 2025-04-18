@@ -14,7 +14,7 @@ HashTablePage::HashTablePage() :
     cellSize(80),
     highlightedIdx(-1),
 
-    createButton(10, 170, 250, 40, "Create Table", 30), // Modidy the coordinate after
+    createButton(10, 170, 250, 40, "Create Table", 30), 
     insertButton(10, 220, 250, 40, "Insert", 30),
     updateButton(270, 220, 100, 40, "Update", 30),
     deleteButton(10, 270, 250, 40, "Delete", 30),
@@ -512,125 +512,130 @@ void HashTablePage::draw()
         DrawTextEx(FONT, text, Vector2{(screenWidth - textSize.x)/2, 50}, 35, 1, Color{87, 143, 202, 255});
     }
 
-   // Vẽ trước các ô vuông (Layer 1)
-   if (tableCreated && table != nullptr)
-   {
-       int tableSize = table->getTableSize();
-       for (int i = 0; i < tableSize; i++) // Traverse the whole table
-       {
-           float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
-           float cellY = startY + (i / 10)*(cellSize + 40);
+    // Vẽ trước các ô vuông (Layer 1)
+    if (tableCreated && table != nullptr)
+    {
+        int tableSize = table->getTableSize();
+        for (int i = 0; i < tableSize; i++) // Traverse the whole table
+        {
+            float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
+            float cellY = startY + (i / 10)*(cellSize + 40);
 
-           Color cellColor = (i == highlightedIdx) ? Color {255, 254, 206, 255} : RAYWHITE;
-           DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
-           Color lineColor = (i == highlightedIdx) ? RED : BLACK;
-           DrawRectangleLines(cellX, cellY, cellSize, cellSize, lineColor);
-       }
-   }
+            Color cellColor = (i == highlightedIdx) ? Color {255, 254, 206, 255} : RAYWHITE;
+            DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
+            Color lineColor = (i == highlightedIdx) ? RED : BLACK;
+            DrawRectangleLines(cellX, cellY, cellSize, cellSize, lineColor);
+        }
+    }
 
-   // Vẽ ô highlighted với animation chuyển động (nếu đang ở chế độ stepModeOn) (Layer 2)
-   if (tableCreated && table != nullptr && stepModeOn && steps.size() > 0) {
-       int currentIndex = steps[currentStep].highlightedIndex;
-       Vector2 currentPos = {startX + (currentIndex%10 + 0.5f)*(cellSize + offsetX), startY + (currentIndex/10)*(cellSize + 40)};
-       // Tính vị trí của ô tiếp theo nếu có bước kế tiếp
-       Vector2 targetPos = currentPos;
-       if (currentStep < (int)steps.size() - 1) {
-           int nextIndex = steps[currentStep + 1].highlightedIndex;
-           targetPos = {startX + (nextIndex%10 + 0.5f)*(cellSize + offsetX), startY + (nextIndex/10)*(cellSize + 40)};
-       }
-       // Vị trí theo animationProgress 
-       Vector2 animPos = {
-           currentPos.x + (targetPos.x - currentPos.x) * animationProgress,
-           currentPos.y + (targetPos.y - currentPos.y) * animationProgress
-       };
-       // Vẽ ô highlight tại vị trí animPos (cùng kích thước ô vuông)
-       DrawRectangle(animPos.x, animPos.y, 80, 80, Color{255, 254, 206, 255});
-       DrawRectangleLines(animPos.x, animPos.y, 80, 80, RED);
-   }
+    // Vẽ ô highlighted với animation chuyển động (nếu đang ở chế độ stepModeOn) (Layer 2)
+    if (tableCreated && table != nullptr && stepModeOn && steps.size() > 0) {
+        int currentIndex = steps[currentStep].highlightedIndex;
+        Vector2 currentPos = {startX + (currentIndex%10 + 0.5f)*(cellSize + offsetX), startY + (currentIndex/10)*(cellSize + 40)};
+        // Tính vị trí của ô tiếp theo nếu có bước kế tiếp
+        Vector2 targetPos = currentPos;
+        if (currentStep < (int)steps.size() - 1) {
+            int nextIndex = steps[currentStep + 1].highlightedIndex;
+            targetPos = {startX + (nextIndex%10 + 0.5f)*(cellSize + offsetX), startY + (nextIndex/10)*(cellSize + 40)};
+        }
+        // Vị trí theo animationProgress 
+        Vector2 animPos = {
+            currentPos.x + (targetPos.x - currentPos.x) * animationProgress,
+            currentPos.y + (targetPos.y - currentPos.y) * animationProgress
+        };
+        // Vẽ ô highlight tại vị trí animPos (cùng kích thước ô vuông)
+        DrawRectangle(animPos.x, animPos.y, 80, 80, Color{255, 254, 206, 255});
+        DrawRectangleLines(animPos.x, animPos.y, 80, 80, RED);
+    }
 
-   // Nếu bảng đã được tạo, vẽ key và index (Layer 3)
-   if (tableCreated && table != nullptr)
-   {
-       int tableSize = table->getTableSize();
-       for (int i = 0; i < tableSize; i++) // Traverse the whole table
-       {
-           float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
-           float cellY = startY + (i / 10)*(cellSize + 40);
+    // Nếu bảng đã được tạo, vẽ key và index (Layer 3)
+    if (tableCreated && table != nullptr)
+    {
+        int tableSize = table->getTableSize();
+        for (int i = 0; i < tableSize; i++) // Traverse the whole table
+        {
+            float cellX = startX + (i % 10 + 0.5)*(cellSize + offsetX);
+            float cellY = startY + (i / 10)*(cellSize + 40);
 
-           if (table->isOccupied(i))
-           {
-               std::string keyStr = std::to_string(table->getKeyAt(i));
-               int fontSize = 25;
-               Vector2 textSizeKey = MeasureTextEx(FONT, keyStr.c_str(), fontSize, 1);
-               DrawTextEx(FONT, keyStr.c_str(), 
-                          Vector2{ cellX + (cellSize - textSizeKey.x) / 2, cellY + (cellSize - textSizeKey.y) / 2 },
-                          fontSize, 1, BLACK);
-           }
+                if (table->isOccupied(i) == 1)
+                {
+                std::string keyStr = std::to_string(table->getKeyAt(i));
+                int fontSize = 25;
+                Vector2 textSizeKey = MeasureTextEx(FONT, keyStr.c_str(), fontSize, 1);
+                DrawTextEx(FONT, keyStr.c_str(), 
+                            Vector2{ cellX + (cellSize - textSizeKey.x) / 2, cellY + (cellSize - textSizeKey.y) / 2 },
+                            fontSize, 1, BLACK);
+                }
+                if (table->isOccupied(i) == 2)
+                {
+                    DrawLine(cellX, cellY, cellX + 80, cellY + 80, BLACK);   
+                    DrawLine(cellX + 80, cellY, cellX, cellY + 80, BLACK); 
+                }
 
-           std::string idxStr = std::to_string(i);
-           int idxFontSize = 20;
-           Vector2 idxTextSize = MeasureTextEx(FONT, idxStr.c_str(), idxFontSize, 1);
-           DrawTextEx(FONT, idxStr.c_str(), 
-                      Vector2{ cellX + (cellSize - idxTextSize.x) / 2, cellY + cellSize + 5 },
-                      idxFontSize, 1, BLACK);
-       }
-   }
+            std::string idxStr = std::to_string(i);
+            int idxFontSize = 20;
+            Vector2 idxTextSize = MeasureTextEx(FONT, idxStr.c_str(), idxFontSize, 1);
+            DrawTextEx(FONT, idxStr.c_str(), 
+                        Vector2{ cellX + (cellSize - idxTextSize.x) / 2, cellY + cellSize + 5 },
+                        idxFontSize, 1, BLACK);
+        }
+    }
 
-   if (stepModeOn) {
-       DrawRectangle(0, 620, 450,screenHeight - 620, Color {248, 186, 200, 255});
-       DrawRectangleLines(0, 620, 450, screenHeight - 620, Color {194, 24, 91, 255});
+    if (stepModeOn) {
+        DrawRectangle(0, 620, 450,screenHeight - 620, Color {248, 186, 200, 255});
+        DrawRectangleLines(0, 620, 450, screenHeight - 620, Color {194, 24, 91, 255});
 
-       // Nếu stepModeOn == true, highlight dòng code = steps[currentStep].codeLine
-       int highlightLine = -1;
-       if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
-           highlightLine = steps[currentStep].codeLine;
-       }
+        // Nếu stepModeOn == true, highlight dòng code = steps[currentStep].codeLine
+        int highlightLine = -1;
+        if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
+            highlightLine = steps[currentStep].codeLine;
+        }
 
-       // Vẽ từng dòng code
-       float lineHeight = 20.0f;
-       std::vector<std::string> curCodeLines;
-       if (insertStepModeOn)
-           curCodeLines = codeLinesForInsert;
-       if (deleteStepModeOn)
-           curCodeLines = codeLinesForDelete;
-       if (searchStepModeOn)
-           curCodeLines = codeLinesForSearch;
-       for (int i = 0; i < (int)curCodeLines.size(); i++) {
-           float lineY = 620 + 10 + i * lineHeight;
-           if (i == highlightLine) {
-               DrawRectangle(0, lineY, 450, lineHeight, Color {245, 162, 178, 255});
-           }
-           DrawTextEx(FONT, curCodeLines[i].c_str(), {5, lineY}, 20, 1, BLACK);
-       }
+        // Vẽ từng dòng code
+        float lineHeight = 20.0f;
+        std::vector<std::string> curCodeLines;
+        if (insertStepModeOn)
+            curCodeLines = codeLinesForInsert;
+        if (deleteStepModeOn)
+            curCodeLines = codeLinesForDelete;
+        if (searchStepModeOn)
+            curCodeLines = codeLinesForSearch;
+        for (int i = 0; i < (int)curCodeLines.size(); i++) {
+            float lineY = 620 + 10 + i * lineHeight;
+            if (i == highlightLine) {
+                DrawRectangle(0, lineY, 450, lineHeight, Color {245, 162, 178, 255});
+            }
+            DrawTextEx(FONT, curCodeLines[i].c_str(), {5, lineY}, 20, 1, BLACK);
+        }
 
-       // Nếu muốn vẽ mô tả step hiện tại
-       if (stepModeOn && currentStep < (int)steps.size()) {
-           DrawTextEx(FONT, steps[currentStep].description.c_str(), {5, float(screenHeight) - 25}, 20, 1, RED);
-       }
+        // Nếu muốn vẽ mô tả step hiện tại
+        if (stepModeOn && currentStep < (int)steps.size()) {
+            DrawTextEx(FONT, steps[currentStep].description.c_str(), {5, float(screenHeight) - 25}, 20, 1, RED);
+        }
 
-       // Vẽ thanh progressBar dọc 
-       int barWidth = 30;
-       int barHeight = screenHeight - 620; 
-       int barX = 450;
-       int barY = 620;
+        // Vẽ thanh progressBar dọc 
+        int barWidth = 30;
+        int barHeight = screenHeight - 620; 
+        int barX = 450;
+        int barY = 620;
 
-       DrawRectangleLines(450, 620, 30, screenHeight - 620, Color {194, 24, 91, 255});
+        DrawRectangleLines(450, 620, 30, screenHeight - 620, Color {194, 24, 91, 255});
 
-       // Vẽ phần đã hoàn thành (filled) từ dưới lên
-       barHeight--;
-       int filledHeight = ((int)(barHeight * progressValue) > barHeight) ? barHeight : (int)(barHeight * progressValue);
-       // Vì progress bar chạy từ dưới lên nên vị trí y của phần filled sẽ là barY + (barHeight - filledHeight)
-       DrawRectangle(barX + 1, barY + 1 + (barHeight - filledHeight), barWidth - 2, filledHeight, Color{245, 162, 178, 255});
+        // Vẽ phần đã hoàn thành (filled) từ dưới lên
+        barHeight--;
+        int filledHeight = ((int)(barHeight * progressValue) > barHeight) ? barHeight : (int)(barHeight * progressValue);
+        // Vì progress bar chạy từ dưới lên nên vị trí y của phần filled sẽ là barY + (barHeight - filledHeight)
+        DrawRectangle(barX + 1, barY + 1 + (barHeight - filledHeight), barWidth - 2, filledHeight, Color{245, 162, 178, 255});
 
-       // Vẽ thanh playSpeed slider nằm ngang
-       int playSpeedWidth = MeasureTextEx(FONT, "Playing Speed", 30, 1).x;
-       DrawTextEx(FONT, "Playing Speed", {1200 + 300/2 - playSpeedWidth/2.0f, 50}, 30, 1, Color{87, 143, 202, 255});
-       DrawRectangleRounded({1200, 100, 300, 30}, 1.0f, 10, Color {248, 186, 200, 255});
-       DrawRectangleRoundedLines({1200, 100, 300, 30}, 1.0f, 10, Color {194, 24, 91, 255});
+        // Vẽ thanh playSpeed slider nằm ngang
+        int playSpeedWidth = MeasureTextEx(FONT, "Playing Speed", 30, 1).x;
+        DrawTextEx(FONT, "Playing Speed", {1200 + 300/2 - playSpeedWidth/2.0f, 50}, 30, 1, Color{87, 143, 202, 255});
+        DrawRectangleRounded({1200, 100, 300, 30}, 1.0f, 10, Color {248, 186, 200, 255});
+        DrawRectangleRoundedLines({1200, 100, 300, 30}, 1.0f, 10, Color {194, 24, 91, 255});
 
-       // Vẽ nút slider
-       speedSlider.draw();
-   }
+        // Vẽ nút slider
+        speedSlider.draw();
+    }
 
     // EndDrawing();
 }

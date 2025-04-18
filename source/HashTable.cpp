@@ -19,7 +19,7 @@ int HashTable::getHash(int key) {
 // Constructor
 HashTable::HashTable(int size) : TABLE_SIZE(size) {
     table.resize(size);
-    occ.resize(size, false);
+    occ.resize(size, 0);
 }
 
 // Destructor
@@ -34,7 +34,7 @@ int HashTable::getTableSize() {
     return TABLE_SIZE;
 }
 
-bool HashTable::isOccupied(int idx) {
+int HashTable::isOccupied(int idx) {
     return occ[idx];
 }
 
@@ -47,13 +47,13 @@ bool HashTable::insert(int key, int &idx) {
     if (search(key, idx)) return false;
     // Linear probing to avoid collision
     idx = key % TABLE_SIZE;
-    while (occ[idx]) {
+    while (occ[idx] == 1) {
         idx = (idx + 1) % TABLE_SIZE;
         cnt++;
         if (cnt == TABLE_SIZE) return false;
     }
     table[idx] = key;
-    occ[idx] = true;
+    occ[idx] = 1;
 
     return true;
 }
@@ -85,7 +85,7 @@ bool HashTable::remove(int key, int &idx) {
     }
     if (occ[cur] && table[cur] == key) {
         idx = cur;
-        occ[cur] = false;
+        occ[cur] = 2;
         return true;
     }
     
@@ -95,7 +95,7 @@ bool HashTable::remove(int key, int &idx) {
 void HashTable::update(int newKey) {
     int idx = newKey % TABLE_SIZE;
 
-    occ[idx] = true;
+    occ[idx] = 1;
     table[idx] = newKey;
 
     return;
@@ -117,7 +117,7 @@ bool HashTable::loadHashTableFromFile(const std::string& filePath) {
     // Cập nhật kích thước bảng và làm mới các vector lưu trữ
     TABLE_SIZE = newSize;
     table.assign(newSize, 0);
-    occ.assign(newSize, false);
+    occ.assign(newSize, 0);
 
     int key, idx = -1;
     // Đọc các key từ file và chèn vào bảng
