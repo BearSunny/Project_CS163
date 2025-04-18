@@ -5,7 +5,7 @@
 #include "InputField.h"
 #include "HashTable.h"
 #include "Step.h"
-// #include "tinyfiledialogs.h"
+#include "tinyfiledialogs.h"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -31,7 +31,7 @@ private:
     // Buttons for various actions
     HashButton createButton;
     HashButton insertButton;
-    HashButton updateButton;            
+    HashButton updateButton;
     HashButton deleteButton;
     HashButton searchButton;
     HashButton clearButton;
@@ -61,7 +61,7 @@ private:
     // Animation properties
     bool isPlaying = false;         
     float animationProgress = 0.0f; 
-    float playSpeed = 1.0f;        
+    float playSpeed = 1.0f;         
     float progressValue = 0.0f;     
     float playSpeedMax = 4.0f;
 

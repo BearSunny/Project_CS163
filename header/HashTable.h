@@ -24,7 +24,7 @@ public:
     int getTableSize();
     bool isOccupied(int idx);
     int getKeyAt(int idx);
-    void insert(int key);
+    bool insert(int key, int &idx);
     bool search(int key, int &idx);
     bool remove(int key, int &idx);
     void update(int newKey);

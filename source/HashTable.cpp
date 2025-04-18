@@ -28,6 +28,8 @@ HashTable::~HashTable() {
     occ.clear();
 }
 
+
+
 int HashTable::getTableSize() {
     return TABLE_SIZE;
 }
@@ -40,18 +42,20 @@ int HashTable::getKeyAt(int idx) {
     return table[idx];
 }
 
-void HashTable::insert(int key) {
-    int idx = -1, cnt = 0;
-    if (search(key, idx)) return;
+bool HashTable::insert(int key, int &idx) {
+    int cnt = 0;
+    if (search(key, idx)) return false;
     // Linear probing to avoid collision
     idx = key % TABLE_SIZE;
     while (occ[idx]) {
         idx = (idx + 1) % TABLE_SIZE;
         cnt++;
-        if (cnt == TABLE_SIZE) return;
+        if (cnt == TABLE_SIZE) return false;
     }
     table[idx] = key;
     occ[idx] = true;
+
+    return true;
 }
 
 bool HashTable::search(int key, int &idx) {
@@ -115,10 +119,10 @@ bool HashTable::loadHashTableFromFile(const std::string& filePath) {
     table.assign(newSize, 0);
     occ.assign(newSize, false);
 
-    int key;
+    int key, idx = -1;
     // Đọc các key từ file và chèn vào bảng
     while (input >> key) {
-        insert(key);
+        insert(key, idx);
     }
 
     input.close();

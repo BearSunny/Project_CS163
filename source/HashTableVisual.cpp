@@ -102,8 +102,8 @@ void HashTablePage::handleInput()
         // Use the current time as the seed for the random number generator
         int randomNum = std::rand() % (randomSize + 1);
         for (int i = 0; i < randomNum; i++) {
-            int key = std::rand() % 100000 ;
-            table->insert(key);
+            int key = std::rand() % 100000, idx_ =-1 ;
+            table->insert(key, idx_);
         }
         highlightedIdx = -1;
         tableCreated = true;
@@ -112,32 +112,32 @@ void HashTablePage::handleInput()
     } 
 
     browseButton.handleInput();
-    // if (browseButton.isClicked()) {
-    //     const char* filterPatterns[1] = { "*.txt" };
+    if (browseButton.isClicked()) {
+        const char* filterPatterns[1] = { "*.txt" };
 
-    //     // Hiển thị hộp thoại mở file
-    //     const char* filePath = tinyfd_openFileDialog(
-    //         "Chọn tệp cần mở",    // Tiêu đề của hộp thoại
-    //         "",                   // Đường dẫn mặc định (để trống nếu không có)
-    //         1,                    // Số lượng filter
-    //         filterPatterns,       // Mảng các filter
-    //         "Text files (*.txt)", // Mô tả filter
-    //         0                     // Kiểu hộp thoại (0: mở file, 1: mở nhiều file)
-    //     );
+        // Hiển thị hộp thoại mở file
+        const char* filePath = tinyfd_openFileDialog(
+            "Chọn tệp cần mở",    // Tiêu đề của hộp thoại
+            "",                   // Đường dẫn mặc định (để trống nếu không có)
+            1,                    // Số lượng filter
+            filterPatterns,       // Mảng các filter
+            "Text files (*.txt)", // Mô tả filter
+            0                     // Kiểu hộp thoại (0: mở file, 1: mở nhiều file)
+        );
         
-    //     // Kiểm tra nếu người dùng đã chọn file
-    //     if (filePath) {
-    //         if (table == nullptr) {           // Tránh gây crash khi gọi loadHashTableFromFile()
-    //             table = new HashTable(1);     // Size tạm, sẽ được cập nhật khi load file
-    //         }
-    //         table->loadHashTableFromFile(std::string(filePath));
-    //         tableCreated = true;
-    //         highlightedIdx = -1;
-    //         filePathInput.setActive(false);
-    //     } else {
-    //         TraceLog(LOG_WARNING, "Cannot open the file!");
-    //     }
-    // }
+        // Kiểm tra nếu người dùng đã chọn file
+        if (filePath) {
+            if (table == nullptr) {           // Tránh gây crash khi gọi loadHashTableFromFile()
+                table = new HashTable(1);     // Size tạm, sẽ được cập nhật khi load file
+            }
+            table->loadHashTableFromFile(std::string(filePath));
+            tableCreated = true;
+            highlightedIdx = -1;
+            filePathInput.setActive(false);
+        } else {
+            TraceLog(LOG_WARNING, "Cannot open the file!");
+        }
+    }
 
     // Chỉ xử lý 1 trong 2 trước
     if (filePathInput.IsActive()) { 
@@ -258,8 +258,10 @@ void HashTablePage::handleInput()
             if (insertStepModeOn) {
                 if (currentStep < (int)steps.size() - 1) {
                     currentStep++;
-                    if (currentStep == (int)steps.size() - 2) 
-                        table->insert(pendingInsertKey);
+                    if (currentStep == (int)steps.size() - 2) {
+                        int idx_ = -1;
+                        table->insert(pendingInsertKey, idx_);
+                    }
                 } 
             } 
             if (deleteStepModeOn) {
@@ -287,7 +289,8 @@ void HashTablePage::handleInput()
             }
             if (deleteStepModeOn) {
                 if (currentStep == (int)steps.size() - 2) { // Key đã được delete
-                    table->insert(pendingInsertKey);
+                    int idx_ = -1;
+                    table->insert(pendingInsertKey, idx_);
                 }
             } 
             if (searchStepModeOn) {
@@ -316,8 +319,9 @@ void HashTablePage::handleInput()
             {
                 int key = std::stoi(str);
                 if (!stepModeOn) {
-                    table->insert(key);
-                    highlightedIdx = -1; // reset highlight
+                    int idx_ = -1;
+                    if (table->insert(key, idx_))
+                        highlightedIdx = idx_;
                 } else {
                     buildInsertSteps(key);
                     insertStepModeOn = true;
@@ -326,26 +330,22 @@ void HashTablePage::handleInput()
             }
             catch (...)
             {
-               
+
             }
 
             inputField.clearText();
         }
     }
 
-    if (updateButton.isClicked()) 
-    {
+    if (updateButton.isClicked()) {
         std::string str = inputField.getText();
-        if (!str.empty()) 
-        {
+        if (!str.empty()) {
             inputField.clearText();
-            try 
-            {
+            try {
                 int newKey = std::stoi(str);
                 table->update(newKey);
-            } 
-            catch(...) 
-            {
+                highlightedIdx = newKey % table->getTableSize();
+            } catch(...) {
 
             }
         }
@@ -375,7 +375,7 @@ void HashTablePage::handleInput()
             }
             catch (...)
             {
-                // Bỏ qua nếu lỗi chuyển đổi
+                
             }
             inputField.clearText();
         }
@@ -401,7 +401,7 @@ void HashTablePage::handleInput()
             }
             catch (...)
             {
-                // Bỏ qua nếu lỗi
+               
             }
             inputField.clearText();
         }
@@ -451,8 +451,10 @@ void HashTablePage::update(float deltaTime)
 
             if (currentStep < (int)steps.size() - 1) {
                 currentStep++;
-                if (insertStepModeOn && currentStep == (int)steps.size() - 2) 
-                    table->insert(pendingInsertKey);
+                if (insertStepModeOn && currentStep == (int)steps.size() - 2) {
+                    int idx_ = -1;
+                    table->insert(pendingInsertKey, idx_);
+                }
                 if (deleteStepModeOn && currentStep == (int)steps.size() - 2) {
                     int temp = -1;
                     table->remove(pendingInsertKey, temp);
@@ -521,7 +523,8 @@ void HashTablePage::draw()
 
            Color cellColor = (i == highlightedIdx) ? Color {255, 254, 206, 255} : RAYWHITE;
            DrawRectangle(cellX, cellY, cellSize, cellSize, cellColor);
-           DrawRectangleLines(cellX, cellY, cellSize, cellSize, BLACK);
+           Color lineColor = (i == highlightedIdx) ? RED : BLACK;
+           DrawRectangleLines(cellX, cellY, cellSize, cellSize, lineColor);
        }
    }
 
