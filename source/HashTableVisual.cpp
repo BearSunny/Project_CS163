@@ -41,17 +41,17 @@ HashTablePage::HashTablePage() :
     filePathInput.setActive(false);
 
     codeLinesForInsert = {
-        "int idx = -1, cnt = 0;",
+        "int cnt = 0;",
         "if (search(key, idx))", 
         "   return;",
         "idx = key % TABLE_SIZE;",
-        "while (occ[idx]) {",
+        "while (occ[idx] = 1) {",
         "   idx = (idx + 1) % TABLE_SIZE;",
         "   cnt++;",
         "   if (cnt == TABLE_SIZE) return;",
         "}",
         "table[idx] = key;",
-        "occ[idx] = true;"
+        "occ[idx] = 1;"
     };
 
     codeLinesForDelete = {
@@ -74,7 +74,7 @@ HashTablePage::HashTablePage() :
         "    cnt++;",
         "    if (cnt == TABLE_SIZE) return false;",
         "}",
-        "if (occ[idx] && table[idx] == key) {",
+        "if (occ[idx] = 1 && table[idx] == key) {",
         "    return true;",
         "}",
         "return false;"
@@ -674,7 +674,7 @@ void HashTablePage::buildInsertSteps(int key) {
 
     // Bước 3+: Vòng while
     int cnt = 0;
-    while (table->isOccupied(idx)) {
+    while (table->isOccupied(idx) == 1) {
         // Mỗi vòng lặp => 1 bước
         s.highlightedIndex = idx;
         s.codeLine = 4;
@@ -827,7 +827,7 @@ void HashTablePage::buildSearchSteps(int key) {
     steps.push_back(s);
     
     // Bước cuối: kiểm tra table[idx]
-    if (table->isOccupied(idx) && table->getKeyAt(idx) == key) {
+    if (table->isOccupied(idx) == 1 && table->getKeyAt(idx) == key) {
         s.highlightedIndex = idx;
         s.codeLine = 8;
         s.description = "Key was founded!";

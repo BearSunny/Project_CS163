@@ -68,7 +68,7 @@ bool HashTable::search(int key, int &idx) {
         cnt++;
         if (cnt == TABLE_SIZE) return false;
     }
-    if (occ[cur] && table[cur] == key) {
+    if (occ[cur] == 1 && table[cur] == key) {
         idx = cur;
         return true;
     }
