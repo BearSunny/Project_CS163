@@ -113,6 +113,7 @@ void HashTablePage::handleInput()
 
     browseButton.handleInput();
     if (browseButton.isClicked()) {
+        highlightedIdx = -1;
         const char* filterPatterns[1] = { "*.txt" };
 
         // Hiển thị hộp thoại mở file
@@ -134,6 +135,7 @@ void HashTablePage::handleInput()
             tableCreated = true;
             highlightedIdx = -1;
             filePathInput.setActive(false);
+            inputField.setActive(true);
         } else {
             TraceLog(LOG_WARNING, "Cannot open the file!");
         }
