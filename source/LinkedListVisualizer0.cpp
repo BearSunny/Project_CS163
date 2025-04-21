@@ -1286,6 +1286,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
 
                             currentPseudocodeLine = 7;  // "Link the last node to the new node"
                         } else {
+                            currentPseudocodeLine = -1;
                             drawNode(posX, posY, node, index);
                         }
                         break;
@@ -1296,18 +1297,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 if (index == currentOp.nodeIndex) {
-                    if (pseudocodeProgress < 0.3f) {
-                        currentPseudocodeLine = 0;
-                    } else if (pseudocodeProgress < 0.6f) {
-                        currentPseudocodeLine = 1;
-                    } else if (pseudocodeProgress < 0.75f) {
-                        currentPseudocodeLine = 2;
-                    } else if (pseudocodeProgress < 0.85f) {
-                        currentPseudocodeLine = 5;
-                    } else {
-                        currentPseudocodeLine = 7;
-                    }
-
                     Color nodeColor = {245, 162, 178, 255};
                     float alpha = animationProgress;
                     DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
@@ -1379,16 +1368,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
         
         case Operation::ADD_HEAD: {
             if (index == currentOp.nodeIndex) {
-                if (pseudocodeProgress < 0.25f) {
-                    currentPseudocodeLine = 0;
-                } else if (pseudocodeProgress < 0.5f) {
-                    currentPseudocodeLine = 1;
-                } else if (pseudocodeProgress < 0.65f) {
-                    currentPseudocodeLine = 2;
-                } else if (pseudocodeProgress < 0.75f) {
-                    currentPseudocodeLine = 3;
-                }
-
                 Color nodeColor = {245, 162, 178, 255};
                 float alpha = animationProgress;
                 DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
@@ -1455,14 +1434,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 drawNode(posX, posY, node, index);
-                // Still show pseudocode progress for DELETE
-                if (pseudocodeProgress < 0.25f) {
-                    currentPseudocodeLine = 3;
-                } else if (pseudocodeProgress < 0.5f) {
-                    currentPseudocodeLine = 6;
-                } else {
-                    currentPseudocodeLine = 7;
-                }
             }
             break;
         }
@@ -1519,8 +1490,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 if (index == currentOp.nodeIndex) {
-                    currentPseudocodeLine = (pseudocodeProgress < 0.5f) ? 4 : 6;
-
                     DrawCircle(posX, posY, 30.f, (Color){124, 156, 191, 255});
                     DrawCircleLines(posX, posY, 30.f, WHITE);
 
@@ -1585,6 +1554,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                                 currentPseudocodeLine = (pseudocodeProgress < 0.5f) ? 7 : 8; // "Not found"
                             }
                         } else {
+                            currentPseudocodeLine = -1;
                             drawNode(posX, posY, node, index);
                         }
                         break;
@@ -1595,20 +1565,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 if (node->val == currentOp.newValue) {
-                    if (pseudocodeProgress < 0.25f) {
-                        currentPseudocodeLine = 3;
-                    } else if (pseudocodeProgress < 0.45f) {
-                        currentPseudocodeLine = 4;
-                    } else if (pseudocodeProgress < 0.65f) {
-                        currentPseudocodeLine = 5;
-                    } else if (pseudocodeProgress < 0.78f) {
-                        currentPseudocodeLine = 6;
-                    } else if (pseudocodeProgress < 0.95f) {
-                        currentPseudocodeLine = 7;
-                    } else {
-                        currentPseudocodeLine = 8;
-                    }
-
                     Color nodeColor = {163, 190, 140, 255};
                     float pulse = 0.5f + 0.5f * sin(animationProgress * PI * 4);
                     DrawCircle(posX, posY, 30.f + pulse * 5.f, nodeColor);
