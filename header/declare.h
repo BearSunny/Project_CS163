@@ -32,7 +32,7 @@ struct theme {
 extern theme THEME;
 extern Font FONT;
 extern Font MONT;
-extern Texture2D PLAY, PAUSE, REPLAY, BACK, DOUBLE_BACK, NEXT, DOUBLE_NEXT, SPEED_UP, SPEED_DOWN, BACK_PAGE;
+extern Texture2D PLAY, PAUSE, REPLAY, BACK, DOUBLE_BACK, NEXT, DOUBLE_NEXT, SPEED_UP, SPEED_DOWN, BACK_PAGE, RESET;
 
 extern const int screenWidth;
 extern const int screenHeight;
