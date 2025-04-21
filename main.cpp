@@ -41,13 +41,16 @@ int main () {
                 break;
             case GRAPH:
                 graph.handle(deltaTime);
-                /* if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    if(MouseButtonPressed(0, 0, 400, 100))
-                        currentScreen = MAINMENU;
-                } */
-                if (title.handle() == 1)
+                title.handle();
+                if (title.getChoice() == 1)
+                {
+                    graph.clearGraph();
+                    title.setChoice();
+                }
+                else if (title.getChoice() == 2)
                 {
                     currentScreen = MAINMENU;
+                    title.setChoice();
                 }
                 break;
             default:
