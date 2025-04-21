@@ -38,7 +38,14 @@ TittleButton::TittleButton(Rectangle rect, const std::string text, float yText, 
     this->isHoveredBackPage = false;
     this->backPage = BACK_PAGE;
     this->backPageRadius = 20;
-    this->backPagePos = {770,54};
+    this->backPagePos = {727,54};
+
+    this->isHoveredReset = false;
+    this->reset = RESET;
+    this->resetRadius = 20;
+    this->resetPos = {770, 54};
+    
+    this->choice = 0;
 }
 
 void TittleButton::draw(float radius) {
@@ -48,15 +55,37 @@ void TittleButton::draw(float radius) {
     this->isHoveredBackPage = CheckCollisionPointCircle(GetMousePosition(), this->backPagePos
                                                         , this->backPageRadius);
     DrawCircleV(this->backPagePos, this->backPageRadius, this->isHoveredBackPage ? Color{234,119,119,255} : Color{249,208,208,255});
-    drawPicture(this->backPage, {762, 43,22,22}, 0.0f, ORIGIN, WHITE);
+    drawPicture(this->backPage, {719, 43,22,22}, 0.0f, ORIGIN, WHITE);
+
+    this->isHoveredReset = CheckCollisionPointCircle(GetMousePosition(), this->resetPos
+                                                        , this->resetRadius);
+    DrawCircleV(this->resetPos, this->resetRadius, this->isHoveredReset ? Color{234,119,119,255} : Color{249,208,208,255});
+    drawPicture(this->reset, {755,37,33,33}, 0.0f, ORIGIN, WHITE);
 }
 
 int TittleButton::handle() {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && this->isHoveredReset) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        choice = 1;
+        return 1;
+    }
+
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && this->isHoveredBackPage) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        choice = 2;
         return 1;
     }
     return 0;
+}
+
+int TittleButton::getChoice()
+{
+    return this->choice;
+}
+
+void TittleButton::setChoice()
+{
+    this->choice = 0;
 }
 
 ButtonImage::ButtonImage(Rectangle outerRect, Rectangle innerRect, const char* path, const std::string text, float yText, Color textColor, float fontSize, Font font) {
