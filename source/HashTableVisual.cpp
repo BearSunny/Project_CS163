@@ -411,6 +411,8 @@ void HashTablePage::handleInput()
 
     if (clearButton.isClicked())
     {
+        steps.clear();
+        currentStep = 0;
         if (table != nullptr)
         {
             int size = table->getTableSize();
@@ -422,6 +424,8 @@ void HashTablePage::handleInput()
 
     if (newButton.isClicked())
     {
+        steps.clear();
+        currentStep = 0;
         if (table != nullptr)
         {
             delete table;
@@ -587,32 +591,34 @@ void HashTablePage::draw()
         DrawRectangle(0, 620, 450,screenHeight - 620, Color {248, 186, 200, 255});
         DrawRectangleLines(0, 620, 450, screenHeight - 620, Color {194, 24, 91, 255});
 
-        // Nếu stepModeOn == true, highlight dòng code = steps[currentStep].codeLine
-        int highlightLine = -1;
-        if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
-            highlightLine = steps[currentStep].codeLine;
-        }
-
-        // Vẽ từng dòng code
-        float lineHeight = 20.0f;
-        std::vector<std::string> curCodeLines;
-        if (insertStepModeOn)
-            curCodeLines = codeLinesForInsert;
-        if (deleteStepModeOn)
-            curCodeLines = codeLinesForDelete;
-        if (searchStepModeOn)
-            curCodeLines = codeLinesForSearch;
-        for (int i = 0; i < (int)curCodeLines.size(); i++) {
-            float lineY = 620 + 10 + i * lineHeight;
-            if (i == highlightLine) {
-                DrawRectangle(0, lineY, 450, lineHeight, Color {245, 162, 178, 255});
+        if (!steps.empty()) {
+            // Nếu stepModeOn == true, highlight dòng code = steps[currentStep].codeLine
+            int highlightLine = -1;
+            if (stepModeOn && currentStep >= 0 && currentStep < (int)steps.size()) {
+                highlightLine = steps[currentStep].codeLine;
             }
-            DrawTextEx(FONT, curCodeLines[i].c_str(), {5, lineY}, 20, 1, BLACK);
-        }
 
-        // Nếu muốn vẽ mô tả step hiện tại
-        if (stepModeOn && currentStep < (int)steps.size()) {
-            DrawTextEx(FONT, steps[currentStep].description.c_str(), {5, float(screenHeight) - 25}, 20, 1, RED);
+            // Vẽ từng dòng code
+            float lineHeight = 20.0f;
+            std::vector<std::string> curCodeLines;
+            if (insertStepModeOn)
+                curCodeLines = codeLinesForInsert;
+            if (deleteStepModeOn)
+                curCodeLines = codeLinesForDelete;
+            if (searchStepModeOn)
+                curCodeLines = codeLinesForSearch;
+            for (int i = 0; i < (int)curCodeLines.size(); i++) {
+                float lineY = 620 + 10 + i * lineHeight;
+                if (i == highlightLine) {
+                    DrawRectangle(0, lineY, 450, lineHeight, Color {245, 162, 178, 255});
+                }
+                DrawTextEx(FONT, curCodeLines[i].c_str(), {5, lineY}, 20, 1, BLACK);
+            }
+
+            // Nếu muốn vẽ mô tả step hiện tại
+            if (stepModeOn && currentStep < (int)steps.size()) {
+                DrawTextEx(FONT, steps[currentStep].description.c_str(), {5, float(screenHeight) - 25}, 20, 1, RED);
+            }
         }
 
         // Vẽ thanh progressBar dọc 
