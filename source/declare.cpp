@@ -11,6 +11,7 @@ Texture2D DOUBLE_BACK;
 Texture2D SPEED_UP;
 Texture2D SPEED_DOWN;
 Texture2D BACK_PAGE;
+Texture2D RESET;
 theme THEME;
 Font FONT;
 Font MONT;
@@ -39,6 +40,7 @@ void initResource()
     SPEED_UP = LoadTexture("./asset/Chevron up.png");
     SPEED_DOWN = LoadTexture("./asset/Chevron down.png");
     BACK_PAGE = LoadTexture("./asset/BackPage.png");
+    RESET = LoadTexture("./asset/reset.png");
     
     //Color
     THEME.BACKGROUND = {241, 231, 231, 255};
