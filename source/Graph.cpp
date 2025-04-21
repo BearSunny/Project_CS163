@@ -593,7 +593,7 @@ void GraphVisualize::drawGraph() {
 }
 
 void GraphVisualize::draw() {
-    drawSideBar(playbackState == Paused ? 0:1, "", {}, this->infor, this->progressBar, this->font);
+    drawSideBar(0, "", {}, this->infor, this->progressBar, this->font);
     drawButton();
     drawGraph();
 }
@@ -1014,7 +1014,7 @@ std::vector<GraphNode*> Graph::getNodes()
 
 void GraphVisualize::drawFrame()
 {
-    drawSideBar(0, "", {}, this->infor, this->progressBar, this->font);
+    drawSideBar(playbackState == Paused ? 0:1, "", {}, this->infor, this->progressBar, this->font);
     drawButton();
 
     //if (frame_count >= frames.size()) return;
@@ -1067,6 +1067,6 @@ void GraphVisualize::clearGraph()
 
     timeElapsed = 0.0f;
     duration = 3.0f;
-    
+
     graph.clearGraph();
 }
