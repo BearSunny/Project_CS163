@@ -27,12 +27,21 @@ protected:
     float backPageRadius;
     Texture2D backPage;
     bool isHoveredBackPage;
-public:
+
+    bool isHoveredReset;
+    Texture2D reset;
+    Vector2 resetPos;
+    float resetRadius;
+    int choice;
+
+    public:
     TittleButton(Rectangle rect, const std::string text, float ytext, Color textColor, float fontSize, Font font = FONT);
     TittleButton() : TittleButton({465, 34, 350, 40}, "", 0.0f, {249,208,208,255},0) {}
     void draw(float radius = 50);
     int handle();
-    bool getIsHovered() {return this->isHovered;}
+    bool getIsHovered() {return this->isHovered;};
+    int getChoice();
+    void setChoice();
 };
 
 class ButtonImage : public Button {
