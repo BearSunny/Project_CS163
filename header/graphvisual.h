@@ -106,6 +106,7 @@ class GraphVisualize {
 
         float timeElapsed = 0.0f;
         float duration = 3.0f;
+        float speedFactor = 0.5f;
         PlaybackState playbackState;
     public:
         GraphVisualize(Font font = FONT);
@@ -122,6 +123,7 @@ class GraphVisualize {
         void update(float deltaTime);
         void drawFrame();
         void addFrame();
+        void clearGraph();
 };
 
 //bool areCollinear(GraphNode* a, GraphNode* b, GraphNode* c);
