@@ -593,7 +593,7 @@ void GraphVisualize::drawGraph() {
 }
 
 void GraphVisualize::draw() {
-    drawSideBar(0, "", {}, this->infor, this->progressBar, this->font);
+    drawSideBar(playbackState == Paused ? 0:1, "", {}, this->infor, this->progressBar, this->font);
     drawButton();
     drawGraph();
 }
@@ -943,6 +943,29 @@ void GraphVisualize::update(float deltaTime)
         frame_count++;
     }
 
+    else if (flag == -2)
+    {
+        playbackState = Paused;
+        frame_count = 0;
+    }
+
+    else if (flag == 2)
+    {
+        playbackState = Paused;
+        frame_count = frames.size();
+        timeElapsed = 0.0f;
+    }
+
+    else if (flag == 3)
+    {
+        duration = duration + speedFactor;
+    }
+
+    else if (flag == -3)
+    {
+        duration = duration - speedFactor;
+    }
+
    /*  // Handle playback controls
     if (playPauseButton.handle()) {
         playbackState = (playbackState == Playing) ? Paused : Playing;
@@ -1030,4 +1053,20 @@ void GraphVisualize::drawFrame()
         DrawCircleV(Nodes[i]->pos, 20, THEME.NODE);
         DrawTextEx(font, TextFormat("%d", Nodes[i]->data), {Nodes[i]->pos.x - size.x/2, Nodes[i]->pos.y - size.y/2}, 20, 2, BLACK);
     }
+}
+
+void GraphVisualize::clearGraph()
+{
+    isCreateChosen = false;
+    isUpdateChosen = false;
+    isDeleteChosen = false;
+
+    this->playbackState = Playing;
+    std::string infor = "";
+    this->numComponent = 0;
+
+    timeElapsed = 0.0f;
+    duration = 3.0f;
+    
+    graph.clearGraph();
 }
