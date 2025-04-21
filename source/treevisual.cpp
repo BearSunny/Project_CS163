@@ -1113,6 +1113,7 @@ void BackToMainMenu() {
     if(!S.Q.empty())
         while(S.insertStepByStep());
     currentScreen = MAINMENU;
+    CurrentButton = NULLBUTTON;
     Number = "";
     CurrentCursor = 0;
     STEPBYSTEPBUTTON = false;

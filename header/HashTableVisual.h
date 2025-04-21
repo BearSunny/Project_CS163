@@ -5,6 +5,7 @@
 #include "InputField.h"
 #include "HashTable.h"
 #include "Step.h"
+#include "tinyfiledialogs.h"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -30,6 +31,7 @@ private:
     // Buttons for various actions
     HashButton createButton;
     HashButton insertButton;
+    HashButton updateButton;
     HashButton deleteButton;
     HashButton searchButton;
     HashButton clearButton;
@@ -57,10 +59,10 @@ private:
     int pendingInsertKey;            // Key for pending step-by-step insert
 
     // Animation properties
-    bool isPlaying = false;         // Trạng thái Play/Pause
-    float animationProgress = 0.0f; // Tiến độ animation (0.0 -> 1.0)
-    float playSpeed = 1.0f;         // Tốc độ chuyển động (có thể điều chỉnh)
-    float progressValue = 0.0f;     // Giá trị progress từ 0.0 đến 1.0
+    bool isPlaying = false;         
+    float animationProgress = 0.0f; 
+    float playSpeed = 1.0f;         
+    float progressValue = 0.0f;     
     float playSpeedMax = 4.0f;
 
     // Source code display for operations

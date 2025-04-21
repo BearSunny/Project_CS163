@@ -19,7 +19,8 @@ enum VisualizerMode {
     MODE_UPDATE,
     MODE_SEARCH,
     MODE_CREATE_FILE,
-    MODE_ADD_HEAD
+    MODE_ADD_HEAD,
+    MODE_INSERT_AT
 };
 
 // Add new enum for animation states
@@ -30,7 +31,7 @@ enum AnimationState {
 };
 
 struct Operation {
-    enum Type { ADD, ADD_HEAD, DELETE, UPDATE, SEARCH } type;
+    enum Type { ADD, ADD_HEAD, DELETE, UPDATE, SEARCH, INSERT_AT } type;
     int nodeIndex;
     int oldValue;
     int newValue;
@@ -90,7 +91,7 @@ private:
     int pendingTargetIndex;
     int pendingDeleteValue;
     bool deleteDone;
-
+    
     void drawAnimationControls();
     void drawOperationInfo();
     void drawLinkedList(float startX, float startY, float offsetX);

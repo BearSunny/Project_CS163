@@ -19,7 +19,7 @@ int HashTable::getHash(int key) {
 // Constructor
 HashTable::HashTable(int size) : TABLE_SIZE(size) {
     table.resize(size);
-    occ.resize(size, false);
+    occ.resize(size, 0);
 }
 
 // Destructor
@@ -34,7 +34,7 @@ int HashTable::getTableSize() {
     return TABLE_SIZE;
 }
 
-bool HashTable::isOccupied(int idx) {
+int HashTable::isOccupied(int idx) {
     return occ[idx];
 }
 
@@ -42,18 +42,20 @@ int HashTable::getKeyAt(int idx) {
     return table[idx];
 }
 
-void HashTable::insert(int key) {
-    int idx = -1, cnt = 0;
-    if (search(key, idx)) return;
+bool HashTable::insert(int key, int &idx) {
+    int cnt = 0;
+    if (search(key, idx)) return false;
     // Linear probing to avoid collision
     idx = key % TABLE_SIZE;
-    while (occ[idx]) {
+    while (occ[idx] == 1) {
         idx = (idx + 1) % TABLE_SIZE;
         cnt++;
-        if (cnt == TABLE_SIZE) return;
+        if (cnt == TABLE_SIZE) return false;
     }
     table[idx] = key;
-    occ[idx] = true;
+    occ[idx] = 1;
+
+    return true;
 }
 
 bool HashTable::search(int key, int &idx) {
@@ -66,7 +68,7 @@ bool HashTable::search(int key, int &idx) {
         cnt++;
         if (cnt == TABLE_SIZE) return false;
     }
-    if (occ[cur] && table[cur] == key) {
+    if (occ[cur] == 1 && table[cur] == key) {
         idx = cur;
         return true;
     }
@@ -83,11 +85,20 @@ bool HashTable::remove(int key, int &idx) {
     }
     if (occ[cur] && table[cur] == key) {
         idx = cur;
-        occ[cur] = false;
+        occ[cur] = 2;
         return true;
     }
     
     return false;
+}
+
+void HashTable::update(int newKey) {
+    int idx = newKey % TABLE_SIZE;
+
+    occ[idx] = 1;
+    table[idx] = newKey;
+
+    return;
 }
 
 bool HashTable::loadHashTableFromFile(const std::string& filePath) {
@@ -106,12 +117,12 @@ bool HashTable::loadHashTableFromFile(const std::string& filePath) {
     // Cập nhật kích thước bảng và làm mới các vector lưu trữ
     TABLE_SIZE = newSize;
     table.assign(newSize, 0);
-    occ.assign(newSize, false);
+    occ.assign(newSize, 0);
 
-    int key;
+    int key, idx = -1;
     // Đọc các key từ file và chèn vào bảng
     while (input >> key) {
-        insert(key);
+        insert(key, idx);
     }
 
     input.close();

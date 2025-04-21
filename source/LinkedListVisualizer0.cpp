@@ -119,7 +119,7 @@ void LinkedListVisualizer::draw() {
 }
 
 void LinkedListVisualizer::drawHelpText() {
-    const char* helpText = "Controls: I-Init | H-Add at Head | A-Add | D-Delete | U-Update | S-Search | F-File Upload | R-Random | C-Clear | Click node to select";
+    const char* helpText = "Controls: I-Init | H-Add at Head | A-Add | K-InsertKidx | D-Delete | U-Update | S-Search | F-File Upload | R-Random | C-Clear | Click node to select";
     int textWidth = MeasureText(helpText, 16);
     DrawText(helpText, (GetScreenWidth() - textWidth) / 2, GetScreenHeight() - 30, 16, (Color){234, 179, 8, 255});
 }
@@ -327,6 +327,18 @@ void LinkedListVisualizer::drawPseudocodeBox() {
                 pseudocodeLines[3] = "3. Link the new node to the head.";
                 lineCount = 4;
                 break;
+            case Operation::INSERT_AT:
+                pseudocodeLines[0] = "INSERT AT INDEX Operation:\n";
+                pseudocodeLines[1] = "1. Create a new node.";
+                pseudocodeLines[2] = "2. Set its value to the given value.";
+                pseudocodeLines[3] = "3. If index == 0:";
+                pseudocodeLines[4] = "   a. Link new node to head.";
+                pseudocodeLines[5] = "   b. Set head = new node.";
+                pseudocodeLines[6] = "4. Else:";
+                pseudocodeLines[7] = "   a. Traverse to node at index - 1.";
+                pseudocodeLines[8] = "   b. Link new node between previous and next.";
+                lineCount = 9;
+                break;
             case Operation::DELETE:
                 pseudocodeLines[0] = "DELETE Operation:\n";
                 pseudocodeLines[1] = "1. If the list is empty:\n";
@@ -489,6 +501,7 @@ void LinkedListVisualizer::drawOperationInfo() {
     switch(mode) {
         case MODE_ADD: modeText += "Add Node"; break;
         case MODE_DELETE: modeText += "Delete Node"; break;
+        case MODE_INSERT_AT: modeText += "Insert at Index"; break;
         case MODE_UPDATE: modeText += "Update Node"; break;
         case MODE_SEARCH: modeText += "Search"; break;
         default: modeText += "None"; break;
@@ -530,7 +543,7 @@ void LinkedListVisualizer::drawLinkedList(float startX, float startY, float offs
         }
         
         if (stepByStepMode && (operationHistory[currentStep].type == Operation::ADD || operationHistory[currentStep].type == Operation::UPDATE || 
-            operationHistory[currentStep].type == Operation::SEARCH || operationHistory[currentStep].type == Operation::DELETE) 
+            operationHistory[currentStep].type == Operation::SEARCH || operationHistory[currentStep].type == Operation::DELETE || operationHistory[currentStep].type == Operation::INSERT_AT) 
         && animState == TRAVERSING && index <= traversalIndex) {
             applyAnimationEffects(posX, posY, current, index); // Let applyAnimationEffects handle orange highlight
         } else if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size()) && index == operationHistory[currentStep].nodeIndex) {
@@ -636,6 +649,7 @@ void LinkedListVisualizer::drawInputBox() {
     switch(mode) {
         case MODE_ADD_HEAD: prompt = "Enter value to add at head: "; break;
         case MODE_ADD: prompt = "Enter value to add: "; break;
+        case MODE_INSERT_AT: prompt = "Enter value index (e.g. 42 2): "; break;
         case MODE_UPDATE: 
             prompt = "Enter new value for node " + to_string(selectedNodeIndex) + ": "; 
             break;
@@ -664,6 +678,9 @@ void LinkedListVisualizer::handleEvent() {
         inputString.clear();
     } else if (IsKeyPressed(KEY_A)) {
         mode = MODE_ADD;
+        inputString = "";
+    } else if (IsKeyPressed(KEY_K)) {
+        mode = MODE_INSERT_AT;
         inputString = "";
     } else if (IsKeyPressed(KEY_D)) {
         mode = MODE_DELETE;
@@ -716,14 +733,57 @@ void LinkedListVisualizer::handleEvent() {
     }
 
     // Handle text input
-    if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH || mode == MODE_INITIALIZE) {
+    if (mode == MODE_ADD || mode == MODE_UPDATE || mode == MODE_SEARCH || mode == MODE_INITIALIZE || mode == MODE_INSERT_AT || mode == MODE_ADD_HEAD) {
         int key = GetCharPressed();
-        if (key >= '0' && key <= '9' || key == ' ') {
-            inputString += (char)key;
+        if (key >= '0' && key <= '9' || key == ' ' || key == '-') {
+            size_t len = inputString.length();
+            if (key == '-') {
+                if (len == 0 || inputString[len - 1] == ' ') {
+                    inputString += (char)key;
+                }
+            } else {
+                inputString += (char)key;
+            }
         }
         
         if (IsKeyPressed(KEY_BACKSPACE) && !inputString.empty()) {
             inputString.pop_back();
+        }
+    } else if (mode == MODE_INSERT_AT && !inputString.empty()) {
+        try {
+            std::istringstream iss(inputString);
+            int value, index;
+            if (iss >> value >> index) {
+                Operation op(Operation::INSERT_AT, index, 0, value);
+                operationHistory.push_back(op);
+    
+                if (!stepByStepMode) {
+                    list->insertAt(index, value);
+                    connectionAnimations.insert(
+                        connectionAnimations.begin() + std::min(index, (int)connectionAnimations.size()),
+                        {0.0f, animationSpeed}
+                    );
+                } else {
+                    pendingAddValue = value;
+                    pendingTargetIndex = index;
+                    shouldAddNode = true;
+                    animState = WAITING;
+                    traversalIndex = -1;
+                    nodeHighlightProgress = 0.0f;
+                    pseudocodeProgress = 0.0f;
+                    isPaused = false;
+                }
+    
+                lastOperation = "Inserted " + std::to_string(value) + " at idx " + std::to_string(index);
+                currentStep = operationHistory.size() - 1;
+                animationProgress = 0.0f;
+                inputString.clear();
+                mode = MODE_NONE;
+            } else {
+                lastOperation = "Invalid input format. Use value index.";
+            }
+        } catch (std::exception& e) {
+            lastOperation = "Invalid input: " + string(e.what());
         }
     } else if (mode == MODE_CREATE_FILE) {
         int key = GetCharPressed();
@@ -757,36 +817,7 @@ void LinkedListVisualizer::handleEvent() {
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C)) {
             SetClipboardText(filePath);
         }
-    } else if (mode == MODE_ADD_HEAD) {
-        int key = GetCharPressed();
-        if (key >= '0' && key <= '9') {
-            inputString += (char)key;
-        }
-        if (IsKeyPressed(KEY_BACKSPACE) && !inputString.empty()) {
-            inputString.pop_back();
-        }
-        if (IsKeyPressed(KEY_ENTER) && !inputString.empty()) {
-            try {
-                int value = std::stoi(inputString);
-
-                // Create operation and add to history
-                Operation op(Operation::ADD_HEAD, 0, 0, value);
-                operationHistory.push_back(op);
-
-                list->addAtHead(value); // Add node at head
-                lastOperation = "Added node with value " + inputString + " at head";
-
-                // Update connection animations
-                connectionAnimations.insert(connectionAnimations.begin(), {0.0f, animationSpeed});
-
-                currentStep = static_cast<int>(operationHistory.size() - 1);
-                inputString.clear();
-                mode = MODE_NONE; // Reset mode
-            } catch (std::exception& e) {
-                lastOperation = "Invalid input: " + std::string(e.what());
-            }
-        }
-    }
+    } 
 
     // Handle node selection via mouse
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -812,15 +843,10 @@ void LinkedListVisualizer::handleEvent() {
                     operationHistory.push_back(op);
                     
                     if (!stepByStepMode) {
-                        // Perform delete
-                        if (list->deleteAt(index)) {
-                            lastOperation = "Deleted node at index " + to_string(index);
-                            if (index < static_cast<int>(connectionAnimations.size())) {
-                                connectionAnimations.erase(connectionAnimations.begin() + index);
-                            }
-                        } else {
-                            lastOperation = "Failed to delete node at index " + to_string(index);
-                        }
+                        // Perform delete                      
+                        lastOperation = "Deleted node at index " + to_string(index);
+                        pendingTargetIndex = index;
+                        deleteDone = false;
                     } else {
                         pendingTargetIndex = index;
                         animState            = WAITING;
@@ -965,6 +991,59 @@ void LinkedListVisualizer::handleEvent() {
             } catch (std::exception& e) {
                 lastOperation = "Invalid input: " + string(e.what());
             }
+        } else if (mode == MODE_ADD_HEAD && !inputString.empty()) {
+            try {
+                int value = std::stoi(inputString);
+                Operation op(Operation::ADD_HEAD, 0, 0, value);
+                operationHistory.push_back(op);
+    
+                list->addAtHead(value);
+                lastOperation = "Added node with value " + inputString + " at head";
+                connectionAnimations.insert(connectionAnimations.begin(), {0.0f, animationSpeed});
+    
+                currentStep = operationHistory.size() - 1;
+                inputString.clear();
+                mode = MODE_NONE;
+                animationProgress = 0.0f;
+            } catch (std::exception& e) {
+                lastOperation = "Invalid input: " + std::string(e.what());
+            }
+        } else if (mode == MODE_INSERT_AT && !inputString.empty()) {
+            try {
+                std::istringstream iss(inputString);
+                int value, index;
+                if (iss >> value >> index) {
+                    Operation op(Operation::INSERT_AT, index, 0, value);
+                    operationHistory.push_back(op);
+    
+                    if (!stepByStepMode) {
+                        list->insertAt(index, value);
+                        connectionAnimations.insert(
+                            connectionAnimations.begin() + std::min(index, (int)connectionAnimations.size()),
+                            {0.0f, animationSpeed}
+                        );
+                    } else {
+                        pendingAddValue = value;
+                        pendingTargetIndex = index;
+                        shouldAddNode = true;
+                        animState = WAITING;
+                        traversalIndex = -1;
+                        nodeHighlightProgress = 0.0f;
+                        pseudocodeProgress = 0.0f;
+                        isPaused = false;
+                    }
+    
+                    lastOperation = "Inserted " + std::to_string(value) + " at idx " + std::to_string(index);
+                    currentStep = operationHistory.size() - 1;
+                    animationProgress = 0.0f;
+                    inputString.clear();
+                    mode = MODE_NONE;
+                } else {
+                    lastOperation = "Invalid input format. Use value index.";
+                }
+            } catch (std::exception& e) {
+                lastOperation = "Invalid input: " + string(e.what());
+            }
         }
     }
 }
@@ -976,13 +1055,18 @@ void LinkedListVisualizer::updateAnimation() {
             
             if (stepByStepMode) {
                 if (currentOp.type == Operation::ADD || currentOp.type == Operation::UPDATE ||
-                    currentOp.type == Operation::SEARCH || currentOp.type == Operation::DELETE) {
+                    currentOp.type == Operation::SEARCH || currentOp.type == Operation::DELETE ||
+                    currentOp.type == Operation::INSERT_AT) {
                     int logicalSize = pendingTraversalCount;
                     int targetIndex = logicalSize - 1;
                     switch (currentOp.type) {
                         case Operation::ADD:
                             logicalSize = pendingTraversalCount;  // Frozen count when staging ADD.
                             targetIndex = logicalSize - 1;           // Traverse until the last node.
+                            break;
+                        case Operation::INSERT_AT:
+                            logicalSize = list->getSize() + 1;  // Pretend the node is already there
+                            targetIndex = pendingTargetIndex;
                             break;
                         case Operation::UPDATE:
                             logicalSize = list->getSize();
@@ -1045,6 +1129,13 @@ void LinkedListVisualizer::updateAnimation() {
                                 } else if (currentOp.type == Operation::DELETE && !deleteDone) {
                                     list->deleteAt(pendingTargetIndex);
                                     deleteDone = true;
+                                } else if (currentOp.type == Operation::INSERT_AT && shouldAddNode) {
+                                    list->insertAt(pendingTargetIndex, pendingAddValue);
+                                    shouldAddNode = false;
+                                    connectionAnimations.insert(
+                                        connectionAnimations.begin() + std::min(pendingTargetIndex, (int)connectionAnimations.size()),
+                                        {0.0f, animationSpeed}
+                                    );
                                 }
                             }
                             break;
@@ -1064,7 +1155,10 @@ void LinkedListVisualizer::updateAnimation() {
                 // Check progress limits
                 if (animationProgress >= 1.0f) {
                     animationProgress = 1.0f; // Keep at 100%
-                    // Don't automatically advance to next step
+                    if (currentOp.type == Operation::DELETE && !deleteDone) {
+                        list->deleteAt(currentOp.nodeIndex);
+                        deleteDone = true;
+                    }
                 }
                 if (pseudocodeProgress >= 1.0f) {
                     pseudocodeProgress = 0.0f;
@@ -1081,6 +1175,9 @@ void LinkedListVisualizer::applyOperation(const Operation& op) {
             break;
         case Operation::ADD_HEAD:
             list->addAtHead(op.newValue);
+            break;
+        case Operation::INSERT_AT:
+            list->insertAt(op.nodeIndex, op.newValue);
             break;
         case Operation::DELETE:
             list->deleteAt(op.nodeIndex);
@@ -1101,6 +1198,9 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
             break;
         case Operation::ADD_HEAD:
             list->addAtHead(op.nodeIndex);
+            break;
+        case Operation::INSERT_AT: 
+            list->deleteAt(op.nodeIndex); 
             break;
         case Operation::DELETE:
             if (op.nodeIndex <= list->getSize()) {
@@ -1186,6 +1286,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
 
                             currentPseudocodeLine = 7;  // "Link the last node to the new node"
                         } else {
+                            currentPseudocodeLine = -1;
                             drawNode(posX, posY, node, index);
                         }
                         break;
@@ -1196,18 +1297,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 if (index == currentOp.nodeIndex) {
-                    if (pseudocodeProgress < 0.3f) {
-                        currentPseudocodeLine = 0;
-                    } else if (pseudocodeProgress < 0.6f) {
-                        currentPseudocodeLine = 1;
-                    } else if (pseudocodeProgress < 0.75f) {
-                        currentPseudocodeLine = 2;
-                    } else if (pseudocodeProgress < 0.85f) {
-                        currentPseudocodeLine = 5;
-                    } else {
-                        currentPseudocodeLine = 7;
-                    }
-
                     Color nodeColor = {245, 162, 178, 255};
                     float alpha = animationProgress;
                     DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
@@ -1223,18 +1312,62 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
             break;
         }
 
+        case Operation::INSERT_AT: {
+            if (stepByStepMode) {
+                switch (animState) {
+                    case WAITING:
+                        drawNode(posX, posY, node, index);
+                        currentPseudocodeLine = -1;
+                        break;
+        
+                    case TRAVERSING:
+                        if (index <= traversalIndex) {
+                            float pulse = 1.0f + 0.2f * sin(GetTime() * 6);
+                            DrawCircle(posX, posY, 30.f, (Color){245, 162, 178, 255});
+                            DrawCircleLines(posX, posY, 30.f * pulse, (Color){234, 179, 8, 255});
+                            DrawCircleLines(posX, posY, 30.5f * pulse, (Color){234, 179, 8, 255});
+                            DrawCircleLines(posX, posY, 31.f * pulse, (Color){234, 179, 8, 255});
+                            DrawCircleLines(posX, posY, 31.5f * pulse, (Color){234, 179, 8, 255});
+                            const char* valueText = TextFormat("%d", node->val);
+                            float textWidth = MeasureText(valueText, 20);
+                            DrawText(valueText, posX - textWidth/2, posY - 10, 20, BLACK);
+                            currentPseudocodeLine = 7; 
+                        } else {
+                            drawNode(posX, posY, node, index);
+                        }
+                        break;
+        
+                    case FINAL_ANIMATION:
+                        if (index == pendingTargetIndex) {
+                            Color nodeColor = {245, 162, 178, 255};
+                            float alpha = animationProgress;
+                            DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
+                            DrawCircleLines(posX, posY, 30.f, (Color){194, 24, 91, 255});
+                            const char* valueText = TextFormat("%d", pendingAddValue);
+                            float textWidth = MeasureText(valueText, 20);
+                            DrawText(valueText, posX - textWidth/2, posY - 10, 20, ColorAlpha(BLACK, alpha));
+                            if (pendingTargetIndex == 0) {
+                                currentPseudocodeLine = (pseudocodeProgress < 0.5f) ? 4 : 5;
+                            } else {
+                                currentPseudocodeLine = 8;
+                            }
+                        } else {
+                            drawNode(posX, posY, node, index);
+                        }
+                        break;
+        
+                    default:
+                        drawNode(posX, posY, node, index);
+                        break;
+                }
+            } else {
+                drawNode(posX, posY, node, index);
+            }
+            break;
+        }
+        
         case Operation::ADD_HEAD: {
             if (index == currentOp.nodeIndex) {
-                if (pseudocodeProgress < 0.25f) {
-                    currentPseudocodeLine = 0;
-                } else if (pseudocodeProgress < 0.5f) {
-                    currentPseudocodeLine = 1;
-                } else if (pseudocodeProgress < 0.65f) {
-                    currentPseudocodeLine = 2;
-                } else if (pseudocodeProgress < 0.75f) {
-                    currentPseudocodeLine = 3;
-                }
-
                 Color nodeColor = {245, 162, 178, 255};
                 float alpha = animationProgress;
                 DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
@@ -1300,25 +1433,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                         break;
                 }
             } else {
-                if (index == currentOp.nodeIndex) {
-                    if (pseudocodeProgress < 0.25f) {
-                        currentPseudocodeLine = 3;
-                    } else if (pseudocodeProgress < 0.5f) {
-                        currentPseudocodeLine = 6;
-                    } else {
-                        currentPseudocodeLine = 7;
-                    }
-                    Color nodeColor = {208, 135, 112, 255};
-                    float alpha = 1.0f - animationProgress;
-                    DrawCircle(posX, posY, 30.f, ColorAlpha(nodeColor, alpha));
-                    DrawCircleLines(posX, posY, 30.f, ColorAlpha(BLACK, alpha));
-
-                    const char* valueText = TextFormat("%d", node->val);
-                    float textWidth = MeasureText(valueText, 20);
-                    DrawText(valueText, posX - textWidth / 2, posY - 10, 20, ColorAlpha(BLACK, alpha));
-                } else {
-                    drawNode(posX, posY, node, index);
-                } 
+                drawNode(posX, posY, node, index);
             }
             break;
         }
@@ -1375,8 +1490,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 if (index == currentOp.nodeIndex) {
-                    currentPseudocodeLine = (pseudocodeProgress < 0.5f) ? 4 : 6;
-
                     DrawCircle(posX, posY, 30.f, (Color){124, 156, 191, 255});
                     DrawCircleLines(posX, posY, 30.f, WHITE);
 
@@ -1441,6 +1554,7 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                                 currentPseudocodeLine = (pseudocodeProgress < 0.5f) ? 7 : 8; // "Not found"
                             }
                         } else {
+                            currentPseudocodeLine = -1;
                             drawNode(posX, posY, node, index);
                         }
                         break;
@@ -1451,20 +1565,6 @@ void LinkedListVisualizer::applyAnimationEffects(float posX, float posY, Node* n
                 }
             } else {
                 if (node->val == currentOp.newValue) {
-                    if (pseudocodeProgress < 0.25f) {
-                        currentPseudocodeLine = 3;
-                    } else if (pseudocodeProgress < 0.45f) {
-                        currentPseudocodeLine = 4;
-                    } else if (pseudocodeProgress < 0.65f) {
-                        currentPseudocodeLine = 5;
-                    } else if (pseudocodeProgress < 0.78f) {
-                        currentPseudocodeLine = 6;
-                    } else if (pseudocodeProgress < 0.95f) {
-                        currentPseudocodeLine = 7;
-                    } else {
-                        currentPseudocodeLine = 8;
-                    }
-
                     Color nodeColor = {163, 190, 140, 255};
                     float pulse = 0.5f + 0.5f * sin(animationProgress * PI * 4);
                     DrawCircle(posX, posY, 30.f + pulse * 5.f, nodeColor);
