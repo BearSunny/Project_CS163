@@ -426,13 +426,16 @@ void LinkedListVisualizer::drawAnimationControls() {
     
     // Redo button
     if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, "R")) {
-        if (!undoHistory.empty()) {
+        if (!undoHistory.empty() && currentStep == static_cast<int>(operationHistory.size())) {
             // Redo the last undone operation
             Operation lastUndo = undoHistory.back();
             undoHistory.pop_back();
             operationHistory.push_back(lastUndo);
             applyOperation(lastUndo);
+            currentStep = operationHistory.size();
             lastOperation = "Redid operation: " + lastUndo.toString();
+        } else {
+            undoHistory.clear();
         }
     }
 
@@ -755,8 +758,9 @@ void LinkedListVisualizer::handleEvent() {
             int value, index;
             if (iss >> value >> index) {
                 Operation op(Operation::INSERT_AT, index, 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
-    
+                
                 if (!stepByStepMode) {
                     list->insertAt(index, value);
                     connectionAnimations.insert(
@@ -840,6 +844,7 @@ void LinkedListVisualizer::handleEvent() {
                 if (mode == MODE_DELETE) {
                     // Create delete operation
                     Operation op(Operation::DELETE, index, current->val, 0);
+                    undoHistory.clear();
                     operationHistory.push_back(op);
                     
                     if (!stepByStepMode) {
@@ -879,7 +884,9 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::ADD, list->getSize(), 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
+                
                 
                 // Store the value for later use
                 pendingAddValue = value;
@@ -925,7 +932,9 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::UPDATE, selectedNodeIndex, oldValue, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
+                
                 
                 pendingUpdateValue = value;
                 updateDone = false;  // Reset flag.
@@ -968,7 +977,9 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::SEARCH, foundIndex, 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
+                
                 
                 // Freeze the target index for SEARCH.
                 pendingTargetIndex = foundIndex;
@@ -995,8 +1006,9 @@ void LinkedListVisualizer::handleEvent() {
             try {
                 int value = std::stoi(inputString);
                 Operation op(Operation::ADD_HEAD, 0, 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
-    
+                
                 list->addAtHead(value);
                 lastOperation = "Added node with value " + inputString + " at head";
                 connectionAnimations.insert(connectionAnimations.begin(), {0.0f, animationSpeed});
@@ -1014,8 +1026,9 @@ void LinkedListVisualizer::handleEvent() {
                 int value, index;
                 if (iss >> value >> index) {
                     Operation op(Operation::INSERT_AT, index, 0, value);
+                    undoHistory.clear();
                     operationHistory.push_back(op);
-    
+                   
                     if (!stepByStepMode) {
                         list->insertAt(index, value);
                         connectionAnimations.insert(
@@ -1050,6 +1063,7 @@ void LinkedListVisualizer::handleEvent() {
 
 void LinkedListVisualizer::updateAnimation() {    
     if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size())) {
+        if (isPaused && stepByStepMode) return;
         if (!isPaused) {
             const Operation& currentOp = operationHistory[currentStep];
             
