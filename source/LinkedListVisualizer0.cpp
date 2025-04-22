@@ -2,6 +2,7 @@
 #define LINKEDLISTVISUALIZER0_H
 
 #include "../header/LinkedListVisualizer.h"
+#include "../header/tinyfiledialogs.h"
 #include <sstream>
 #include <raylib.h>
 #include <cmath>
@@ -135,20 +136,6 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, (Color){194, 24, 91, 255});
     
     DrawText("Create Linked List from File", panelX + 20, panelY + 20, 20, (Color){255, 254, 206, 255});
-    DrawText("Copy file path here:", panelX + 20, panelY + 60, 18, (Color){255, 254, 206, 255});
-    
-    // Draw input box
-    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){245, 162, 178, 255});
-    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){194, 24, 91, 255});
-    DrawText(filePath, panelX + 30, panelY + 100, 18, (Color){255, 254, 206, 255});
-    
-    // Draw cursor blink
-    static float cursorTimer = 0;
-    cursorTimer += GetFrameTime();
-    if (fmod(cursorTimer, 1.0f) < 0.5f) {
-        float cursorX = panelX + GetScreenWidth() * 0.02f + MeasureText(filePath, 18);
-        DrawRectangle(cursorX, panelY + GetScreenHeight() * 0.1f, 2, GetScreenHeight() * 0.02f, (Color){245, 162, 178, 255});
-    }
     
     // Show error message if any
     if (fileError) {
@@ -162,18 +149,20 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
     int buttonsY = panelY + panelHeight - 60;
     
-    // Load button
-    bool loadClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Load File");
-    if (loadClicked && strlen(filePath) > 0) {
-        createLLFromFile(filePath);
-    }
-    
-    // Browse button (in a real implementation, this would open a file dialog)
-    bool browseClicked = DrawButton(buttonsStartX + buttonWidth + buttonSpacing, buttonsY, buttonWidth, buttonHeight, "Browse...");
+    // Browse button 
+    bool browseClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Browse...");
     if (browseClicked) {
-        // In a real implementation, this would open a file dialog
-        // For now, we'll just simulate it with a message
-        strcpy(filePath, "example.txt");
+        const char* result = tinyfd_openFileDialog(
+            "Select File",  // dialog title
+            "",                         // default path
+            0, NULL, NULL,               // filters
+            0                            // allow multi-select?
+        );
+        if (result) {
+            // Copy path into buffer
+            strncpy(filePath, result, sizeof(filePath) - 1);
+            filePath[sizeof(filePath) - 1] = '\0';
+        }
     }
 
     // Cancel button
@@ -426,13 +415,16 @@ void LinkedListVisualizer::drawAnimationControls() {
     
     // Redo button
     if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, "R")) {
-        if (!undoHistory.empty()) {
+        if (!undoHistory.empty() && currentStep == static_cast<int>(operationHistory.size())) {
             // Redo the last undone operation
             Operation lastUndo = undoHistory.back();
             undoHistory.pop_back();
             operationHistory.push_back(lastUndo);
             applyOperation(lastUndo);
+            currentStep = operationHistory.size();
             lastOperation = "Redid operation: " + lastUndo.toString();
+        } else {
+            undoHistory.clear();
         }
     }
 
@@ -749,74 +741,8 @@ void LinkedListVisualizer::handleEvent() {
         if (IsKeyPressed(KEY_BACKSPACE) && !inputString.empty()) {
             inputString.pop_back();
         }
-    } else if (mode == MODE_INSERT_AT && !inputString.empty()) {
-        try {
-            std::istringstream iss(inputString);
-            int value, index;
-            if (iss >> value >> index) {
-                Operation op(Operation::INSERT_AT, index, 0, value);
-                operationHistory.push_back(op);
-    
-                if (!stepByStepMode) {
-                    list->insertAt(index, value);
-                    connectionAnimations.insert(
-                        connectionAnimations.begin() + std::min(index, (int)connectionAnimations.size()),
-                        {0.0f, animationSpeed}
-                    );
-                } else {
-                    pendingAddValue = value;
-                    pendingTargetIndex = index;
-                    shouldAddNode = true;
-                    animState = WAITING;
-                    traversalIndex = -1;
-                    nodeHighlightProgress = 0.0f;
-                    pseudocodeProgress = 0.0f;
-                    isPaused = false;
-                }
-    
-                lastOperation = "Inserted " + std::to_string(value) + " at idx " + std::to_string(index);
-                currentStep = operationHistory.size() - 1;
-                animationProgress = 0.0f;
-                inputString.clear();
-                mode = MODE_NONE;
-            } else {
-                lastOperation = "Invalid input format. Use value index.";
-            }
-        } catch (std::exception& e) {
-            lastOperation = "Invalid input: " + string(e.what());
-        }
-    } else if (mode == MODE_CREATE_FILE) {
-        int key = GetCharPressed();
-        // Allow alphanumeric characters, dots, slashes, and backslashes for file paths
-        if ((key >= 32 && key <= 126)) {  // Printable ASCII characters
-            size_t len = strlen(filePath);
-            if (len < sizeof(filePath) - 1) {
-                filePath[len] = (char)key;
-                filePath[len + 1] = '\0';
-            }
-        }
-        
-        if (IsKeyPressed(KEY_BACKSPACE) && strlen(filePath) > 0) {
-            filePath[strlen(filePath) - 1] = '\0';
-        }
-
-        // Handle Ctrl+V for pasting from clipboard
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_V)) {
-            const char* clipboardText = GetClipboardText();
-            if (clipboardText != nullptr) {
-                size_t len = strlen(filePath);
-                size_t clipboardLen = strlen(clipboardText);
-                size_t availableSpace = sizeof(filePath) - len - 1;
-
-                // Append clipboard text to the file path, ensuring it doesn't exceed the buffer size
-                strncat(filePath, clipboardText, availableSpace);
-            }
-        }
-
-        // Handle Ctrl+C for copying the current file path to the clipboard
-        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_C)) {
-            SetClipboardText(filePath);
-        }
+    } else if (mode == MODE_CREATE_FILE && strlen(filePath) > 0) {
+        createLLFromFile(filePath);
     } 
 
     // Handle node selection via mouse
@@ -840,6 +766,7 @@ void LinkedListVisualizer::handleEvent() {
                 if (mode == MODE_DELETE) {
                     // Create delete operation
                     Operation op(Operation::DELETE, index, current->val, 0);
+                    undoHistory.clear();
                     operationHistory.push_back(op);
                     
                     if (!stepByStepMode) {
@@ -879,7 +806,9 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::ADD, list->getSize(), 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
+                
                 
                 // Store the value for later use
                 pendingAddValue = value;
@@ -916,6 +845,43 @@ void LinkedListVisualizer::handleEvent() {
             } catch (std::exception& e) {
                 lastOperation = "Invalid input: " + string(e.what());
             }
+        } else if (mode == MODE_INSERT_AT && !inputString.empty()) {
+            try {
+                std::istringstream iss(inputString);
+                int value, index;
+                if (iss >> value >> index) {
+                    Operation op(Operation::INSERT_AT, index, 0, value);
+                    undoHistory.clear();
+                    operationHistory.push_back(op);
+                    
+                    if (!stepByStepMode) {
+                        list->insertAt(index, value);
+                        connectionAnimations.insert(
+                            connectionAnimations.begin() + std::min(index, (int)connectionAnimations.size()),
+                            {0.0f, animationSpeed}
+                        );
+                    } else {
+                        pendingAddValue = value;
+                        pendingTargetIndex = index;
+                        shouldAddNode = true;
+                        animState = WAITING;
+                        traversalIndex = -1;
+                        nodeHighlightProgress = 0.0f;
+                        pseudocodeProgress = 0.0f;
+                        isPaused = false;
+                    }
+        
+                    lastOperation = "Inserted " + std::to_string(value) + " at idx " + std::to_string(index);
+                    currentStep = operationHistory.size() - 1;
+                    animationProgress = 0.0f;
+                    inputString.clear();
+                    mode = MODE_NONE;
+                } else {
+                    lastOperation = "Invalid input format. Use value index.";
+                }
+            } catch (std::exception& e) {
+                lastOperation = "Invalid input: " + string(e.what());
+            } 
         } else if (mode == MODE_UPDATE && selectedNodeIndex != -1 && !inputString.empty()) {
             try {
                 int value = std::stoi(inputString);
@@ -925,7 +891,9 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::UPDATE, selectedNodeIndex, oldValue, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
+                
                 
                 pendingUpdateValue = value;
                 updateDone = false;  // Reset flag.
@@ -968,7 +936,9 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::SEARCH, foundIndex, 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
+                
                 
                 // Freeze the target index for SEARCH.
                 pendingTargetIndex = foundIndex;
@@ -995,8 +965,9 @@ void LinkedListVisualizer::handleEvent() {
             try {
                 int value = std::stoi(inputString);
                 Operation op(Operation::ADD_HEAD, 0, 0, value);
+                undoHistory.clear();
                 operationHistory.push_back(op);
-    
+                
                 list->addAtHead(value);
                 lastOperation = "Added node with value " + inputString + " at head";
                 connectionAnimations.insert(connectionAnimations.begin(), {0.0f, animationSpeed});
@@ -1014,8 +985,9 @@ void LinkedListVisualizer::handleEvent() {
                 int value, index;
                 if (iss >> value >> index) {
                     Operation op(Operation::INSERT_AT, index, 0, value);
+                    undoHistory.clear();
                     operationHistory.push_back(op);
-    
+                   
                     if (!stepByStepMode) {
                         list->insertAt(index, value);
                         connectionAnimations.insert(
@@ -1050,6 +1022,7 @@ void LinkedListVisualizer::handleEvent() {
 
 void LinkedListVisualizer::updateAnimation() {    
     if (!operationHistory.empty() && currentStep < static_cast<int>(operationHistory.size())) {
+        if (isPaused && stepByStepMode) return;
         if (!isPaused) {
             const Operation& currentOp = operationHistory[currentStep];
             
@@ -1219,7 +1192,7 @@ void LinkedListVisualizer::undoOperation(const Operation& op) {
 void LinkedListVisualizer::stepForward() {
     if (currentStep < static_cast<int>(operationHistory.size())) {
         currentStep++;
-        animationProgress = 0.0f; // Reset animation progress
+        animationProgress = 0.0f;
         pseudocodeProgress = 0.0f;
         traversalIndex = -1;
         animState = WAITING;
@@ -1230,7 +1203,7 @@ void LinkedListVisualizer::stepForward() {
 void LinkedListVisualizer::stepBackward() {
     if (currentStep > 0) {
         currentStep--;
-        animationProgress = 0.0f; // Reset animation progress
+        animationProgress = 0.0f;
         pseudocodeProgress = 0.0f;
         traversalIndex = -1;
         animState = WAITING;
