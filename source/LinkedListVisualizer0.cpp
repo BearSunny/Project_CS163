@@ -56,7 +56,7 @@ LinkedListVisualizer::LinkedListVisualizer(LinkedList* list)
     lastOperation(""), connectionAnimations(), showPseudocode(false), currentPseudocodeLine(0), pseudocodeProgress(0.0f), stepByStepMode(false), traversalIndex(-1), 
     animState(WAITING), nodeHighlightProgress(0.0f), pendingAddValue(0), shouldAddNode(false), pendingTraversalCount(0),
     pendingUpdateValue(0), updateDone(false), searchDone(false), pendingTargetIndex(-1),
-    pendingDeleteValue(0), deleteDone(false) {}
+    pendingDeleteValue(0), deleteDone(false), hasUndone(false) {}
 
 Operation::Operation(Type t, int idx, int oldVal, int newVal)
     : type(t), nodeIndex(idx), oldValue(oldVal), newValue(newVal) {}
@@ -400,6 +400,7 @@ void LinkedListVisualizer::drawAnimationControls() {
             undoHistory.push_back(lastOp);
             undoOperation(lastOp);
             lastOperation = "Undid operation: " + lastOp.toString();
+            hasUndone = true;
         }
     }
 
@@ -415,7 +416,7 @@ void LinkedListVisualizer::drawAnimationControls() {
     
     // Redo button
     if (DrawButton(startX + (buttonWidth + buttonSpacing) * 4, controlsY, buttonWidth, buttonWidth, "R")) {
-        if (!undoHistory.empty() && currentStep == static_cast<int>(operationHistory.size())) {
+        if (!undoHistory.empty()) {
             // Redo the last undone operation
             Operation lastUndo = undoHistory.back();
             undoHistory.pop_back();
@@ -423,9 +424,8 @@ void LinkedListVisualizer::drawAnimationControls() {
             applyOperation(lastUndo);
             currentStep = operationHistory.size();
             lastOperation = "Redid operation: " + lastUndo.toString();
-        } else {
-            undoHistory.clear();
-        }
+            hasUndone = false;
+        } 
     }
 
     // Step forward button (">>")
@@ -766,7 +766,10 @@ void LinkedListVisualizer::handleEvent() {
                 if (mode == MODE_DELETE) {
                     // Create delete operation
                     Operation op(Operation::DELETE, index, current->val, 0);
-                    undoHistory.clear();
+                    if (hasUndone) {
+                        undoHistory.clear();
+                        hasUndone = false;
+                    }
                     operationHistory.push_back(op);
                     
                     if (!stepByStepMode) {
@@ -806,7 +809,10 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::ADD, list->getSize(), 0, value);
-                undoHistory.clear();
+                if (hasUndone) {
+                    undoHistory.clear();
+                    hasUndone = false;
+                }
                 operationHistory.push_back(op);
                 
                 
@@ -851,7 +857,10 @@ void LinkedListVisualizer::handleEvent() {
                 int value, index;
                 if (iss >> value >> index) {
                     Operation op(Operation::INSERT_AT, index, 0, value);
-                    undoHistory.clear();
+                    if (hasUndone) {
+                        undoHistory.clear();
+                        hasUndone = false;
+                    }
                     operationHistory.push_back(op);
                     
                     if (!stepByStepMode) {
@@ -891,7 +900,10 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::UPDATE, selectedNodeIndex, oldValue, value);
-                undoHistory.clear();
+                if (hasUndone) {
+                    undoHistory.clear();
+                    hasUndone = false;
+                }
                 operationHistory.push_back(op);
                 
                 
@@ -936,7 +948,10 @@ void LinkedListVisualizer::handleEvent() {
                 
                 // Create operation and add to history
                 Operation op(Operation::SEARCH, foundIndex, 0, value);
-                undoHistory.clear();
+                if (hasUndone) {
+                    undoHistory.clear();
+                    hasUndone = false;
+                }
                 operationHistory.push_back(op);
                 
                 
@@ -965,7 +980,10 @@ void LinkedListVisualizer::handleEvent() {
             try {
                 int value = std::stoi(inputString);
                 Operation op(Operation::ADD_HEAD, 0, 0, value);
-                undoHistory.clear();
+                if (hasUndone) {
+                    undoHistory.clear();
+                    hasUndone = false;
+                }
                 operationHistory.push_back(op);
                 
                 list->addAtHead(value);
@@ -985,7 +1003,10 @@ void LinkedListVisualizer::handleEvent() {
                 int value, index;
                 if (iss >> value >> index) {
                     Operation op(Operation::INSERT_AT, index, 0, value);
-                    undoHistory.clear();
+                    if (hasUndone) {
+                        undoHistory.clear();
+                        hasUndone = false;
+                    }
                     operationHistory.push_back(op);
                    
                     if (!stepByStepMode) {
