@@ -800,7 +800,8 @@ void GraphVisualize::mstKruskal() {
     std::cout << "Done add frame" << std::endl;
     std::cout << frames.size() << std::endl;
     std::cout << frame_count << std::endl;
-    while (frame_count <= stop)
+    std::cout << stop << std::endl;
+    while (frame_count < stop)
     {
         float dTime = GetFrameTime();
         update(dTime);
@@ -810,6 +811,7 @@ void GraphVisualize::mstKruskal() {
         //draw();
         EndDrawing();
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     this->progressBar.updateMaxStep(1);
     this->progressBar.updateStep(1);
 }
@@ -916,7 +918,7 @@ void GraphVisualize::update(float deltaTime)
             //displayFrame(animationFrames[currentFrame]); // Render next frame
             timeElapsed = 0.0f;
         } 
-        else if (timeElapsed > duration && frame_count == frames.size() - 1) 
+        else if (timeElapsed > duration && frame_count >= frames.size() - 1) 
         {
             frame_count++;
             playbackState = Paused; // Stop at the last frame
@@ -993,7 +995,7 @@ void GraphVisualize::addFrame()
 {
     std::vector<std::tuple<int, GraphNode*, GraphNode*, bool>> Edges = graph.getEdges();
 
-    frame_count = frames.size();
+    //frame_count = frames.size();
 
     for (int i = 0; i < Edges.size(); i++)
     {
