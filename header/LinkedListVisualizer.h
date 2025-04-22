@@ -91,6 +91,7 @@ private:
     int pendingTargetIndex;
     int pendingDeleteValue;
     bool deleteDone;
+    bool hasUndone;
     
     void drawAnimationControls();
     void drawOperationInfo();
