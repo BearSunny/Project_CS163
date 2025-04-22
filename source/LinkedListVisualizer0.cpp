@@ -137,19 +137,6 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     
     DrawText("Create Linked List from File", panelX + 20, panelY + 20, 20, (Color){255, 254, 206, 255});
     
-    // Draw input box
-    DrawRectangle(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){245, 162, 178, 255});
-    DrawRectangleLines(panelX + 20, panelY + 90, panelWidth - 40, 40, (Color){194, 24, 91, 255});
-    DrawText(filePath, panelX + 30, panelY + 100, 18, (Color){255, 254, 206, 255});
-    
-    // Draw cursor blink
-    static float cursorTimer = 0;
-    cursorTimer += GetFrameTime();
-    if (fmod(cursorTimer, 1.0f) < 0.5f) {
-        float cursorX = panelX + GetScreenWidth() * 0.02f + MeasureText(filePath, 18);
-        DrawRectangle(cursorX, panelY + GetScreenHeight() * 0.1f, 2, GetScreenHeight() * 0.02f, (Color){245, 162, 178, 255});
-    }
-    
     // Show error message if any
     if (fileError) {
         DrawText(fileErrorMessage.c_str(), panelX + 20, panelY + 150, 18, RED);
@@ -162,7 +149,7 @@ void LinkedListVisualizer::drawFileUploadInterface() {
     int buttonsStartX = panelX + (panelWidth - (2 * buttonWidth + buttonSpacing)) / 2;
     int buttonsY = panelY + panelHeight - 60;
     
-    // Browse button (in a real implementation, this would open a file dialog)
+    // Browse button 
     bool browseClicked = DrawButton(buttonsStartX, buttonsY, buttonWidth, buttonHeight, "Browse...");
     if (browseClicked) {
         const char* result = tinyfd_openFileDialog(
@@ -178,16 +165,7 @@ void LinkedListVisualizer::drawFileUploadInterface() {
         }
     }
 
-    // Load button
-    bool loadClicked = DrawButton(buttonsStartX + buttonWidth + buttonSpacing, buttonsY, buttonWidth, buttonHeight, "Load");
-    if (loadClicked) {
-        if (!createLLFromFile(filePath)) {
-            // Error already handled in createLLFromFile
-        } else {
-            mode = MODE_NONE;
-        }
-    }
-        // Cancel button
+    // Cancel button
     bool cancelClicked = DrawButton(panelX + panelWidth - 100, panelY + 20, 80, 30, "Cancel");
     if (cancelClicked) {
         mode = MODE_NONE;
